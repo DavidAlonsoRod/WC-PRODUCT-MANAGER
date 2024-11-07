@@ -9,11 +9,12 @@ from woocommerce import API
 from dotenv import load_dotenv
 import os
 
+load_dotenv()
 
 api = Blueprint('api', __name__)
 
 # Allow CORS requests to this API
-CORS(api)
+CORS(api, resources={r"/*": {"origins": "*"}}) 
 
 database_url = os.getenv('DATABASE_URL')
 consumer_key = os.getenv('WC_CONSUMER_KEY')
@@ -23,6 +24,7 @@ wcapi = API(
     url="https://piedrapapelytijeras.es",  
     consumer_key=consumer_key,  
     consumer_secret=consumer_secret, 
+    wp_api=True,
     version="wc/v3",
     timeout=100
     
@@ -226,3 +228,83 @@ def import_orders():
 
     except Exception as e:
         return jsonify({"msg": f"Error al importar órdenes: {str(e)}"}), 500
+    
+# @api.route('/customers', methods=['GET'])
+# def get_customers():
+#     all_customer = Customer.query.all()
+#     result = list(map(lambda customer: customer.serialize(),all_customer))
+#     if not result:
+#         return jsonify({"msg": "No existen datos"}), 200
+#     return jsonify(result), 200
+
+    
+@api.route('/customers', methods=['GET'])
+def get_customers():
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        response = wcapi.get("customers", params={"per_page": per_page, "page": page})
+        
+        if response.status_code != 200:
+            return jsonify({"error": "Error fetching customers from WooCommerce"}), response.status_code
+
+        wc_customers = response.json()
+        total_customers = response.headers.get('X-WP-Total', 0)
+        customers = []
+
+        for wc_customer in wc_customers:
+            customer = {
+                "id": wc_customer["id"],
+                "email": wc_customer["email"],
+                "first_name": wc_customer["first_name"],
+                "last_name": wc_customer["last_name"],
+                "company": wc_customer["billing"]["company"],
+                "city": wc_customer["billing"]["city"],
+                "state": wc_customer["billing"]["state"],
+                "email": wc_customer["email"]
+            }
+            customers.append(customer)
+
+        return jsonify({"customers": customers, "total_customers": int(total_customers), "page": page, "per_page": per_page}), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Imprimir el error
+        return jsonify({"error": str(e)}), 500
+    
+@api.route('/orders', methods=['GET'])
+def get_orders():
+    try:
+        orders = Order.query.all()
+        return jsonify([order.serialize() for order in orders]), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Imprimir el error
+        return jsonify({"error": str(e)}), 500
+    
+@api.route('/customers/<int:customer_id>', methods=['GET'])
+def get_customer(customer_id):
+    try:
+        response = wcapi.get(f"customers/{customer_id}")
+        
+        if response.status_code != 200:
+            return jsonify({"error": "Error fetching customer from WooCommerce"}), response.status_code
+
+        wc_customer = response.json()
+        customer = {
+            "id": wc_customer["id"],
+            "email": wc_customer["email"],
+            "first_name": wc_customer["first_name"],
+            "last_name": wc_customer["last_name"],
+            "company": wc_customer["billing"]["company"],
+            "city": wc_customer["billing"]["city"],
+            "state": wc_customer["billing"]["state"],
+            "email": wc_customer["email"],
+            "role": wc_customer.get("role", ""),
+            "username": wc_customer.get("username", ""),
+            "billing": wc_customer.get("billing", {}),
+            "shipping": wc_customer.get("shipping", {}),
+            "orders": wc_customer.get("orders", [])
+        }
+
+        return jsonify(customer), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Imprimir el error
+        return jsonify({"error": str(e)}), 500
