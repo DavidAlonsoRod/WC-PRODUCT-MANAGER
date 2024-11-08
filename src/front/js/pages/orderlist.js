@@ -54,12 +54,11 @@ const Orders = () => {
                     <thead className='bg-light'>
                         <tr>
                             <th>ID</th>
-                            <th>Number</th>
-                            <th>Status</th>
+                            <th>Cliente</th>
                             <th>Total</th>
-                            <th>Customer ID</th>
-                            <th>Billing</th>
-                            <th>Shipping</th>
+                            <th>Estado</th>
+                            
+                            
                         </tr>
                     </thead>
                     <tbody>
@@ -71,12 +70,12 @@ const Orders = () => {
                                 style={{ cursor: 'pointer' }}
                             >
                                 <td className='fw-light'>{order.id}</td>
-                                <td>{order.number}</td>
-                                <td>{order.status}</td>
-                                <td>{order.total}</td>
-                                <td>{order.customer_id}</td>
                                 <td>{order.billing ? `${order.billing.first_name} ${order.billing.last_name}` : 'N/A'}</td>
-                                <td>{order.shipping ? `${order.shipping.first_name} ${order.shipping.last_name}` : 'N/A'}</td>
+                                <td>{order.total}</td>
+                                <td>{order.status}</td>
+                                
+                                
+                                
                             </tr>
                         ))}
                     </tbody>

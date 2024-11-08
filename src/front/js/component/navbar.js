@@ -14,12 +14,34 @@ export const Navbar = () => {
 		navigate('/')
 
 	}
+	const importCustomers = async () => {
+        try {
+            const response = await fetch('/api/import_customers');
+            if (!response.ok) throw new Error('Error al importar clientes');
+            alert('Clientes importados correctamente');
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+        }
+    };
+
+    const importOrders = async () => {
+        try {
+            const response = await fetch('/api/import_orders');
+            if (!response.ok) throw new Error('Error al importar órdenes');
+            alert('Órdenes importadas correctamente');
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+        }
+    };
+
 
 	return (
 		<nav className="navbar  border-bottom border-body justify-content-between d-flex mb-5" id="navbar">
 			<div className="container navbar">
 
 				<div className="left-section">
+					<button className="btn" onClick={importCustomers}>Importar Clientes</button>
+                    <button className="btn" onClick={importOrders}>Importar Órdenes</button>
 					<h2 className="m-3">Wocoomerce Product Manager</h2>
 					<h5 className="m-3">Gestión de fabricación y envío de productos de Woocommerce</h5>
 
