@@ -13,6 +13,7 @@ INSTALL:
 - WC_API_URL=https://piedrapapelytijeras.es/wp-json/wc/v3/
 - WC_CONSUMER_KEY=
 - WC_CONSUMER_SECRET=
+- https://react-pdf.org/
 
 ### 1) Installation:
 

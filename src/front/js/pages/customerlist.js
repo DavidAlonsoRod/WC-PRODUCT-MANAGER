@@ -6,19 +6,21 @@ import "../../styles/customerlist.css";
 const Customers = () => {
     const [customers, setCustomers] = useState([]);
     const [page, setPage] = useState(1);
-    const [perPage, setPerPage] = useState(20);  // Cambiar el valor predeterminado a 20
+    const [perPage, setPerPage] = useState(20);  
     const [totalCustomers, setTotalCustomers] = useState(0);
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchCustomers = async () => {
             try {
+                console.log("Fetching customers from:", `${process.env.BACKEND_URL}/api/customers`);
                 const response = await axios.get(`${process.env.BACKEND_URL}/api/customers`, {
                     params: {
                         page: page,
                         per_page: perPage,
                     },
                 });
+                console.log("Response data:", response.data);
                 setCustomers(response.data.customers);
                 setTotalCustomers(response.data.total_customers);
             } catch (error) {

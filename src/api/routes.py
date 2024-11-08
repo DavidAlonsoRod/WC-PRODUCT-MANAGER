@@ -229,15 +229,6 @@ def import_orders():
     except Exception as e:
         return jsonify({"msg": f"Error al importar órdenes: {str(e)}"}), 500
     
-# @api.route('/customers', methods=['GET'])
-# def get_customers():
-#     all_customer = Customer.query.all()
-#     result = list(map(lambda customer: customer.serialize(),all_customer))
-#     if not result:
-#         return jsonify({"msg": "No existen datos"}), 200
-#     return jsonify(result), 200
-
-    
 @api.route('/customers', methods=['GET'])
 def get_customers():
     try:
@@ -269,12 +260,34 @@ def get_customers():
     except Exception as e:
         print(f"Error: {str(e)}")  # Imprimir el error
         return jsonify({"error": str(e)}), 500
-    
+
 @api.route('/orders', methods=['GET'])
 def get_orders():
     try:
-        orders = Order.query.all()
-        return jsonify([order.serialize() for order in orders]), 200
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        response = wcapi.get("orders", params={"per_page": per_page, "page": page})
+        
+        if response.status_code != 200:
+            return jsonify({"error": "Error fetching orders from WooCommerce"}), response.status_code
+
+        wc_orders = response.json()
+        total_orders = response.headers.get('X-WP-Total', 0)
+        orders = []
+
+        for wc_order in wc_orders:
+            order = {
+                "id": wc_order["id"],
+                "number": wc_order["number"],
+                "status": wc_order["status"],
+                "total": wc_order["total"],
+                "customer_id": wc_order["customer_id"],
+                "billing": wc_order.get("billing", {}),
+                "shipping": wc_order.get("shipping", {})
+            }
+            orders.append(order)
+
+        return jsonify({"orders": orders, "total_orders": int(total_orders), "page": page, "per_page": per_page}), 200
     except Exception as e:
         print(f"Error: {str(e)}")  # Imprimir el error
         return jsonify({"error": str(e)}), 500
@@ -307,4 +320,30 @@ def get_customer(customer_id):
         return jsonify(customer), 200
     except Exception as e:
         print(f"Error: {str(e)}")  # Imprimir el error
+        return jsonify({"error": str(e)}), 500
+        
+@api.route('/orders/<int:order_id>', methods=['GET'])
+def get_order(order_id):
+    try:
+        response = wcapi.get(f"orders/{order_id}")
+        
+        if response.status_code != 200:
+            return jsonify({"error": "Error fetching order from WooCommerce"}), response.status_code
+
+        wc_order = response.json()
+        order = {
+           
+            "id": wc_order["id"],
+            "number": wc_order["number"],
+            "status": wc_order["status"],   
+            "total": wc_order["total"],
+            "customer_id": wc_order["customer_id"],
+            "billing": wc_order.get("billing", {}),
+            "shipping": wc_order.get("shipping", {})
+        }
+            
+
+        return jsonify(order), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
