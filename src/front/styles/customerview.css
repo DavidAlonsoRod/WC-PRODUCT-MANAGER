@@ -1,0 +1,48 @@
+
+.custom-container {
+    margin-top: 0; /* Ajusta este valor según sea necesario */
+    padding-top: 20px; /* Ajusta este valor según sea necesario */
+}
+
+.btn-custom {
+    background-color: #303d6f; 
+    color: white; 
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer; 
+}
+
+.btn-custom:hover {
+    background-color: #303d6f; 
+    color: rgb(143, 141, 141);
+}
+
+p{
+    color: rgb(93, 93, 93);
+}
+h1{
+color: #303d6f;
+}
+h2{
+color: #374478;
+}
+h3{
+    color: #354278;
+}
+h4{
+    color: #374478;
+}
+h5{
+    color: #374478;
+}
+
+   a {
+       text-decoration: none; /* Elimina el subrayado */
+       color: #354278; /* Cambia el color del enlace */
+   }
+
+   a:hover {
+       text-decoration: underline; /* Agrega un subrayado al pasar el mouse */
+   }
+   

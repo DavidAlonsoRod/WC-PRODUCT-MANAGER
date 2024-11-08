@@ -1,0 +1,32 @@
+
+#navbar {
+    background-color: #0d183f;
+    font-weight: lighter;
+    color: rgb(215, 8, 8); /* Para todo el texto dentro del navbar */
+}
+
+#navbar a, 
+#navbar button {
+    color: white; 
+    font-weight: lighter;
+}
+#navbar button:hover {
+    color: white; 
+    font-weight: 400;
+}
+
+.navbar-brand {
+    color: white;
+}
+
+.navbar-brand:hover {
+    color: rgb(32, 55, 29);
+}
+
+#navbar h2 {
+    color: #f8f8f8; /* Color rojo para el h2 dentro del navbar */
+}
+
+#navbar h5 {
+    color: rgb(195, 185, 205); /* Color gris para el h5 dentro del navbar */
+}
