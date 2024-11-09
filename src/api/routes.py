@@ -14,13 +14,15 @@ from dotenv import load_dotenv
 import os
 from datetime import datetime, timedelta
 from api.insert_line_items import insert_line_item
+from .controllers import get_order_by_id
 
 load_dotenv()
 
-api = Blueprint('api', __name__)
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Asegúrate de que CORS esté configurado para la aplicación Flask
 
-# Allow CORS requests to this API
-CORS(api, resources={r"/*": {"origins": "*"}}) 
+api = Blueprint('api', __name__)
+CORS(api)  # Asegúrate de que CORS esté configurado para el Blueprint
 
 database_url = os.getenv('DATABASE_URL')
 consumer_key = os.getenv('WC_CONSUMER_KEY')
@@ -406,7 +408,7 @@ def get_orders():
             order = {
                 "id": wc_order["id"],
                 "number": wc_order["number"],
-                "status": wc_order["status"],
+                "status": wc_order["status"],  # Asegúrate de que el campo esté correctamente mapeado
                 "date_created": wc_order["date_created"],  # Asegúrate de que el campo esté correctamente mapeado
                 "shipping_date": shipping_date.isoformat(),
                 "discount_total": wc_order["discount_total"],
@@ -465,26 +467,36 @@ def get_customer(customer_id):
 def get_order(order_id):
     try:
         response = wcapi.get(f"orders/{order_id}")
-        
         if response.status_code != 200:
             return jsonify({"error": "Error fetching order from WooCommerce"}), response.status_code
-
         wc_order = response.json()
+        date_created = datetime.strptime(wc_order["date_created"], "%Y-%m-%dT%H:%M:%S")
+        shipping_date = date_created + timedelta(days=9)
         order = {
-           
             "id": wc_order["id"],
             "number": wc_order["number"],
-            "status": wc_order["status"],   
+            "status": wc_order["status"],  # Asegúrate de que el campo esté correctamente mapeado
+            "date_created": wc_order["date_created"],  # Asegúrate de que el campo esté correctamente mapeado
+            "shipping_date": shipping_date.isoformat(),
+            "discount_total": wc_order["discount_total"],
+            "discount_tax": wc_order["discount_tax"],
+            "shipping_total": wc_order["shipping_total"],
+            "shipping_tax": wc_order["shipping_tax"],
+            "cart_tax": wc_order["cart_tax"],
+            "total_tax": wc_order["total_tax"],
             "total": wc_order["total"],
+            "payment_method": wc_order["payment_method"],
+            "payment_method_title": wc_order["payment_method_title"],
+            "customer_note": wc_order["customer_note"],
+            "date_completed": wc_order["date_completed"],
             "customer_id": wc_order["customer_id"],
             "billing": wc_order.get("billing", {}),
-            "shipping": wc_order.get("shipping", {})
+            "shipping": wc_order.get("shipping", {}),
+            "line_items": wc_order.get("line_items", [])  # Asegúrate de incluir los line_items
         }
-            
-
         return jsonify(order), 200
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"Error: {str(e)}") 
         return jsonify({"error": str(e)}), 500
 
 @api.route('/line_items', methods=['GET'])

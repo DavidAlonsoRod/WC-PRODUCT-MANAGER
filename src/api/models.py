@@ -135,7 +135,7 @@ class Order(db.Model):
 
     def serialize(self):
         return {
-            "id": self.id,
+            'id': self.id,
             "number": self.number,
             "status": self.status,
             "date_created": self.date_created.isoformat() if self.date_created else None,
@@ -190,6 +190,7 @@ class LineItem(db.Model):
         self.qr_code = img_str
 
     def serialize(self):
+        customer = self.order.customer
         return {
             "id": self.id,
             "name": self.name,
@@ -202,7 +203,9 @@ class LineItem(db.Model):
             "total": self.total,
             "total_tax": self.total_tax,
             "order_id": self.order_id,
-            "qr_code": self.qr_code
+            "qr_code": self.qr_code,
+            "customer_name": f"{customer.first_name} {customer.last_name}" if customer else None,
+            "company_name": customer.company if customer else None
         }
 
     @staticmethod
