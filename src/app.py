@@ -2,15 +2,17 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 import os
+import sys
 from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import db
+from api.models import db, init_engine  # Importar init_engine
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
@@ -29,6 +31,9 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db, compare_type=True)
 db.init_app(app)
+
+with app.app_context():
+    init_engine()  # Inicializar el engine dentro del contexto de la aplicación
 
 # add the admin
 setup_admin(app)

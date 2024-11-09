@@ -13,6 +13,7 @@ import { Footer } from "./component/footer";
 import Orders from "./pages/orderlist";
 import Customers from "./pages/customerlist";
 import CustomerView from "./pages/customerview";
+import LineItems from "./pages/lineitems";
 
 
 
@@ -34,6 +35,7 @@ const Layout = () => {
                         <Route element={<Single />} path="/single/:theid" />
                         <Route element={<Orders />} path="/orders" />
                         <Route element={<Customers />} path="/customers" />
+                        <Route element={<LineItems />} path="/lineitems" />
                         <Route element={<Orders />} path="/orders" />
                         <Route element={<CustomerView />} path="/customer/:customerId" />
                         <Route element={<h1>Not found!</h1>} />

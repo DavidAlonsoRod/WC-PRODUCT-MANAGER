@@ -1,4 +1,9 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects.postgresql import JSON
+import qrcode
+import io
+import base64
+from sqlalchemy import create_engine
 
 db = SQLAlchemy()
 
@@ -87,6 +92,7 @@ class Shipping(db.Model):
     state = db.Column(db.String(120), nullable=False)
     postcode = db.Column(db.String(20), nullable=False)
     country = db.Column(db.String(3), nullable=False)
+    phone = db.Column(db.String(20), nullable=True)
 
     def serialize(self):
         return {
@@ -98,30 +104,121 @@ class Shipping(db.Model):
             "city": self.city,
             "state": self.state,
             "postcode": self.postcode,
-            "country": self.country
+            "country": self.country,
+            "phone": self.phone
         }
+
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    number = db.Column(db.String(80), nullable=False)
-    status = db.Column(db.String(80), nullable=False, default='pending')
-    total = db.Column(db.String(80), nullable=False)
+    number = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(255), nullable=False, default='pending')
+    date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
+    discount_total = db.Column(db.String(80), nullable=True)
+    discount_tax = db.Column(db.String(80), nullable=True)
+    shipping_total = db.Column(db.String(80), nullable=True)
+    shipping_tax = db.Column(db.String(80), nullable=True)
+    cart_tax = db.Column(db.String(80), nullable=True)
+    total_tax = db.Column(db.String(255), nullable=False)
+    total = db.Column(db.String(255), nullable=False)
+    payment_method = db.Column(db.String(80), nullable=True)
+    payment_method_title = db.Column(db.String(150), nullable=True)
+    customer_note = db.Column(db.String(500), nullable=True)
+    date_completed = db.Column(db.DateTime, nullable=True)
+    shipping_date = db.Column(db.DateTime, nullable=True)
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)
     billing_id = db.Column(db.Integer, db.ForeignKey('billing.id'), nullable=True)
     shipping_id = db.Column(db.Integer, db.ForeignKey('shipping.id'), nullable=True)
     customer = db.relationship('Customer', back_populates='orders')
     billing = db.relationship('Billing', backref='order_billing', foreign_keys=[billing_id])
     shipping = db.relationship('Shipping', backref='order_shipping', foreign_keys=[shipping_id])
+    line_items = db.relationship('LineItem', back_populates='order', lazy='dynamic')
 
     def serialize(self):
         return {
             "id": self.id,
             "number": self.number,
             "status": self.status,
+            "date_created": self.date_created.isoformat() if self.date_created else None,
+            "discount_total": self.discount_total,
+            "discount_tax": self.discount_tax,
+            "shipping_total": self.shipping_total,
+            "shipping_tax": self.shipping_tax,
+            "cart_tax": self.cart_tax,
+            "total_tax": self.total_tax,
             "total": self.total,
+            "payment_method": self.payment_method,
+            "payment_method_title": self.payment_method_title,
+            "customer_note": self.customer_note,
+            "date_completed": self.date_completed,
             "customer_id": self.customer_id,
             "billing_id": self.billing_id,
             "shipping_id": self.shipping_id,
+            "customer": self.customer.serialize() if self.customer else None,
             "billing": self.billing.serialize() if self.billing else None,
-            "shipping": self.shipping.serialize() if self.shipping else None
+            "shipping": self.shipping.serialize() if self.shipping else None,
+            "line_items": [item.serialize() for item in self.line_items.all()]
         }
-    
+
+class LineItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    product_id = db.Column(db.Integer, nullable=False)
+    variation_id = db.Column(db.Integer, nullable=True)
+    quantity = db.Column(db.Integer, nullable=False)
+    tax_class = db.Column(db.String(255), nullable=True)
+    subtotal = db.Column(db.String(255), nullable=False)
+    subtotal_tax = db.Column(db.String(255), nullable=False)
+    total = db.Column(db.String(255), nullable=False)
+    total_tax = db.Column(db.String(255), nullable=False)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
+    order = db.relationship('Order', back_populates='line_items')
+    qr_code = db.Column(db.Text, nullable=True)
+
+    def generate_qr_code(self):
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(self.id)
+        qr.make(fit=True)
+        img = qr.make_image(fill='black', back_color='white')
+        buffered = io.BytesIO()
+        img.save(buffered, format="PNG")
+        img_str = base64.b64encode(buffered.getvalue()).decode()
+        self.qr_code = img_str
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "product_id": self.product_id,
+            "variation_id": self.variation_id,
+            "quantity": self.quantity,
+            "tax_class": self.tax_class,
+            "subtotal": self.subtotal,
+            "subtotal_tax": self.subtotal_tax,
+            "total": self.total,
+            "total_tax": self.total_tax,
+            "order_id": self.order_id,
+            "qr_code": self.qr_code
+        }
+
+    @staticmethod
+    def before_insert(mapper, connection, target):
+        target.generate_qr_code()
+
+    @staticmethod
+    def before_update(mapper, connection, target):
+        if target.qr_code is None:
+            target.generate_qr_code()
+
+db.event.listen(LineItem, 'before_insert', LineItem.before_insert)
+db.event.listen(LineItem, 'before_update', LineItem.before_update)
+
+engine = None
+
+def init_engine():
+    global engine
+    engine = create_engine(db.engine.url)
