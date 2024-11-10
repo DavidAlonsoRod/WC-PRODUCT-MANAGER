@@ -14,12 +14,34 @@ export const Navbar = () => {
 		navigate('/')
 
 	}
+	const importCustomers = async () => {
+		try {
+			const response = await fetch('/api/import_customers');
+			if (!response.ok) throw new Error('Error al importar clientes');
+			alert('Clientes importados correctamente');
+		} catch (error) {
+			alert(`Error: ${error.message}`);
+		}
+	};
+
+	const importOrders = async () => {
+		try {
+			const response = await fetch('/api/import_orders');
+			if (!response.ok) throw new Error('Error al importar órdenes');
+			alert('Órdenes importadas correctamente');
+		} catch (error) {
+			alert(`Error: ${error.message}`);
+		}
+	};
+
 
 	return (
 		<nav className="navbar  border-bottom border-body justify-content-between d-flex mb-5" id="navbar">
 			<div className="container navbar">
 
 				<div className="left-section">
+					<button className="btn" onClick={importCustomers}>Importar Clientes</button>
+					<button className="btn" onClick={importOrders}>Importar Órdenes</button>
 					<h2 className="m-3">Wocoomerce Product Manager</h2>
 					<h5 className="m-3">Gestión de fabricación y envío de productos de Woocommerce</h5>
 
@@ -35,8 +57,8 @@ export const Navbar = () => {
 					<Link to="/demo">
 						{store.auth === false ? <button className="btn" id="button" onClick={() => handleLogout()}><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="20px" fill="gray"><path d="M240-80q-50 0-85-35t-35-85v-120h120v-560l60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60v680q0 50-35 85t-85 35H240Zm480-80q17 0 28.5-11.5T760-200v-560H320v440h360v120q0 17 11.5 28.5T720-160ZM360-600v-80h240v80H360Zm0 120v-80h240v80H360Zm320-120q-17 0-28.5-11.5T640-640q0-17 11.5-28.5T680-680q17 0 28.5 11.5T720-640q0 17-11.5 28.5T680-600Zm0 120q-17 0-28.5-11.5T640-520q0-17 11.5-28.5T680-560q17 0 28.5 11.5T720-520q0 17-11.5 28.5T680-480ZM240-160h360v-80H200v40q0 17 11.5 28.5T240-160Zm-40 0v-80 80Z" /></svg> Facturas</button> : ''}
 					</Link>
-					<Link to="/demo">
-						{store.auth === false ? <button className="btn" id="button" onClick={() => handleLogout()}><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="20px" fill="gray"><path d="M159-120v-120h124L181-574q-27-15-44.5-44T119-680q0-50 35-85t85-35q39 0 69.5 22.5T351-720h128v-40q0-17 11.5-28.5T519-800q9 0 17.5 4t14.5 12l68-64q9-9 21.5-11.5T665-856l156 72q12 6 16.5 17.5T837-744q-6 12-17.5 15.5T797-730l-144-66-94 88v56l94 86 144-66q11-5 23-1t17 15q6 12 1 23t-17 17l-156 74q-12 6-24.5 3.5T619-512l-68-64q-6 6-14.5 11t-17.5 5q-17 0-28.5-11.5T479-600v-40H351q-3 8-6.5 15t-9.5 15l200 370h144v120H159Zm80-520q17 0 28.5-11.5T279-680q0-17-11.5-28.5T239-720q-17 0-28.5 11.5T199-680q0 17 11.5 28.5T239-640Zm126 400h78L271-560h-4l98 320Zm78 0Z" /></svg> Cambiar estados</button> : ''}
+					<Link to="/lineitems">
+						{store.auth === false ? <button className="btn" id="button" onClick={() => handleLogout()}><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="20px" fill="gray"><path d="M159-120v-120h124L181-574q-27-15-44.5-44T119-680q0-50 35-85t85-35q39 0 69.5 22.5T351-720h128v-40q0-17 11.5-28.5T519-800q9 0 17.5 4t14.5 12l68-64q9-9 21.5-11.5T665-856l156 72q12 6 16.5 17.5T837-744q-6 12-17.5 15.5T797-730l-144-66-94 88v56l94 86 144-66q11-5 23-1t17 15q6 12 1 23t-17 17l-156 74q-12 6-24.5 3.5T619-512l-68-64q-6 6-14.5 11t-17.5 5q-17 0-28.5-11.5T479-600v-40H351q-3 8-6.5 15t-9.5 15l200 370h144v120H159Zm80-520q17 0 28.5-11.5T279-680q0-17-11.5-28.5T239-720q-17 0-28.5 11.5T199-680q0 17 11.5 28.5T239-640Zm126 400h78L271-560h-4l98 320Zm78 0Z" /></svg>Producción</button> : ''}
 
 					</Link>
 					<Link to="/customers">

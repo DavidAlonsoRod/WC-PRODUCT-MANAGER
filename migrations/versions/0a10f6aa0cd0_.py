@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 628f31610c4b
+Revision ID: 0a10f6aa0cd0
 Revises: 
-Create Date: 2024-11-05 17:42:17.709085
+Create Date: 2024-11-09 09:49:20.635069
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '628f31610c4b'
+revision = '0a10f6aa0cd0'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -44,6 +44,7 @@ def upgrade():
     sa.Column('state', sa.String(length=120), nullable=False),
     sa.Column('postcode', sa.String(length=20), nullable=False),
     sa.Column('country', sa.String(length=3), nullable=False),
+    sa.Column('phone', sa.String(length=20), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user',
@@ -74,9 +75,21 @@ def upgrade():
     )
     op.create_table('order',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('number', sa.String(length=80), nullable=False),
-    sa.Column('status', sa.String(length=80), nullable=False),
-    sa.Column('total', sa.String(length=80), nullable=False),
+    sa.Column('number', sa.String(length=255), nullable=False),
+    sa.Column('status', sa.String(length=255), nullable=False),
+    sa.Column('date_create', sa.DateTime(), nullable=True),
+    sa.Column('discount_total', sa.String(length=80), nullable=True),
+    sa.Column('discount_tax', sa.String(length=80), nullable=True),
+    sa.Column('shipping_total', sa.String(length=80), nullable=True),
+    sa.Column('shipping_tax', sa.String(length=80), nullable=True),
+    sa.Column('cart_tax', sa.String(length=80), nullable=True),
+    sa.Column('total_tax', sa.String(length=255), nullable=False),
+    sa.Column('total', sa.String(length=255), nullable=False),
+    sa.Column('payment_method', sa.String(length=80), nullable=True),
+    sa.Column('payment_method_title', sa.String(length=150), nullable=True),
+    sa.Column('customer_note', sa.String(length=500), nullable=True),
+    sa.Column('date_completed', sa.DateTime(), nullable=True),
+    sa.Column('shipping_date', sa.DateTime(), nullable=True),
     sa.Column('customer_id', sa.Integer(), nullable=False),
     sa.Column('billing_id', sa.Integer(), nullable=True),
     sa.Column('shipping_id', sa.Integer(), nullable=True),
