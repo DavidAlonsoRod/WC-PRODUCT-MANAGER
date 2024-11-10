@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
-import "../../styles/customerview.css";
+import "../../styles/orderview.css";
 
 const OrderView = () => {
     const { orderId } = useParams();
@@ -28,7 +28,7 @@ const OrderView = () => {
     }
 
     if (!order) {
-        return <div>Cargando...</div>;
+        return <div>un poquillo de paciencia...🥰</div>;
     }
 
     const formatDate = (dateString) => {
@@ -73,20 +73,29 @@ const OrderView = () => {
 
     return (
         <div className='order-view m-5'>
-            <h1>Pedido {order.id}</h1>
-            <div className='order-details'>
+            <h1>{order.id}</h1>
+            <div className='d-flex justify-content-start'>
+
+            
+            <div className='order-details m-2'>
               
                 <p><strong>{order.billing ? `${order.billing.first_name} ${order.billing.last_name}` : 'N/A'}</strong></p>
-                <p><strong>Fecha de Creación:</strong> {formatDate(order.date_created)}</p>
-                <p><strong>Fecha de Envío:</strong> {formatDate(order.shipping_date)}</p>
-                <p><strong>Ciudad:</strong> {order.billing.city}</p>
+                <p>Fecha pedido: {formatDate(order.date_created)}</p>
+                <p>Envío estimado: {formatDate(order.shipping_date)}</p>
+                
+            </div>
+            <div className='order-details  justify-content-end m-2'>
+              
+             
+                <p> {order.billing.city}</p>
                 
                 <p><strong>Método de Pago:</strong> {order.payment_method_title}</p>
-                <p><strong>Estado:</strong> 
+                <p>
                     <button className={getStatusClass(order.status)}>
                         {translateStatus(order.status)}
                     </button>
                 </p>
+            </div>
             </div>
             <h2>Artículos de Línea</h2>
             <table className='table'>
@@ -105,14 +114,13 @@ const OrderView = () => {
                             <td>{item.id}</td>
                             <td>{item.name}</td>
                             <td>{item.quantity}</td>
-                            <td>{item.price}</td>
+                            <td>{item.subtotal}</td>
                             <td>{item.total}</td>
                         </tr>
-                        
                     ))}
                     <tr>
-                        <td colSpan="4"><strong>Total</strong></td>
-                        <td><strong>{order.total}</strong></td>
+                        <td colSpan="4">Total:</td>
+                        <td colSpan="3"><strong>{order.total}</strong></td>
                     </tr>
                 </tbody>
             </table>

@@ -18,6 +18,17 @@ INSTALL:
 - pipenv install woocommerce
 - pipenv shell
 
+### ) CONSULTAS:
+
+- Generación de pdfs: 
+- Revisar los endpoinst para actualizar los datos
+- Como configurar para conectarse a varias apis de woocommerce ??
+
+- Filtrado de todos las orders
+- Como es el esquema para introducir datos que no trae la Api ?
+- Que puedo usar para producción real? Amazon o google-cloud.
+
+
 ### 1) Installation:
 
 > If you use Github Codespaces (recommended) or Gitpod this template will already come with Python, Node and the Posgres Database installed. If you are working locally make sure to install Python 3.10, Node 

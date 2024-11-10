@@ -18,7 +18,7 @@
 }
 
 p{
-    color: rgb(234, 24, 24);
+    color: rgb(93, 93, 93);
 }
 h1{
 color: #303d6f;
@@ -27,21 +27,29 @@ h2{
 color: #374478;
 }
 h3{
-    color: #ed2b16;
+    color: #354278;
 }
 h4{
-    color: #e13d02;
+    color: #374478;
 }
 h5{
     color: #374478;
 }
 
+   a {
+       text-decoration: none; /* Elimina el subrayado */
+       color: #354278; /* Cambia el color del enlace */
+   }
 
+   a:hover {
+       text-decoration: underline; /* Agrega un subrayado al pasar el mouse */
+   }
 
-.custom-tabs .nav-link {
-    font-size: 16px; /* Cambia el tamaño de la fuente */
-    padding: 10px 20px; 
-    color: #5c699d;/* Ajusta el relleno */
+.navbar-logo {
+    margin-left: 60px; /* Añadir margen izquierdo de 30px */
 }
 
+.tab-text {
+    font-size: 26px; /* Ajusta este valor según sea necesario */
+}
 

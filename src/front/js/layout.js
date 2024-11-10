@@ -15,6 +15,8 @@ import Customers from "./pages/customerlist";
 import CustomerView from "./pages/customerview";
 import LineItems from "./pages/lineitems";
 import OrderView from "./pages/orderview";
+import CustomerEdit from "./pages/customeredit";
+
 
 const Layout = () => {
     const basename = process.env.BASENAME || "";
@@ -35,7 +37,8 @@ const Layout = () => {
                         <Route element={<LineItems />} path="/lineitems" />
                         <Route element={<OrderView />} path="/orders/:orderId" />
                         <Route element={<CustomerView />} path="/customer/:customerId" />
-                        <Route element={<h1>Not found!</h1>} />
+                        <Route element={<CustomerEdit />} path="/customer/:customerId/edit" />
+                        <Route element={<h1>Not found!</h1>} path="*" />
                     </Routes>
                     <Footer />
                 </ScrollToTop>

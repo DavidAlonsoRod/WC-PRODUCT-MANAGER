@@ -21,8 +21,21 @@ def insert_line_item(line_item_data):
                 print(f"Error: El order_id {order_id} no existe en la tabla Order.")
                 return
             
-            line_item = LineItem(**line_item_data)
-            session.add(line_item)
+            existing_item = session.query(LineItem).filter_by(id=line_item_data['id']).first()
+            if existing_item:
+                existing_item.name = line_item_data["name"]
+                existing_item.product_id = line_item_data["product_id"]
+                existing_item.variation_id = line_item_data["variation_id"]
+                existing_item.quantity = line_item_data["quantity"]
+                existing_item.tax_class = line_item_data["tax_class"]
+                existing_item.subtotal = line_item_data["subtotal"]
+                existing_item.subtotal_tax = line_item_data["subtotal_tax"]
+                existing_item.total = line_item_data["total"]
+                existing_item.total_tax = line_item_data["total_tax"]
+                existing_item.qr_code = line_item_data["qr_code"]
+            else:
+                line_item = LineItem(**line_item_data)
+                session.add(line_item)
         
         try:
             session.commit()

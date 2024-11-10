@@ -5,7 +5,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from flask import Flask, request, jsonify, url_for, Blueprint
+from flask import Flask, request, jsonify, url_for, Blueprint, send_file
 from api.models import db, User, Customer, Billing, Shipping, Order, LineItem
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
@@ -15,6 +15,9 @@ import os
 from datetime import datetime, timedelta
 from api.insert_line_items import insert_line_item
 from .controllers import get_order_by_id
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+import io
 
 load_dotenv()
 
@@ -37,6 +40,15 @@ wcapi = API(
     timeout=30
     
 )
+# wcapi2= API(
+#     url="https://piedrapapelytijeras.es",  
+#     consumer_key=consumer_key2,  
+#     consumer_secret=consumer_secret2, 
+#     wp_api=True,
+#     version="wc/v3",
+#     timeout=30
+    
+# )
 
 
 @api.route('/hello', methods=['POST', 'GET'])
@@ -53,7 +65,7 @@ def import_customers():
     try:
         page = 1
         while True:
-            response = wcapi.get("customers", params={"per_page": 100, "page": page, "timeout": 30})
+            response = wcapi.get("customers", params={"per_page": 100, "page": page})
             
             if response.status_code != 200:
                 return jsonify({"msg": f"Error al importar clientes: {response.text}"}), 401
@@ -224,7 +236,7 @@ def import_orders():
                     if existing_order:
                         existing_order.number = wc_order["number"]
                         existing_order.status = wc_order["status"]
-                        existing_order.date_create = wc_order.get("date_created")
+                        existing_order.date_created = wc_order.get("date_created")
                         existing_order.discount_total = wc_order.get("discount_total")
                         existing_order.discount_tax = wc_order.get("discount_tax")
                         existing_order.shipping_total = wc_order.get("shipping_total")
@@ -254,7 +266,7 @@ def import_orders():
                             shipping_tax=wc_order.get("shipping_tax"),
                             cart_tax=wc_order.get("cart_tax"),
                             customer_note=wc_order.get("customer_note"),
-                            date_create=wc_order.get("date_created"),
+                            date_created=wc_order.get("date_created"),
                             date_completed=wc_order.get("date_completed"),
                             customer_id=wc_order["customer_id"],
                             billing_id=billing.id if billing else None,
@@ -265,20 +277,33 @@ def import_orders():
 
                     # Importar artículos de línea
                     for item in wc_order.get("line_items", []):
-                        line_item = LineItem(
-                            id=item["id"],
-                            name=item["name"],
-                            product_id=item["product_id"],
-                            variation_id=item["variation_id"],
-                            quantity=item["quantity"],
-                            tax_class=item["tax_class"],
-                            subtotal=item["subtotal"],
-                            subtotal_tax=item["subtotal_tax"],
-                            total=item["total"],
-                            total_tax=item["total_tax"],
-                            order_id=new_order.id if not existing_order else existing_order.id
-                        )
-                        db.session.add(line_item)
+                        existing_item = LineItem.query.filter_by(id=item["id"]).first()
+                        
+                        if existing_item:
+                            existing_item.name = item["name"]
+                            existing_item.product_id = item["product_id"]
+                            existing_item.variation_id = item["variation_id"]
+                            existing_item.quantity = item["quantity"]
+                            existing_item.tax_class = item["tax_class"]
+                            existing_item.subtotal = item["subtotal"]
+                            existing_item.subtotal_tax = item["subtotal_tax"]
+                            existing_item.total = item["total"]
+                            existing_item.total_tax = item["total_tax"]
+                        else:
+                            line_item = LineItem(
+                                id=item["id"],
+                                name=item["name"],
+                                product_id=item["product_id"],
+                                variation_id=item["variation_id"],
+                                quantity=item["quantity"],
+                                tax_class=item["tax_class"],
+                                subtotal=item["subtotal"],
+                                subtotal_tax=item["subtotal_tax"],
+                                total=item["total"],
+                                total_tax=item["total_tax"],
+                                order_id=new_order.id if not existing_order else existing_order.id
+                            )
+                            db.session.add(line_item)
                 except Exception as e:
                     print(f"Error processing order {wc_order['id']}: {str(e)}")
                     continue
@@ -404,13 +429,13 @@ def get_orders():
 
         for wc_order in wc_orders:
             date_created = datetime.strptime(wc_order["date_created"], "%Y-%m-%dT%H:%M:%S")
-            shipping_date = date_created + timedelta(days=9)
+            shipping_date = add_business_days(date_created, 9) if date_created else None
             order = {
                 "id": wc_order["id"],
                 "number": wc_order["number"],
                 "status": wc_order["status"],  # Asegúrate de que el campo esté correctamente mapeado
                 "date_created": wc_order["date_created"],  # Asegúrate de que el campo esté correctamente mapeado
-                "shipping_date": shipping_date.isoformat(),
+                "shipping_date": shipping_date.isoformat() if shipping_date else None,
                 "discount_total": wc_order["discount_total"],
                 "discount_tax": wc_order["discount_tax"],
                 "shipping_total": wc_order["shipping_total"],
@@ -442,6 +467,23 @@ def get_customer(customer_id):
             return jsonify({"error": "Error fetching customer from WooCommerce"}), response.status_code
 
         wc_customer = response.json()
+        
+        # Obtener las órdenes del cliente
+        orders_response = wcapi.get("orders", params={"customer": customer_id})
+        if orders_response.status_code != 200:
+            return jsonify({"error": "Error fetching orders from WooCommerce"}), orders_response.status_code
+        
+        wc_orders = orders_response.json()
+        orders = [
+            {
+                "id": order["id"],
+                "number": order["number"],
+                "total": order["total"],
+                "status": order["status"],
+                "date_created": order["date_created"]
+            } for order in wc_orders
+        ]
+
         customer = {
             "id": wc_customer["id"],
             "email": wc_customer["email"],
@@ -455,7 +497,7 @@ def get_customer(customer_id):
             "username": wc_customer.get("username", ""),
             "billing": wc_customer.get("billing", {}),
             "shipping": wc_customer.get("shipping", {}),
-            "orders": wc_customer.get("orders", [])
+            "orders": orders  # Incluir las órdenes en la respuesta
         }
 
         return jsonify(customer), 200
@@ -466,38 +508,13 @@ def get_customer(customer_id):
 @api.route('/orders/<int:order_id>', methods=['GET'])
 def get_order(order_id):
     try:
-        response = wcapi.get(f"orders/{order_id}")
-        if response.status_code != 200:
-            return jsonify({"error": "Error fetching order from WooCommerce"}), response.status_code
-        wc_order = response.json()
-        date_created = datetime.strptime(wc_order["date_created"], "%Y-%m-%dT%H:%M:%S")
-        shipping_date = date_created + timedelta(days=9)
-        order = {
-            "id": wc_order["id"],
-            "number": wc_order["number"],
-            "status": wc_order["status"],  # Asegúrate de que el campo esté correctamente mapeado
-            "date_created": wc_order["date_created"],  # Asegúrate de que el campo esté correctamente mapeado
-            "shipping_date": shipping_date.isoformat(),
-            "discount_total": wc_order["discount_total"],
-            "discount_tax": wc_order["discount_tax"],
-            "shipping_total": wc_order["shipping_total"],
-            "shipping_tax": wc_order["shipping_tax"],
-            "cart_tax": wc_order["cart_tax"],
-            "total_tax": wc_order["total_tax"],
-            "total": wc_order["total"],
-            "payment_method": wc_order["payment_method"],
-            "payment_method_title": wc_order["payment_method_title"],
-            "customer_note": wc_order["customer_note"],
-            "date_completed": wc_order["date_completed"],
-            "customer_id": wc_order["customer_id"],
-            "billing": wc_order.get("billing", {}),
-            "shipping": wc_order.get("shipping", {}),
-            "line_items": wc_order.get("line_items", [])  # Asegúrate de incluir los line_items
-        }
-        return jsonify(order), 200
+        order_data = get_order_by_id(order_id)
+        return jsonify(order_data), 200
+    except APIException as e:
+        return jsonify({"error": str(e)}), e.status_code
     except Exception as e:
-        print(f"Error: {str(e)}") 
-        return jsonify({"error": str(e)}), 500
+        print(f"Error: {str(e)}")
+        return jsonify({"error": "Internal Server Error"}), 500
 
 @api.route('/line_items', methods=['GET'])
 def get_line_items():
@@ -520,3 +537,155 @@ def get_line_items():
     except Exception as e:
         print(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/update_customer', methods=['PUT'])
+def update_customer():
+    data = request.json
+    customer_id = data.get('id')
+    customer_data = {
+        "first_name": data.get('first_name'),
+        "last_name": data.get('last_name'),
+        "email": data.get('email'),
+        "billing": {
+            "first_name": data.get('billing_first_name'),
+            "last_name": data.get('billing_last_name'),
+            "company": data.get('billing_company'),
+            "address_1": data.get('billing_address_1'),
+            "address_2": data.get('billing_address_2'),
+            "city": data.get('billing_city'),
+            "state": data.get('billing_state'),
+            "postcode": data.get('billing_postcode'),
+            "country": data.get('billing_country'),
+            "email": data.get('billing_email'),
+            "phone": data.get('billing_phone')
+        },
+        "shipping": {
+            "first_name": data.get('shipping_first_name'),
+            "last_name": data.get('shipping_last_name'),
+            "company": data.get('shipping_company'),
+            "address_1": data.get('shipping_address_1'),
+            "address_2": data.get('shipping_address_2'),
+            "city": data.get('shipping_city'),
+            "state": data.get('shipping_state'),
+            "postcode": data.get('shipping_postcode'),
+            "country": data.get('shipping_country')
+        }
+    }
+
+    response = wcapi.put(f"customers/{customer_id}", customer_data)
+    if response.status_code == 200:
+        return jsonify(response.json()), 200
+    else:
+        return jsonify({"error": response.json()}), response.status_code
+
+@api.route('/api/orders/<int:order_id>/pdf', methods=['GET'])
+def generate_order_pdf(order_id):
+    # Aquí deberías obtener los datos de la orden usando el order_id
+    order = get_order_by_id(order_id)  # Implementa esta función según tu lógica
+
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=letter)
+    c.drawString(100, 750, f"Order ID: {order['id']}")
+    c.drawString(100, 735, f"Customer: {order['customer']}")
+    c.drawString(100, 720, f"Total: {order['total']}")
+    # Añade más detalles de la orden según sea necesario
+    c.showPage()
+    c.save()
+
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name=f'order_{order_id}.pdf', mimetype='application/pdf')
+
+# Lista de días festivos nacionales en España (formato: "YYYY-MM-DD")
+HOLIDAYS = [
+    "2023-01-01", "2023-01-06", "2023-04-07", "2023-05-01", "2023-08-15",
+    "2023-10-12", "2023-11-01", "2023-12-06", "2023-12-08", "2023-12-25"
+]
+
+def is_holiday(date):
+    return date.strftime("%Y-%m-%d") in HOLIDAYS
+
+def add_business_days(start_date, days):
+    current_date = start_date
+    while days > 0:
+        current_date += timedelta(days=1)
+        if current_date.weekday() < 5 and not is_holiday(current_date):  # Lunes a Viernes y no festivo
+            days -= 1
+    return current_date
+
+def get_order_by_id(order_id):
+    order = Order.query.get(order_id)
+    if not order:
+        raise APIException(f"Order with id {order_id} not found", status_code=404)
+
+    customer = Customer.query.get(order.customer_id)
+    billing = Billing.query.get(order.billing_id)
+    shipping = Shipping.query.get(order.shipping_id)
+    line_items = LineItem.query.filter_by(order_id=order_id).all()
+
+    date_created = order.date_created
+    shipping_date = add_business_days(date_created, 9) if date_created else None
+
+    order_data = {
+        'id': order.id,
+        'number': order.number,
+        'status': order.status,
+        'date_created': date_created.isoformat() if date_created else None,
+        'shipping_date': shipping_date.isoformat() if shipping_date else None,
+        'date_completed': order.date_completed.isoformat() if order.date_completed else None,
+        'total': order.total,
+        'total_tax': order.total_tax,
+        'discount_total': order.discount_total,
+        'discount_tax': order.discount_tax,
+        'shipping_total': order.shipping_total,
+        'shipping_tax': order.shipping_tax,
+        'cart_tax': order.cart_tax,
+        'payment_method': order.payment_method,
+        'payment_method_title': order.payment_method_title,
+        'customer_note': order.customer_note,
+        'customer': {
+            'id': customer.id,
+            'first_name': customer.first_name,
+            'last_name': customer.last_name,
+            'email': customer.email
+        } if customer else None,
+        'billing': {
+            'first_name': billing.first_name,
+            'last_name': billing.last_name,
+            'company': billing.company,
+            'address_1': billing.address_1,
+            'address_2': billing.address_2,
+            'city': billing.city,
+            'state': billing.state,
+            'postcode': billing.postcode,
+            'country': billing.country,
+            'email': billing.email,
+            'phone': billing.phone
+        } if billing else None,
+        'shipping': {
+            'first_name': shipping.first_name,
+            'last_name': shipping.last_name,
+            'company': shipping.company,
+            'address_1': shipping.address_1,
+            'address_2': shipping.address_2,
+            'city': shipping.city,
+            'state': shipping.state,
+            'postcode': shipping.postcode,
+            'country': shipping.country
+        } if shipping else None,
+        'line_items': [
+            {
+                'id': item.id,
+                'name': item.name,
+                'product_id': item.product_id,
+                'variation_id': item.variation_id,
+                'quantity': item.quantity,
+                'tax_class': item.tax_class,
+                'subtotal': item.subtotal,
+                'subtotal_tax': item.subtotal_tax,
+                'total': item.total,
+                'total_tax': item.total_tax
+            } for item in line_items
+        ]
+    }
+
+    return order_data
