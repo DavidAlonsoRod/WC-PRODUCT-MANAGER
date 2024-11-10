@@ -87,19 +87,19 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log("Error loading message from backend", error)
 				}
 			},
-			getOrders: async () => {
-				try {
-					const response = await fetch(`${process.env.BACKEND_URL}/api/orders`);
-					if (response.ok) {
-						const data = await response.json();
-						setStore({ orders: data }); // Guardar órdenes en el store
-					} else {
-						throw new Error("Failed to fetch orders");
-					}
-				} catch (error) {
-					console.error("Error fetching orders:", error);
-				}
-			},
+			// getOrders: async () => {
+			// 	try {
+			// 		const response = await fetch(`${process.env.BACKEND_URL}/api/orders`);
+			// 		if (response.ok) {
+			// 			const data = await response.json();
+			// 			setStore({ orders: data }); // Guardar órdenes en el store
+			// 		} else {
+			// 			throw new Error("Failed to fetch orders");
+			// 		}
+			// 	} catch (error) {
+			// 		console.error("Error fetching orders:", error);
+			// 	}
+			// },
 			changeColor: (index, color) => {
 				//get the store
 				const store = getStore();

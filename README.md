@@ -13,6 +13,10 @@ INSTALL:
 - WC_API_URL=https://piedrapapelytijeras.es/wp-json/wc/v3/
 - WC_CONSUMER_KEY=
 - WC_CONSUMER_SECRET=
+- https://react-pdf.org/
+- pipenv install python-dotenv
+- pipenv install woocommerce
+- pipenv shell
 
 ### 1) Installation:
 
