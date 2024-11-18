@@ -1,34 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState, useContext } from 'react';
+import { Context } from '../store/appContext';
 import { useNavigate } from 'react-router-dom';
 import "../../styles/customerlist.css";
 
 const Customers = () => {
-    const [customers, setCustomers] = useState([]);
+    const { store, actions } = useContext(Context);
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(20);  
-    const [totalCustomers, setTotalCustomers] = useState(0);
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchCustomers = async () => {
-            try {
-                console.log("Fetching customers from:", `${process.env.BACKEND_URL}/api/customers`);
-                const response = await axios.get(`${process.env.BACKEND_URL}/api/customers`, {
-                    params: {
-                        page: page,
-                        per_page: perPage,
-                    },
-                });
-                console.log("Response data:", response.data);
-                setCustomers(response.data.customers);
-                setTotalCustomers(response.data.total_customers);
-            } catch (error) {
-                console.error("Error fetching customers", error);
-            }
+        let isMounted = true;
+        actions.getCustomers(page, perPage).then(() => {
+            if (!isMounted) return;
+        });
+        return () => {
+            isMounted = false;
         };
-        
-        fetchCustomers();
     }, [page, perPage]);
 
     const handleRowClick = (customerId) => {
@@ -39,7 +27,7 @@ const Customers = () => {
         setPage(pageNumber);
     };
 
-    const totalPages = Math.ceil(totalCustomers / perPage);
+    const totalPages = Math.ceil(store.totalCustomers / perPage);
 
     return (
         <div>
@@ -58,7 +46,7 @@ const Customers = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {customers.map(customer => (
+                        {store.customers.map(customer => (
                             <tr 
                                 key={customer.id} 
                                 className='fw-light' 
