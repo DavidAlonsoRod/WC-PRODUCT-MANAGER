@@ -88,7 +88,7 @@ def import_customers():
 
                 billing_info = wc_customer.get("billing", {})
                 if billing_info:
-                    billing = Billing.query.filter_by(id=existing_customer.billing_id).first() if existing_customer else None
+                    billing = Billing.query.filter_by(id=wc_customer["id"]).first()  # Actualizar la consulta
                     if billing:
                         billing.first_name = billing_info["first_name"]
                         billing.last_name = billing_info["last_name"]
@@ -98,9 +98,11 @@ def import_customers():
                         billing.city = billing_info.get("city", "")
                         billing.state = billing_info.get("state", "")
                         billing.postcode = billing_info.get("postcode", "")
-                        billing.country = billing_info.get("country", "")
+                        billing.country = billing_info.get("country", "")[:100]  # Limitar la longitud del campo country
                         billing.email = billing_info.get("email", "")
                         billing.phone = billing_info.get("phone", "")
+                        billing.iban = billing_info.get("iban", "")  # Importar IBAN
+                        billing.nif = billing_info.get("nif", "")  # Importar NIF
                     else:
                         new_billing = Billing(
                             first_name=billing_info["first_name"],
@@ -111,9 +113,11 @@ def import_customers():
                             city=billing_info.get("city", ""),
                             state=billing_info.get("state", ""),
                             postcode=billing_info.get("postcode", ""),
-                            country=billing_info.get("country", ""),
+                            country=billing_info.get("country", "")[:100],  # Limitar la longitud del campo country
                             email=billing_info.get("email", ""),
-                            phone=billing_info.get("phone", "")
+                            phone=billing_info.get("phone", ""),
+                            iban=billing_info.get("iban", ""),  # Importar IBAN
+                            nif=billing_info.get("nif", "")  # Importar NIF
                         )
                         db.session.add(new_billing)
                         if existing_customer:
@@ -123,7 +127,7 @@ def import_customers():
 
                 shipping_info = wc_customer.get("shipping", {})
                 if shipping_info:
-                    shipping = Shipping.query.filter_by(id=existing_customer.shipping_id).first() if existing_customer else None
+                    shipping = Shipping.query.filter_by(id=wc_customer["id"]).first()  # Actualizar la consulta
                     if shipping:
                         shipping.first_name = shipping_info["first_name"]
                         shipping.last_name = shipping_info["last_name"]
@@ -133,7 +137,7 @@ def import_customers():
                         shipping.city = shipping_info.get("city", "")
                         shipping.state = shipping_info.get("state", "")
                         shipping.postcode = shipping_info.get("postcode", "")
-                        shipping.country = shipping_info.get("country", "")
+                        shipping.country = shipping_info.get("country", "")[:100]  # Limitar la longitud del campo country
                     else:
                         new_shipping = Shipping(
                             first_name=shipping_info["first_name"],
@@ -144,7 +148,7 @@ def import_customers():
                             city=shipping_info.get("city", ""),
                             state=shipping_info.get("state", ""),
                             postcode=shipping_info.get("postcode", ""),
-                            country=shipping_info.get("country", "")
+                            country=shipping_info.get("country", "")[:100]  # Limitar la longitud del campo country
                         )
                         db.session.add(new_shipping)
                         if existing_customer:
@@ -193,7 +197,9 @@ def import_orders():
                             postcode=billing_info.get("postcode", ""),
                             country=billing_info.get("country", ""),
                             email=billing_info.get("email", ""),
-                            phone=billing_info.get("phone", "")
+                            phone=billing_info.get("phone", ""),
+                            iban=billing_info.get("iban", ""),  # Importar IBAN
+                            nif=billing_info.get("nif", "")  # Importar NIF
                         )
                         db.session.add(billing)
                         db.session.flush()  # Asegurarse de que el ID esté disponible
@@ -224,7 +230,7 @@ def import_orders():
                     if existing_order:
                         existing_order.number = wc_order["number"]
                         existing_order.status = wc_order["status"]
-                        existing_order.date_create = wc_order.get("date_created")
+                        existing_order.date_created = wc_order.get("date_created")  # Corregir el nombre del campo
                         existing_order.discount_total = wc_order.get("discount_total")
                         existing_order.discount_tax = wc_order.get("discount_tax")
                         existing_order.shipping_total = wc_order.get("shipping_total")
@@ -254,7 +260,7 @@ def import_orders():
                             shipping_tax=wc_order.get("shipping_tax"),
                             cart_tax=wc_order.get("cart_tax"),
                             customer_note=wc_order.get("customer_note"),
-                            date_create=wc_order.get("date_created"),
+                            date_created=wc_order.get("date_created"),  # Corregir el nombre del campo
                             date_completed=wc_order.get("date_completed"),
                             customer_id=wc_order["customer_id"],
                             billing_id=billing.id if billing else None,
@@ -355,29 +361,14 @@ def get_customers():
     try:
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
-        response = wcapi.get("customers", params={"per_page": per_page, "page": page})
         
-        if response.status_code != 200:
-            return jsonify({"error": "Error fetching customers from WooCommerce"}), response.status_code
+        customers_query = Customer.query.paginate(page=page, per_page=per_page, error_out=False)
+        customers = customers_query.items
+        total_customers = customers_query.total
 
-        wc_customers = response.json()
-        total_customers = response.headers.get('X-WP-Total', 0)
-        customers = []
+        serialized_customers = [customer.serialize() for customer in customers]
 
-        for wc_customer in wc_customers:
-            customer = {
-                "id": wc_customer["id"],
-                "email": wc_customer["email"],
-                "first_name": wc_customer["first_name"],
-                "last_name": wc_customer["last_name"],
-                "company": wc_customer["billing"]["company"],
-                "city": wc_customer["billing"]["city"],
-                "state": wc_customer["billing"]["state"],
-                "email": wc_customer["email"]
-            }
-            customers.append(customer)
-
-        return jsonify({"customers": customers, "total_customers": int(total_customers), "page": page, "per_page": per_page}), 200
+        return jsonify({"customers": serialized_customers, "total_customers": total_customers, "page": page, "per_page": per_page}), 200
     except Exception as e:
         print(f"Error: {str(e)}")  # Imprimir el error
         return jsonify({"error": str(e)}), 500
@@ -436,33 +427,16 @@ def get_orders():
 @api.route('/customers/<int:customer_id>', methods=['GET'])
 def get_customer(customer_id):
     try:
-        response = wcapi.get(f"customers/{customer_id}")
-        
-        if response.status_code != 200:
-            return jsonify({"error": "Error fetching customer from WooCommerce"}), response.status_code
+        customer = Customer.query.get(customer_id)
+        if not customer:
+            return jsonify({"error": "Customer not found"}), 404
 
-        wc_customer = response.json()
-        customer = {
-            "id": wc_customer["id"],
-            "email": wc_customer["email"],
-            "first_name": wc_customer["first_name"],
-            "last_name": wc_customer["last_name"],
-            "company": wc_customer["billing"]["company"],
-            "city": wc_customer["billing"]["city"],
-            "state": wc_customer["billing"]["state"],
-            "email": wc_customer["email"],
-            "role": wc_customer.get("role", ""),
-            "username": wc_customer.get("username", ""),
-            "billing": wc_customer.get("billing", {}),
-            "shipping": wc_customer.get("shipping", {}),
-            "orders": wc_customer.get("orders", [])
-        }
-
-        return jsonify(customer), 200
+        serialized_customer = customer.serialize()
+        return jsonify(serialized_customer), 200
     except Exception as e:
         print(f"Error: {str(e)}")  # Imprimir el error
         return jsonify({"error": str(e)}), 500
-        
+
 @api.route('/orders/<int:order_id>', methods=['GET'])
 def get_order(order_id):
     try:
@@ -520,3 +494,96 @@ def get_line_items():
     except Exception as e:
         print(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+@api.route('/customers/<int:customer_id>', methods=['PUT'])
+def update_customer(customer_id):
+    try:
+        data = request.json
+        customer = Customer.query.get(customer_id)
+        
+        if not customer:
+            return jsonify({"error": "Customer not found"}), 404
+        
+        customer.first_name = data.get('first_name', customer.first_name)
+        customer.last_name = data.get('last_name', customer.last_name)
+        customer.email = data.get('email', customer.email)
+        
+        billing_data = data.get('billing', {})
+        if billing_data:
+            billing = customer.billing
+            if not billing:
+                billing = Billing()
+                customer.billing = billing
+            billing.first_name = billing_data.get('first_name', billing.first_name or '')
+            billing.last_name = billing_data.get('last_name', billing.last_name or '')
+            billing.company = billing_data.get('company', billing.company or '')
+            billing.address_1 = billing_data.get('address_1', billing.address_1 or '')
+            billing.address_2 = billing_data.get('address_2', billing.address_2 or '')
+            billing.city = billing_data.get('city', billing.city or '')
+            billing.state = billing_data.get('state', billing.state or '')
+            billing.postcode = billing_data.get('postcode', billing.postcode or '')
+            billing.country = billing_data.get('country', billing.country or '')
+            billing.email = billing_data.get('email', billing.email or '')
+            billing.phone = billing_data.get('phone', billing.phone or '')
+            billing.nif = billing_data.get('nif', billing.nif or '')
+            billing.iban = billing_data.get('iban', billing.iban or '')
+        
+        shipping_data = data.get('shipping', {})
+        if shipping_data:
+            shipping = customer.shipping
+            if not shipping:
+                shipping = Shipping()
+                customer.shipping = shipping
+            shipping.first_name = shipping_data.get('first_name', shipping.first_name or '')
+            shipping.last_name = shipping_data.get('last_name', shipping.last_name or '')
+            shipping.company = shipping_data.get('company', shipping.company or '')
+            shipping.address_1 = shipping_data.get('address_1', shipping.address_1 or '')
+            shipping.address_2 = shipping_data.get('address_2', shipping.address_2 or '')
+            shipping.city = shipping_data.get('city', shipping.city or '')
+            shipping.state = shipping_data.get('state', shipping.state or '')
+            shipping.postcode = shipping_data.get('postcode', shipping.postcode or '')
+            shipping.country = shipping_data.get('country', shipping.country or '')
+            shipping.phone = shipping_data.get('phone', shipping.phone or '')
+        
+        db.session.commit()
+
+        # Actualizar datos en WooCommerce
+        wc_data = {
+            "billing": {
+                "first_name": billing.first_name,
+                "last_name": billing.last_name,
+                "company": billing.company,
+                "address_1": billing.address_1,
+                "address_2": billing.address_2,
+                "city": billing.city,
+                "state": billing.state,
+                "postcode": billing.postcode,
+                "country": billing.country,
+                "email": billing.email,
+                "phone": billing.phone,
+                "nif": billing.nif
+            },
+            "shipping": {
+                "first_name": shipping.first_name,
+                "last_name": shipping.last_name,
+                "company": shipping.company,
+                "address_1": shipping.address_1,
+                "address_2": shipping.address_2,
+                "city": shipping.city,
+                "state": shipping.state,
+                "postcode": shipping.postcode,
+                "country": shipping.country,
+                "phone": shipping.phone
+            }
+        }
+        response = wcapi.put(f"customers/{customer_id}", wc_data)
+        if response.status_code != 200:
+            print(f"Error updating customer in WooCommerce: {response.text}")
+            return jsonify({"error": "Error updating customer in WooCommerce"}), response.status_code
+
+        return jsonify(customer.serialize()), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+app.register_blueprint(api, url_prefix='/api')  # Asegúrate de registrar el blueprint con el prefijo correcto

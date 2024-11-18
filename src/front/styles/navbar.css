@@ -1,8 +1,7 @@
-
 #navbar {
-    background-color: #0d183f;
+    background-color: #1d2232;
     font-weight: lighter;
-    color: rgb(215, 8, 8); /* Para todo el texto dentro del navbar */
+    color: rgb(215, 8, 8); 
 }
 
 #navbar a, 
@@ -24,9 +23,22 @@
 }
 
 #navbar h2 {
-    color: #f8f8f8; /* Color rojo para el h2 dentro del navbar */
+    color: #f8f8f8; 
 }
 
 #navbar h5 {
-    color: rgb(209, 220, 252); /* Color gris para el h5 dentro del navbar */
+    color: rgb(214, 219, 231);
+}
+.navbar-logo {
+    height: 80px; 
+    margin-right: 10px;
+}
+
+.dropdown-item {
+    color: gray;
+    background-color: #323749; /* Cambiar a negro */
+}
+
+.dropdown-menu {
+    background-color: #323749; /* Cambiar a negro */
 }

@@ -1,4 +1,3 @@
-
 .custom-container {
     margin-top: 0; /* Ajusta este valor según sea necesario */
     padding-top: 20px; /* Ajusta este valor según sea necesario */
@@ -37,12 +36,16 @@ h5{
     color: #374478;
 }
 
-   a {
-       text-decoration: none; /* Elimina el subrayado */
-       color: #354278; /* Cambia el color del enlace */
-   }
+.qr-code {
+    height: 200px; /* Ajusta la altura del QR aquí */
+}
 
-   a:hover {
-       text-decoration: underline; /* Agrega un subrayado al pasar el mouse */
-   }
-   
+a {
+    text-decoration: none; /* Elimina el subrayado */
+    color: #354278; /* Cambia el color del enlace */
+}
+
+a:hover {
+    text-decoration: underline; /* Agrega un subrayado al pasar el mouse */
+}
+

@@ -34,8 +34,8 @@ class Customer(db.Model):
     is_paying_customer = db.Column(db.Boolean, default=False)
     billing_id = db.Column(db.Integer, db.ForeignKey('billing.id'), nullable=True)
     shipping_id = db.Column(db.Integer, db.ForeignKey('shipping.id'), nullable=True)
-    billing = db.relationship('Billing', backref='customer')
-    shipping = db.relationship('Shipping', backref='customer')
+    billing = db.relationship('Billing', backref='customer', foreign_keys=[billing_id])
+    shipping = db.relationship('Shipping', backref='customer', foreign_keys=[shipping_id])
     orders = db.relationship('Order', back_populates='customer', lazy='dynamic')
 
     def serialize(self):
@@ -50,10 +50,12 @@ class Customer(db.Model):
             "is_paying_customer": self.is_paying_customer,
             "billing": self.billing.serialize() if self.billing else None,
             "shipping": self.shipping.serialize() if self.shipping else None,
-            "orders": [order.serialize() for order in self.orders.all()]
+            "orders": [order.serialize_basic() for order in self.orders.all()]  # Evitar recursión infinita
         }
+
 class Billing(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    # customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)  # Eliminar columna
     first_name = db.Column(db.String(120), nullable=False)
     last_name = db.Column(db.String(120), nullable=False)
     company = db.Column(db.String(120), nullable=True)
@@ -62,9 +64,11 @@ class Billing(db.Model):
     city = db.Column(db.String(120), nullable=False)
     state = db.Column(db.String(120), nullable=False)
     postcode = db.Column(db.String(20), nullable=False)
-    country = db.Column(db.String(3), nullable=False)
+    country = db.Column(db.String(100), nullable=False)  # Aumentar la longitud del campo country
     email = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(20), nullable=False)
+    iban = db.Column(db.String(34), nullable=True)  # Nuevo campo IBAN
+    nif = db.Column(db.String(20), nullable=True)  # Nuevo campo NIF
 
     def serialize(self):
         return {
@@ -83,6 +87,7 @@ class Billing(db.Model):
     
 class Shipping(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    # customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)  # Eliminar columna
     first_name = db.Column(db.String(120), nullable=False)
     last_name = db.Column(db.String(120), nullable=False)
     company = db.Column(db.String(120), nullable=True)
@@ -91,7 +96,7 @@ class Shipping(db.Model):
     city = db.Column(db.String(120), nullable=False)
     state = db.Column(db.String(120), nullable=False)
     postcode = db.Column(db.String(20), nullable=False)
-    country = db.Column(db.String(3), nullable=False)
+    country = db.Column(db.String(100), nullable=False)  # Aumentar la longitud del campo country
     phone = db.Column(db.String(20), nullable=True)
 
     def serialize(self):
@@ -131,7 +136,7 @@ class Order(db.Model):
     customer = db.relationship('Customer', back_populates='orders')
     billing = db.relationship('Billing', backref='order_billing', foreign_keys=[billing_id])
     shipping = db.relationship('Shipping', backref='order_shipping', foreign_keys=[shipping_id])
-    line_items = db.relationship('LineItem', back_populates='order', lazy='dynamic')
+    line_items = db.relationship('LineItem', back_populates='order', lazy='dynamic', primaryjoin="Order.id == LineItem.order_id")
 
     def serialize(self):
         return {
@@ -153,10 +158,20 @@ class Order(db.Model):
             "customer_id": self.customer_id,
             "billing_id": self.billing_id,
             "shipping_id": self.shipping_id,
-            "customer": self.customer.serialize() if self.customer else None,
+            "customer": self.customer.serialize_basic() if self.customer else None,  # Evitar recursión infinita
             "billing": self.billing.serialize() if self.billing else None,
             "shipping": self.shipping.serialize() if self.shipping else None,
             "line_items": [item.serialize() for item in self.line_items.all()]
+        }
+
+    def serialize_basic(self):
+        return {
+            'id': self.id,
+            "number": self.number,
+            "status": self.status,
+            "date_created": self.date_created.isoformat() if self.date_created else None,
+            "total": self.total,
+            "customer_id": self.customer_id
         }
 
 class LineItem(db.Model):
@@ -173,6 +188,7 @@ class LineItem(db.Model):
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
     order = db.relationship('Order', back_populates='line_items')
     qr_code = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(50), nullable=False, default='pending')  # Nuevo campo status
 
     def generate_qr_code(self):
         qr = qrcode.QRCode(
@@ -205,7 +221,8 @@ class LineItem(db.Model):
             "order_id": self.order_id,
             "qr_code": self.qr_code,
             "customer_name": f"{customer.first_name} {customer.last_name}" if customer else None,
-            "company_name": customer.company if customer else None
+            "company_name": customer.company if customer else None,
+            "status": self.status  # Incluir el nuevo campo status
         }
 
     @staticmethod

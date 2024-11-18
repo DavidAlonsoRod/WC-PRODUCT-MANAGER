@@ -60,7 +60,7 @@ const LineItems = () => {
                             <td>{item.total}</td>
                             <td>
                                 {item.qr_code && (
-                                    <img src={`data:image/png;base64,${item.qr_code}`} alt="QR Code" />
+                                    <img src={`data:image/png;base64,${item.qr_code}`} alt="QR Code" style={{ height: '60px' }} />
                                 )}
                             </td>
                         </tr>
