@@ -18,6 +18,11 @@ const CustomerView = () => {
     const [isShippingModalOpen, setIsShippingModalOpen] = useState(false); // Estado para el modal de envío
     const isMounted = useRef(true);
 
+    const [orders, setOrders] = useState([]);
+    const [ordersPage, setOrdersPage] = useState(1);
+    const [ordersPerPage, setOrdersPerPage] = useState(20);
+    const [totalOrders, setTotalOrders] = useState(0);
+
     const handleEditClick = () => {
         setIsModalOpen(true);
     };
@@ -86,6 +91,38 @@ const CustomerView = () => {
             isMounted.current = false;
         };
     }, [customerId]);
+
+    useEffect(() => {
+        const fetchOrders = async () => {
+            try {
+                const response = await axios.get(`${process.env.BACKEND_URL}/api/orders`, {
+                    params: {
+                        customer_id: customerId,
+                        page: ordersPage,
+                        per_page: ordersPerPage,
+                        order: 'desc',
+                        orderby: 'date_created'
+                    }
+                });
+                if (isMounted.current) {
+                    setOrders(response.data.orders);
+                    setTotalOrders(response.data.total_orders);
+                }
+            } catch (err) {
+                if (isMounted.current) {
+                    setError(err.message);
+                }
+            }
+        };
+
+        fetchOrders();
+    }, [customerId, ordersPage, ordersPerPage]);
+
+    const totalPages = Math.ceil(totalOrders / ordersPerPage);
+
+    const handleOrdersPageClick = (pageNumber) => {
+        setOrdersPage(pageNumber);
+    };
 
     if (loading) return <p className='p-3'>Loading...</p>;
     if (error) return <p className='p-3'>Error: {error}</p>;
@@ -164,12 +201,47 @@ const CustomerView = () => {
                         {customer.shipping ? (
                             <div className='m-5 p-3 border rounded-3'>
                                 <h4>Pedidos de {customer.billing.company}</h4>
-                                {customer.orders && customer.orders.length > 0 ? (
-                                    <ul>
-                                        {customer.orders.map(order => (
-                                            <li key={order.id}>Order Number: {order.number} - Total: {order.total}</li>
-                                        ))}
-                                    </ul>
+                                {orders && orders.length > 0 ? (
+                                    <>
+                                        <table className='table caption-top'>
+                                            <caption className='p-3'>Pedidos</caption>
+                                            <thead className='bg-light'>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Total</th>
+                                                    <th>Fecha de Creación</th>
+                                                    <th>Fecha Prevista de Salida</th>
+                                                    <th>Estado</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {orders.map(order => (
+                                                    <tr key={order.id}>
+                                                        <td>{order.id}</td>
+                                                        <td>{order.total}</td>
+                                                        <td>{new Date(order.date_created).toLocaleDateString()}</td>
+                                                        <td>{new Date(order.date_created).toLocaleDateString()}</td>
+                                                        <td>{order.status}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                        <div className="d-flex justify-content-end m-2 pagination">
+                                            {Array.from({ length: totalPages }, (_, index) => (
+                                                <span 
+                                                    key={index + 1} 
+                                                    onClick={() => handleOrdersPageClick(index + 1)} 
+                                                    style={{ 
+                                                        cursor: 'pointer', 
+                                                        fontWeight: ordersPage === index + 1 ? 'bold' : 'normal',
+                                                        margin: '0 5px'
+                                                    }}
+                                                >
+                                                    {index + 1}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </>
                                 ) : (
                                     <p>No hay pedidos de este cliente.</p>
                                 )}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; // Asegúrate de importar Link
+import { useNavigate } from 'react-router-dom';
 import "../../styles/customerlist.css";
 
 const Orders = () => {
@@ -102,7 +102,11 @@ const Orders = () => {
                 if (customerId) {
                     params.customer_id = customerId;
                 }
-                const response = await axios.get(`${process.env.BACKEND_URL}/api/orders`, { params });
+                const endpoint = filters.status ? `${process.env.BACKEND_URL}/api/orders/filter` : `${process.env.BACKEND_URL}/api/orders`;
+                if (filters.status) {
+                    params.status = filters.status;
+                }
+                const response = await axios.get(endpoint, { params });
 
                 setOrders(response.data.orders || []);
                 setTotalOrders(response.data.total_orders || 0);
@@ -115,7 +119,7 @@ const Orders = () => {
         const intervalId = setInterval(fetchOrders, 300000); // Actualizar cada 5 minutos
 
         return () => clearInterval(intervalId); // Limpiar el intervalo al desmontar el componente
-    }, [page, perPage, customerId]);
+    }, [page, perPage, customerId, filters.status]);
 
     const handleRowClick = (orderId) => {
         navigate(`/orders/${orderId}`);

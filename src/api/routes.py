@@ -386,7 +386,7 @@ def get_orders():
         
         response = wcapi.get("orders", params=params)
         
-        if response.status_code != 200:
+        if (response.status_code != 200):
             return jsonify({"error": "Error fetching orders from WooCommerce"}), response.status_code
 
         wc_orders = response.json()
@@ -423,7 +423,28 @@ def get_orders():
     except Exception as e:
         print(f"Error: {str(e)}")  # Imprimir el error
         return jsonify({"error": str(e)}), 500
-    
+
+@api.route('/orders/filter', methods=['GET'])
+def filter_orders_by_status():
+    try:
+        status = request.args.get('status')
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        
+        if not status:
+            return jsonify({"error": "Status parameter is required"}), 400
+
+        orders_query = Order.query.filter_by(status=status).paginate(page=page, per_page=per_page, error_out=False)
+        orders = orders_query.items
+        total_orders = orders_query.total
+
+        serialized_orders = [order.serialize() for order in orders]
+
+        return jsonify({"orders": serialized_orders, "total_orders": total_orders, "page": page, "per_page": per_page}), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
 @api.route('/customers/<int:customer_id>', methods=['GET'])
 def get_customer(customer_id):
     try:
