@@ -14,7 +14,9 @@ const getState = ({ getStore, getActions, setStore }) => {
 					initial: "white"
 				}
 			],
-			auth: false
+			auth: false,
+			customers: [],
+			totalCustomers: 0  // Asegúrate de tener este campo en el store
 		},
 		actions: {
 			// Use getActions to call a function within a fuction
@@ -100,6 +102,19 @@ const getState = ({ getStore, getActions, setStore }) => {
 			// 		console.error("Error fetching orders:", error);
 			// 	}
 			// },
+			getCustomers: async (page = 1, per_page = 20) => {
+				try {
+					const response = await fetch(`${process.env.BACKEND_URL}/api/customers?page=${page}&per_page=${per_page}`);
+					if (response.ok) {
+						const data = await response.json();
+						setStore({ customers: data.customers, totalCustomers: data.total_customers });
+					} else {
+						throw new Error("Failed to fetch customers");
+					}
+				} catch (error) {
+					console.error("Error fetching customers:", error);
+				}
+			},
 			changeColor: (index, color) => {
 				//get the store
 				const store = getStore();
