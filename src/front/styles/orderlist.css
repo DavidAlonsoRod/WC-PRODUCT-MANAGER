@@ -77,6 +77,7 @@ span{
     background-color: #1c1663;
     /* border-color: #f8f9fa; */
     color: #48dc12;
+    display: table-cell; /* Asegurar que se muestre como celda de tabla */
 }
 
 .btn-small {

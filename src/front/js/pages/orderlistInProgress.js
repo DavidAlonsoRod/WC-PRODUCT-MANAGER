@@ -7,7 +7,7 @@ import "../../styles/orderlist.css";
 const OrdersInProgress = () => {
     const [orders, setOrders] = useState([]);
     const [page, setPage] = useState(1);
-    const [perPage, setPerPage] = useState(20);
+    const [perPage, setPerPage] = useState(25); // Cambiar a 25 por defecto
     const [totalOrders, setTotalOrders] = useState(0);
     const [customerId, setCustomerId] = useState(null);
     const [filters, setFilters] = useState({
@@ -20,7 +20,7 @@ const OrdersInProgress = () => {
         payment_method: '',
         status: ''
     });
-    const [sortOrder, setSortOrder] = useState('desc');
+    const [sortOrder, setSortOrder] = useState('asc'); // Cambiar a 'asc' para ordenar de la más antigua a la más nueva
     const [sortBy, setSortBy] = useState('date_created');
     const [selectedOrders, setSelectedOrders] = useState([]);
     const navigate = useNavigate();
@@ -115,6 +115,7 @@ const OrdersInProgress = () => {
                 const params = {
                     page: page,
                     per_page: perPage,
+                    ...filters // Añadir filtros a los parámetros
                 };
                 if (customerId) {
                     params.customer_id = customerId;
@@ -133,7 +134,7 @@ const OrdersInProgress = () => {
         const intervalId = setInterval(fetchOrders, 300000); // Actualizar cada 5 minutos
 
         return () => clearInterval(intervalId); // Limpiar el intervalo al desmontar el componente
-    }, [page, perPage, customerId]);
+    }, [page, perPage, customerId, filters]); // Añadir filtros a las dependencias
 
     const handleRowClick = (orderId) => {
         navigate(`/orders/${orderId}`);
@@ -186,6 +187,11 @@ const OrdersInProgress = () => {
         // axios.post('/api/orders/batch-update', { orderIds: selectedOrders, newStatus: 'completed' });
     };
 
+    const handlePerPageChange = (event) => {
+        setPerPage(parseInt(event.target.value));
+        setPage(1); // Reiniciar a la primera página al cambiar el número de elementos por p��gina
+    };
+
     const filteredOrders = orders.filter(order => {
         return (
             (filters.id === '' || order.id.toString().includes(filters.id)) &&
@@ -222,8 +228,32 @@ const OrdersInProgress = () => {
                 </Tab>
                 <Tab eventKey="inProgressOrders" title="Pedidos en Proceso">
                     <div className='border rounded-3 m-5 justify-content-center'>
-
                         <button onClick={handleBatchAction} className="btn btn-primary m-3">Realizar acción en pedidos seleccionados</button>
+                        <div className="d-flex justify-content-between align-items-center m-3">
+                            <div>
+                                <label htmlFor="perPageSelect">Mostrar:</label>
+                                <select id="perPageSelect" value={perPage} onChange={handlePerPageChange} className="form-select d-inline-block w-auto ms-2">
+                                    <option value={25}>25</option>
+                                    <option value={50}>50</option>
+                                    <option value={100}>100</option>
+                                </select>
+                            </div>
+                            <div className="pagination">
+                                {Array.from({ length: totalPages }, (_, index) => (
+                                    <span
+                                        key={index + 1}
+                                        onClick={() => handlePageClick(index + 1)}
+                                        style={{
+                                            cursor: 'pointer',
+                                            fontWeight: page === index + 1 ? 'bold' : 'normal',
+                                            margin: '0 5px'
+                                        }}
+                                    >
+                                        {index + 1}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
                         <table className='table caption-top'>
                             <caption className='p-3'>Pedidos en Proceso</caption>
                             <thead className='bg-light'>
@@ -240,6 +270,7 @@ const OrdersInProgress = () => {
                                             }}
                                             checked={selectedOrders.length === orders.length}
                                         />
+                                        <span className="ms-2">({selectedOrders.length})</span>
                                     </th>
                                     <th>
                                         ID

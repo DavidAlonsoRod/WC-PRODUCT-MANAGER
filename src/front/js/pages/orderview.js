@@ -28,7 +28,7 @@ const OrderView = () => {
     }
 
     if (!order) {
-        return <div>Cargando...</div>;
+        return <div className='m-3'>Cagando...</div>;
     }
 
     const formatDate = (dateString) => {
@@ -75,14 +75,14 @@ const OrderView = () => {
         <div className='order-view m-5'>
             <h1>Pedido {order.id}</h1>
             <div className='order-details'>
-              
+
                 <p><strong>{order.billing ? `${order.billing.first_name} ${order.billing.last_name}` : 'N/A'}</strong></p>
                 <p><strong>Fecha de Creación:</strong> {formatDate(order.date_created)}</p>
                 <p><strong>Fecha de Envío:</strong> {formatDate(order.shipping_date)}</p>
                 <p><strong>Ciudad:</strong> {order.billing.city}</p>
-                
+
                 <p><strong>Método de Pago:</strong> {order.payment_method_title}</p>
-                <p><strong>Estado:</strong> 
+                <p><strong>Estado:</strong>
                     <button className={getStatusClass(order.status)}>
                         {translateStatus(order.status)}
                     </button>
@@ -108,7 +108,7 @@ const OrderView = () => {
                             <td>{item.price}</td>
                             <td>{item.total}</td>
                         </tr>
-                        
+
                     ))}
                     <tr>
                         <td colSpan="4"><strong>Total</strong></td>

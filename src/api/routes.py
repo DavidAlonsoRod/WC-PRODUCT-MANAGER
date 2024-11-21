@@ -662,13 +662,53 @@ def update_order():
 def get_orders_in_progress():
     try:
         page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 20, type=int)
-        
-        orders_query = Order.query.filter(Order.status != 'completed').paginate(page=page, per_page=per_page, error_out=False)
-        orders = orders_query.items
-        total_orders = orders_query.total
+        per_page = request.args.get('per_page', 25, type=int)  # Cambiar a 25 por defecto
+        filters = {
+            "id": request.args.get('id', ''),
+            "customer": request.args.get('customer', ''),
+            "date_created": request.args.get('date_created', ''),
+            "shipping_date": request.args.get('shipping_date', ''),
+            "city": request.args.get('city', ''),
+            "total": request.args.get('total', ''),
+            "payment_method": request.args.get('payment_method', ''),
+            "status": request.args.get('status', '')
+        }
 
-        serialized_orders = [order.serialize() for order in orders]
+        query = Order.query.filter(Order.status != 'completed')
+
+        if filters["id"]:
+            query = query.filter(Order.id.like(f"%{filters['id']}%"))
+        if filters["customer"]:
+            query = query.join(Customer).filter((Customer.first_name + " " + Customer.last_name).ilike(f"%{filters['customer']}%"))
+        if filters["date_created"]:
+            query = query.filter(Order.date_created.like(f"%{filters['date_created']}%"))
+        if filters["shipping_date"]:
+            query = query.filter(Order.shipping_date.like(f"%{filters['shipping_date']}%"))
+        if filters["city"]:
+            query = query.join(Billing).filter(Billing.city.ilike(f"%{filters['city']}%"))
+        if filters["total"]:
+            query = query.filter(Order.total.like(f"%{filters['total']}%"))
+        if filters["payment_method"]:
+            query = query.filter(Order.payment_method.ilike(f"%{filters['payment_method']}%"))
+        if filters["status"]:
+            query = query.filter(Order.status.ilike(f"%{filters['status']}%"))
+
+        # Obtener todas las órdenes sin paginación
+        orders = query.all()
+        total_orders = len(orders)
+
+        # Aplicar paginación manualmente
+        start = (page - 1) * per_page
+        end = start + per_page
+        paginated_orders = orders[start:end]
+
+        serialized_orders = []
+        for order in paginated_orders:
+            serialized_order = order.serialize()
+            date_created = datetime.strptime(serialized_order["date_created"], "%Y-%m-%dT%H:%M:%S")
+            shipping_date = date_created + timedelta(days=9)
+            serialized_order["shipping_date"] = shipping_date.isoformat()
+            serialized_orders.append(serialized_order)
 
         return jsonify({"orders": serialized_orders, "total_orders": total_orders, "page": page, "per_page": per_page}), 200
     except Exception as e:
