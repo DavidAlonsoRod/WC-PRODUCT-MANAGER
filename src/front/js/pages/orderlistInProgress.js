@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
-import "../../styles/orderlist.css";
 import { Tab, Tabs } from 'react-bootstrap';
-// import OrderActionsFooter from '../component/OrderActionsFooter';
+import "../../styles/orderlist.css";
 
-const Orders = () => {
+const OrdersInProgress = () => {
     const [orders, setOrders] = useState([]);
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(20);
@@ -22,7 +21,7 @@ const Orders = () => {
         status: ''
     });
     const [sortOrder, setSortOrder] = useState('desc');
-    const [sortBy, setSortBy] = useState('id');
+    const [sortBy, setSortBy] = useState('date_created');
     const [selectedOrders, setSelectedOrders] = useState([]);
     const navigate = useNavigate();
 
@@ -120,10 +119,7 @@ const Orders = () => {
                 if (customerId) {
                     params.customer_id = customerId;
                 }
-                const endpoint = filters.status ? `${process.env.BACKEND_URL}/api/orders/filter` : `${process.env.BACKEND_URL}/api/orders`;
-                if (filters.status) {
-                    params.status = filters.status;
-                }
+                const endpoint = `${process.env.BACKEND_URL}/api/orders/in-progress`;
                 const response = await axios.get(endpoint, { params });
 
                 setOrders(response.data.orders || []);
@@ -137,7 +133,7 @@ const Orders = () => {
         const intervalId = setInterval(fetchOrders, 300000); // Actualizar cada 5 minutos
 
         return () => clearInterval(intervalId); // Limpiar el intervalo al desmontar el componente
-    }, [page, perPage, customerId, filters.status]);
+    }, [page, perPage, customerId]);
 
     const handleRowClick = (orderId) => {
         navigate(`/orders/${orderId}`);
@@ -214,17 +210,22 @@ const Orders = () => {
     return (
         <div>
             <Tabs
-                activeKey="allOrders"
-                onSelect={(k) => navigate(k === "allOrders" ? "/orders" : "/orders-in-progress")}
+                activeKey="inProgressOrders"
+                onSelect={(k) => navigate(k === "inProgressOrders" ? "/orders-in-progress" : "/orders")}
                 id="order-tabs"
                 className="m-3 custom-tabs"
             >
                 <Tab eventKey="allOrders" title="Todos los Pedidos">
                     <div className='border rounded-3 m-5 justify-content-center'>
-                        
+                        <p>Redirigiendo a Todos los Pedidos...</p>
+                    </div>
+                </Tab>
+                <Tab eventKey="inProgressOrders" title="Pedidos en Proceso">
+                    <div className='border rounded-3 m-5 justify-content-center'>
+
                         <button onClick={handleBatchAction} className="btn btn-primary m-3">Realizar acción en pedidos seleccionados</button>
                         <table className='table caption-top'>
-                            <caption className='p-3'>Pedidos</caption>
+                            <caption className='p-3'>Pedidos en Proceso</caption>
                             <thead className='bg-light'>
                                 <tr>
                                     <th>
@@ -386,14 +387,9 @@ const Orders = () => {
                         </div>
                     </div>
                 </Tab>
-                <Tab eventKey="inProgressOrders" title="Pedidos en Proceso">
-                    <div className='border rounded-3 m-5 justify-content-center'>
-                        <p>Redirigiendo a Pedidos en Proceso...</p>
-                    </div>
-                </Tab>
             </Tabs>
         </div>
     );
 };
 
-export default Orders;
+export default OrdersInProgress;

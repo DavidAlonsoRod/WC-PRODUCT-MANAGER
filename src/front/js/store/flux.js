@@ -115,6 +115,20 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.error("Error fetching customers:", error);
 				}
 			},
+			getShippingDateColor: (shippingDate) => {
+				const now = new Date();
+				const date = new Date(shippingDate);
+				const diffMs = date - now;
+				const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+				if (diffDays <= 1) {
+					return 'text-danger'; 
+				} else if (diffDays <= 3) {
+					return 'text-warning'; 
+				} else {
+					return 'text-success'; 
+				}
+			},
 			changeColor: (index, color) => {
 				//get the store
 				const store = getStore();

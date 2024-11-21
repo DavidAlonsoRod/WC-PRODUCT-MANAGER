@@ -48,6 +48,9 @@ def handle_hello():
 
     return jsonify(response_body), 200
 
+
+############ CUSTOMERS ############
+
 @api.route("/import_customers", methods=["GET"])
 def import_customers():
     try:
@@ -163,6 +166,129 @@ def import_customers():
 
     except Exception as e:
         return jsonify({"msg": f"Error al importar clientes: {str(e)}"}), 500
+
+@api.route('/customers', methods=['GET'])
+def get_customers():
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        
+        customers_query = Customer.query.paginate(page=page, per_page=per_page, error_out=False)
+        customers = customers_query.items
+        total_customers = customers_query.total
+
+        serialized_customers = [customer.serialize() for customer in customers]
+
+        return jsonify({"customers": serialized_customers, "total_customers": total_customers, "page": page, "per_page": per_page}), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Imprimir el error
+        return jsonify({"error": str(e)}), 500
+    
+@api.route('/customers/<int:customer_id>', methods=['GET'])
+def get_customer(customer_id):
+    try:
+        customer = Customer.query.get(customer_id)
+        if not customer:
+            return jsonify({"error": "Customer not found"}), 404
+
+        serialized_customer = customer.serialize()
+        return jsonify(serialized_customer), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Imprimir el error
+        return jsonify({"error": str(e)}), 500
+    
+@api.route('/customers/<int:customer_id>', methods=['PUT'])
+def update_customer(customer_id):
+    try:
+        data = request.json
+        customer = Customer.query.get(customer_id)
+        
+        if not customer:
+            return jsonify({"error": "Customer not found"}), 404
+        
+        customer.first_name = data.get('first_name', customer.first_name)
+        customer.last_name = data.get('last_name', customer.last_name)
+        customer.email = data.get('email', customer.email)
+        
+        billing_data = data.get('billing', {})
+        if billing_data:
+            billing = customer.billing
+            if not billing:
+                billing = Billing()
+                customer.billing = billing
+            billing.first_name = billing_data.get('first_name', billing.first_name or '')
+            billing.last_name = billing_data.get('last_name', billing.last_name or '')
+            billing.company = billing_data.get('company', billing.company or '')
+            billing.address_1 = billing_data.get('address_1', billing.address_1 or '')
+            billing.address_2 = billing_data.get('address_2', billing.address_2 or '')
+            billing.city = billing_data.get('city', billing.city or '')
+            billing.state = billing_data.get('state', billing.state or '')
+            billing.postcode = billing_data.get('postcode', billing.postcode or '')
+            billing.country = billing_data.get('country', billing.country or '')
+            billing.email = billing_data.get('email', billing.email or '')
+            billing.phone = billing_data.get('phone', billing.phone or '')
+            billing.nif = billing_data.get('nif', billing.nif or '')
+            billing.iban = billing_data.get('iban', billing.iban or '')
+        
+        shipping_data = data.get('shipping', {})
+        if shipping_data:
+            shipping = customer.shipping
+            if not shipping:
+                shipping = Shipping()
+                customer.shipping = shipping
+            shipping.first_name = shipping_data.get('first_name', shipping.first_name or '')
+            shipping.last_name = shipping_data.get('last_name', shipping.last_name or '')
+            shipping.company = shipping_data.get('company', shipping.company or '')
+            shipping.address_1 = shipping_data.get('address_1', shipping.address_1 or '')
+            shipping.address_2 = shipping_data.get('address_2', shipping.address_2 or '')
+            shipping.city = shipping_data.get('city', shipping.city or '')
+            shipping.state = shipping_data.get('state', shipping.state or '')
+            shipping.postcode = shipping_data.get('postcode', shipping.postcode or '')
+            shipping.country = shipping_data.get('country', shipping.country or '')
+            shipping.phone = shipping_data.get('phone', shipping.phone or '')
+        
+        db.session.commit()
+
+        # Actualizar datos en WooCommerce
+        wc_data = {
+            "billing": {
+                "first_name": billing.first_name,
+                "last_name": billing.last_name,
+                "company": billing.company,
+                "address_1": billing.address_1,
+                "address_2": billing.address_2,
+                "city": billing.city,
+                "state": billing.state,
+                "postcode": billing.postcode,
+                "country": billing.country,
+                "email": billing.email,
+                "phone": billing.phone,
+                "nif": billing.nif
+            },
+            "shipping": {
+                "first_name": shipping.first_name,
+                "last_name": shipping.last_name,
+                "company": shipping.company,
+                "address_1": shipping.address_1,
+                "address_2": shipping.address_2,
+                "city": shipping.city,
+                "state": shipping.state,
+                "postcode": shipping.postcode,
+                "country": shipping.country,
+                "phone": shipping.phone
+            }
+        }
+        response = wcapi.put(f"customers/{customer_id}", wc_data)
+        if response.status_code != 200:
+            print(f"Error updating customer in WooCommerce: {response.text}")
+            return jsonify({"error": "Error updating customer in WooCommerce"}), response.status_code
+
+        return jsonify(customer.serialize()), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+############ ORDERS ############
 
 @api.route("/import_orders", methods=["GET"])
 def import_orders():
@@ -356,22 +482,6 @@ def import_line_items():
     except Exception as e:
         return jsonify({"msg": f"Error al importar artículos de línea: {str(e)}"}), 500
 
-@api.route('/customers', methods=['GET'])
-def get_customers():
-    try:
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 20, type=int)
-        
-        customers_query = Customer.query.paginate(page=page, per_page=per_page, error_out=False)
-        customers = customers_query.items
-        total_customers = customers_query.total
-
-        serialized_customers = [customer.serialize() for customer in customers]
-
-        return jsonify({"customers": serialized_customers, "total_customers": total_customers, "page": page, "per_page": per_page}), 200
-    except Exception as e:
-        print(f"Error: {str(e)}")  # Imprimir el error
-        return jsonify({"error": str(e)}), 500
 
 @api.route('/orders', methods=['GET'])
 def get_orders():
@@ -445,18 +555,7 @@ def filter_orders_by_status():
         print(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@api.route('/customers/<int:customer_id>', methods=['GET'])
-def get_customer(customer_id):
-    try:
-        customer = Customer.query.get(customer_id)
-        if not customer:
-            return jsonify({"error": "Customer not found"}), 404
 
-        serialized_customer = customer.serialize()
-        return jsonify(serialized_customer), 200
-    except Exception as e:
-        print(f"Error: {str(e)}")  # Imprimir el error
-        return jsonify({"error": str(e)}), 500
 
 @api.route('/orders/<int:order_id>', methods=['GET'])
 def get_order(order_id):
@@ -516,96 +615,7 @@ def get_line_items():
         print(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@api.route('/customers/<int:customer_id>', methods=['PUT'])
-def update_customer(customer_id):
-    try:
-        data = request.json
-        customer = Customer.query.get(customer_id)
-        
-        if not customer:
-            return jsonify({"error": "Customer not found"}), 404
-        
-        customer.first_name = data.get('first_name', customer.first_name)
-        customer.last_name = data.get('last_name', customer.last_name)
-        customer.email = data.get('email', customer.email)
-        
-        billing_data = data.get('billing', {})
-        if billing_data:
-            billing = customer.billing
-            if not billing:
-                billing = Billing()
-                customer.billing = billing
-            billing.first_name = billing_data.get('first_name', billing.first_name or '')
-            billing.last_name = billing_data.get('last_name', billing.last_name or '')
-            billing.company = billing_data.get('company', billing.company or '')
-            billing.address_1 = billing_data.get('address_1', billing.address_1 or '')
-            billing.address_2 = billing_data.get('address_2', billing.address_2 or '')
-            billing.city = billing_data.get('city', billing.city or '')
-            billing.state = billing_data.get('state', billing.state or '')
-            billing.postcode = billing_data.get('postcode', billing.postcode or '')
-            billing.country = billing_data.get('country', billing.country or '')
-            billing.email = billing_data.get('email', billing.email or '')
-            billing.phone = billing_data.get('phone', billing.phone or '')
-            billing.nif = billing_data.get('nif', billing.nif or '')
-            billing.iban = billing_data.get('iban', billing.iban or '')
-        
-        shipping_data = data.get('shipping', {})
-        if shipping_data:
-            shipping = customer.shipping
-            if not shipping:
-                shipping = Shipping()
-                customer.shipping = shipping
-            shipping.first_name = shipping_data.get('first_name', shipping.first_name or '')
-            shipping.last_name = shipping_data.get('last_name', shipping.last_name or '')
-            shipping.company = shipping_data.get('company', shipping.company or '')
-            shipping.address_1 = shipping_data.get('address_1', shipping.address_1 or '')
-            shipping.address_2 = shipping_data.get('address_2', shipping.address_2 or '')
-            shipping.city = shipping_data.get('city', shipping.city or '')
-            shipping.state = shipping_data.get('state', shipping.state or '')
-            shipping.postcode = shipping_data.get('postcode', shipping.postcode or '')
-            shipping.country = shipping_data.get('country', shipping.country or '')
-            shipping.phone = shipping_data.get('phone', shipping.phone or '')
-        
-        db.session.commit()
 
-        # Actualizar datos en WooCommerce
-        wc_data = {
-            "billing": {
-                "first_name": billing.first_name,
-                "last_name": billing.last_name,
-                "company": billing.company,
-                "address_1": billing.address_1,
-                "address_2": billing.address_2,
-                "city": billing.city,
-                "state": billing.state,
-                "postcode": billing.postcode,
-                "country": billing.country,
-                "email": billing.email,
-                "phone": billing.phone,
-                "nif": billing.nif
-            },
-            "shipping": {
-                "first_name": shipping.first_name,
-                "last_name": shipping.last_name,
-                "company": shipping.company,
-                "address_1": shipping.address_1,
-                "address_2": shipping.address_2,
-                "city": shipping.city,
-                "state": shipping.state,
-                "postcode": shipping.postcode,
-                "country": shipping.country,
-                "phone": shipping.phone
-            }
-        }
-        response = wcapi.put(f"customers/{customer_id}", wc_data)
-        if response.status_code != 200:
-            print(f"Error updating customer in WooCommerce: {response.text}")
-            return jsonify({"error": "Error updating customer in WooCommerce"}), response.status_code
-
-        return jsonify(customer.serialize()), 200
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        return jsonify({"error": str(e)}), 500
 
 @api.route('/orders/update', methods=['PUT'])
 def update_order():
@@ -644,6 +654,23 @@ def update_order():
             return jsonify({"error": "Error updating order in WooCommerce"}), response.status_code
 
         return jsonify(order.serialize()), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@api.route('/orders/in-progress', methods=['GET'])
+def get_orders_in_progress():
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        
+        orders_query = Order.query.filter(Order.status != 'completed').paginate(page=page, per_page=per_page, error_out=False)
+        orders = orders_query.items
+        total_orders = orders_query.total
+
+        serialized_orders = [order.serialize() for order in orders]
+
+        return jsonify({"orders": serialized_orders, "total_orders": total_orders, "page": page, "per_page": per_page}), 200
     except Exception as e:
         print(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500

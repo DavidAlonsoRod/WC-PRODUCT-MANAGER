@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+h1 {
+    color: #0d183f;
+
+};
+tr {
+    background-color: gray;
+
+}
+th {
+    font-family: 'Roboto', sans-serif;
+}
+tr:hover {
+    background-color: rgb(238, 242, 249); /* Color de fondo al pasar el ratón */
+}
+
+thead{
+    color: #61626e;
+}
+table tr {
+    cursor: pointer;
+    color:rgb(61, 61, 61);
+    font-size: 12px
+    
+}
+
+table tr:hover {
+    background-color: #f5f5f5;
+    
+}
+
+table a {
+    display: table-row;
+}
+p{
+    font-weight: 200;
+}
+span{
+    cursor: pointer;
+    color:rgb(61, 61, 61);
+    font-size: 12px;
+    margin-right: 10px;
+
+}
+
+.btn-warning {
+    background-color: #ffebb1;
+    border-color: #ffebb1;
+    
+    color: #392d2d;
+}
+
+.btn-success {
+    background-color: #a1cbab;
+    border-color: #a1cbab;
+    color: #445a4d;
+}
+
+.btn-primary {
+    background-color: #c3e0ff;
+    border-color: #c1defe;
+    color: #5f6d7c;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: #fff;
+}
+
+.btn-light {
+    background-color: #f8f9fa;
+    border-color: #f8f9fa;
+    color: #212529;
+}
+.btn-urgent {
+    background-color: #1c1663;
+    /* border-color: #f8f9fa; */
+    color: #48dc12;
+}
+
+.btn-small {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.70rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+}
+
+.form-control {
+    font-size: 0.875rem; /* Tamaño de fuente más pequeño */
+    padding: 0.25rem 0.5rem; /* Espaciado interno más pequeño */
+    height: auto; /* Ajustar altura automáticamente */
+}
+
+/* Puedes añadir más estilos según sea necesario */

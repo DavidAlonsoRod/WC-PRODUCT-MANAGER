@@ -140,28 +140,24 @@ class Order(db.Model):
 
     def serialize(self):
         return {
-            'id': self.id,
+            "id": self.id,
             "number": self.number,
             "status": self.status,
             "date_created": self.date_created.isoformat() if self.date_created else None,
+            "shipping_date": self.shipping_date.isoformat() if self.shipping_date else None,
+            "total": self.total,
+            "total_tax": self.total_tax,
             "discount_total": self.discount_total,
             "discount_tax": self.discount_tax,
             "shipping_total": self.shipping_total,
-            "shipping_tax": self.shipping_tax,
-            "cart_tax": self.cart_tax,
-            "total_tax": self.total_tax,
-            "total": self.total,
             "payment_method": self.payment_method,
             "payment_method_title": self.payment_method_title,
             "customer_note": self.customer_note,
-            "date_completed": self.date_completed,
+            "date_completed": self.date_completed.isoformat() if self.date_completed else None,
             "customer_id": self.customer_id,
-            "billing_id": self.billing_id,
-            "shipping_id": self.shipping_id,
-            "customer": self.customer.serialize_basic() if self.customer else None,  # Evitar recursión infinita
             "billing": self.billing.serialize() if self.billing else None,
             "shipping": self.shipping.serialize() if self.shipping else None,
-            "line_items": [item.serialize() for item in self.line_items.all()]
+            "line_items": [item.serialize() for item in self.line_items]
         }
 
     def serialize_basic(self):

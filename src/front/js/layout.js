@@ -15,6 +15,7 @@ import Customers from "./pages/customerlist";
 import CustomerView from "./pages/customerview";
 import LineItems from "./pages/lineitems";
 import OrderView from "./pages/orderview";
+import OrdersInProgress from "./pages/orderlistInProgress";
 // import CustomerForm from "./pages/customerform"; 
 
 const Layout = () => {
@@ -32,6 +33,7 @@ const Layout = () => {
                         <Route element={<Demo />} path="/demo" />
                         <Route element={<Single />} path="/single/:theid" />
                         <Route element={<Orders />} path="/orders" />
+                        <Route element={<OrdersInProgress />} path="/orders-in-progress" />
                         <Route element={<Customers />} path="/customers" />
                         <Route element={<LineItems />} path="/lineitems" />
                         <Route element={<OrderView />} path="/orders/:orderId" />
