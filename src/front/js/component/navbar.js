@@ -19,7 +19,7 @@ export const Navbar = () => {
 
 	return (
 		<nav className="navbar  border-bottom border-body justify-content-between d-flex" id="navbar">
-			<img clasname='' src={logo} alt="Logo" className="navbar-logo"></img>
+			<img clasname='d-flex m-5' src={logo} alt="Logo" className="navbar-logo"></img>
 			<div className="container navbar d-flex align-content-around">
 
 				<div className="left-section">

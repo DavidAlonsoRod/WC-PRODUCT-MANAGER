@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import "../../styles/customerlist.css";
+// import OrderActionsFooter from '../component/OrderActionsFooter';
 
 const Orders = () => {
     const [orders, setOrders] = useState([]);
@@ -21,6 +22,7 @@ const Orders = () => {
     });
     const [sortOrder, setSortOrder] = useState('desc');
     const [sortBy, setSortBy] = useState('id');
+    const [selectedOrders, setSelectedOrders] = useState([]);
     const navigate = useNavigate();
 
     const formatDate = (dateString) => {
@@ -80,7 +82,7 @@ const Orders = () => {
         "PayPal",
         "Credit Card",
         "Bank Transfer",
-        // Añadir más métodos de pago según sea necesario
+        // A��adir más métodos de pago según sea necesario
     ];
 
     const orderStatuses = [
@@ -157,6 +159,21 @@ const Orders = () => {
         }
     };
 
+    const handleSelectOrder = (orderId) => {
+        setSelectedOrders(prevSelectedOrders =>
+            prevSelectedOrders.includes(orderId)
+                ? prevSelectedOrders.filter(id => id !== orderId)
+                : [...prevSelectedOrders, orderId]
+        );
+    };
+
+    const handleBatchAction = () => {
+        // Realizar la acción deseada con los pedidos seleccionados
+        console.log('Pedidos seleccionados:', selectedOrders);
+        // Ejemplo: cambiar el estado de los pedidos seleccionados
+        // axios.post('/api/orders/batch-update', { orderIds: selectedOrders, newStatus: 'completed' });
+    };
+
     const filteredOrders = orders.filter(order => {
         return (
             (filters.id === '' || order.id.toString().includes(filters.id)) &&
@@ -191,10 +208,24 @@ const Orders = () => {
                         className="form-control"
                     />
                 </div>
+                <button onClick={handleBatchAction} className="btn btn-primary m-3">Realizar acción en pedidos seleccionados</button>
                 <table className='table caption-top'>
                     <caption className='p-3'>Pedidos</caption>
                     <thead className='bg-light'>
                         <tr>
+                            <th>
+                                <input
+                                    type="checkbox"
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            setSelectedOrders(orders.map(order => order.id));
+                                        } else {
+                                            setSelectedOrders([]);
+                                        }
+                                    }}
+                                    checked={selectedOrders.length === orders.length}
+                                />
+                            </th>
                             <th>
                                 ID
                                 <button onClick={() => handleSort('id')} className="btn btn-link">
@@ -296,6 +327,14 @@ const Orders = () => {
                                 style={{ cursor: 'pointer' }}
                                 onClick={() => handleRowClick(order.id)}
                             >
+                                <td>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedOrders.includes(order.id)}
+                                        onChange={() => handleSelectOrder(order.id)}
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                </td>
                                 <td className='fw-light'>{order.id}</td>
                                 <td>
                                     {order.billing ? `${order.billing.first_name} ${order.billing.last_name}` : 'N/A'}
@@ -332,6 +371,9 @@ const Orders = () => {
                     ))}
                 </div>
             </div>
+            {/* {selectedOrders.length > 0 && (
+                <OrderActionsFooter selectedOrders={selectedOrders} />
+            )} */}
         </div>
     );
 };

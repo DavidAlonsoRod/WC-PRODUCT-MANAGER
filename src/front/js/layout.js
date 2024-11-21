@@ -15,6 +15,7 @@ import Customers from "./pages/customerlist";
 import CustomerView from "./pages/customerview";
 import LineItems from "./pages/lineitems";
 import OrderView from "./pages/orderview";
+// import CustomerForm from "./pages/customerform"; 
 
 const Layout = () => {
     const basename = process.env.BASENAME || "";
@@ -35,6 +36,7 @@ const Layout = () => {
                         <Route element={<LineItems />} path="/lineitems" />
                         <Route element={<OrderView />} path="/orders/:orderId" />
                         <Route element={<CustomerView />} path="/customer/:customerId" />
+                        {/* <Route element={<CustomerForm />} path="/customerform" />  */}
                         <Route element={<h1>Not found!</h1>} />
                     </Routes>
                     <Footer />

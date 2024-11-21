@@ -607,4 +607,45 @@ def update_customer(customer_id):
         print(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-app.register_blueprint(api, url_prefix='/api')  # Asegúrate de registrar el blueprint con el prefijo correcto
+@api.route('/orders/update', methods=['PUT'])
+def update_order():
+    try:
+        data = request.json
+        order_id = data.get('order_id')
+        new_status = data.get('status')
+        new_total = data.get('total')
+        new_payment_method = data.get('payment_method')
+
+        if not order_id:
+            return jsonify({"error": "Order ID is required"}), 400
+
+        order = Order.query.get(order_id)
+        if not order:
+            return jsonify({"error": "Order not found"}), 404
+
+        if new_status:
+            order.status = new_status
+        if new_total:
+            order.total = new_total
+        if new_payment_method:
+            order.payment_method = new_payment_method
+
+        db.session.commit()
+
+        # Actualizar datos en WooCommerce
+        wc_data = {
+            "status": new_status,
+            "total": new_total,
+            "payment_method": new_payment_method
+        }
+        response = wcapi.put(f"orders/{order_id}", wc_data)
+        if response.status_code != 200:
+            print(f"Error updating order in WooCommerce: {response.text}")
+            return jsonify({"error": "Error updating order in WooCommerce"}), response.status_code
+
+        return jsonify(order.serialize()), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+app.register_blueprint(api, url_prefix='/api')

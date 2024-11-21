@@ -3,7 +3,6 @@ import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import { Tab, Tabs } from 'react-bootstrap';
 import "../../styles/customerview.css";
-// import CustomerEditModal from '../component/CustomerEditModal';
 import EditBillingModal from '../component/EditBillingModal';
 import EditShippingModal from '../component/EditShippingModal';
 
@@ -140,17 +139,7 @@ const CustomerView = () => {
 
                                 <p>Forma de pago: {customer.role}</p>
                                 <p>Usuario: {customer.username}</p>
-                                <div>
-                                    <button className='btn btn-custom mb-3' onClick={handleEditClick}>Editar Cliente</button>
 
-                                    {isModalOpen && customer && (
-                                        <CustomerEditModal
-                                            customer={customer}
-                                            onClose={handleCloseModal}
-                                            onUpdate={handleUpdateCustomer}
-                                        />
-                                    )}
-                                </div>
                             </div>
                             <div className='m-5 p-3 border rounded-3 customerboxes'>
                                 <h4>Información de envio</h4>
@@ -184,6 +173,7 @@ const CustomerView = () => {
                                 <p>Nif:  <strong>{customer.billing.nif}</strong></p>
                                 <p>Email:  <strong>{customer.billing.email}</strong></p>
                                 <p>Teléfono:  <strong>{customer.billing.phone}</strong></p>
+                                <p>Iban:  <strong>{customer.billing.iban}</strong></p>
                                 <button className='btn btn-custom mb-3' onClick={handleBillingEditClick}>Editar Facturación</button>
                                 {isBillingModalOpen && customer && (
                                     <EditBillingModal
@@ -228,11 +218,11 @@ const CustomerView = () => {
                                         </table>
                                         <div className="d-flex justify-content-end m-2 pagination">
                                             {Array.from({ length: totalPages }, (_, index) => (
-                                                <span 
-                                                    key={index + 1} 
-                                                    onClick={() => handleOrdersPageClick(index + 1)} 
-                                                    style={{ 
-                                                        cursor: 'pointer', 
+                                                <span
+                                                    key={index + 1}
+                                                    onClick={() => handleOrdersPageClick(index + 1)}
+                                                    style={{
+                                                        cursor: 'pointer',
                                                         fontWeight: ordersPage === index + 1 ? 'bold' : 'normal',
                                                         margin: '0 5px'
                                                     }}
