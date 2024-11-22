@@ -93,4 +93,8 @@ span{
     height: auto; /* Ajustar altura automáticamente */
 }
 
+.custom-tabs-margin {
+    margin: 20px; /* Ajustar el valor según sea necesario */
+}
+
 /* Puedes añadir más estilos según sea necesario */

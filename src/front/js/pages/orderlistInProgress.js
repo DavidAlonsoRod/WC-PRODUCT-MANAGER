@@ -20,7 +20,7 @@ const OrdersInProgress = () => {
         payment_method: '',
         status: ''
     });
-    const [sortOrder, setSortOrder] = useState('asc'); // Cambiar a 'asc' para ordenar de la más antigua a la más nueva
+    const [sortOrder, setSortOrder] = useState('asc'); 
     const [sortBy, setSortBy] = useState('date_created');
     const [selectedOrders, setSelectedOrders] = useState([]);
     const navigate = useNavigate();
@@ -219,7 +219,7 @@ const OrdersInProgress = () => {
                 activeKey="inProgressOrders"
                 onSelect={(k) => navigate(k === "inProgressOrders" ? "/orders-in-progress" : "/orders")}
                 id="order-tabs"
-                className="m-3 custom-tabs"
+                className="m-3 custom-tabs custom-tabs-margin"
             >
                 <Tab eventKey="allOrders" title="Todos los Pedidos">
                     <div className='border rounded-3 m-5 justify-content-center'>

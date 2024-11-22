@@ -32,6 +32,7 @@
 .navbar-logo {
     height: 80px; 
     margin-right: 10px;
+    margin-left: 1rem; /* Ajustar el valor según sea necesario */
 }
 
 .dropdown-item {
@@ -41,4 +42,13 @@
 
 .dropdown-menu {
     background-color: #323749; /* Cambiar a negro */
+}
+
+#navbar .container-fluid {
+    display: flex;
+    align-items: center;
+}
+
+body {
+    padding-top: 80px; /* Ajustar según la altura del navbar */
 }
