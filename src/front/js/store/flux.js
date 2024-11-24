@@ -46,9 +46,12 @@ const getState = ({ getStore, getActions, setStore }) => {
 						const data = await response.json();
 						localStorage.setItem("token", data.access_token);
 						setStore({ auth: true });
+						console.log("Login successful");  // Agregar registro
 						return response; 
 					} else {
-						throw new Error("Login failed");
+						const errorData = await response.json();
+						console.error("Login failed:", errorData);  // Agregar registro
+						throw new Error(errorData.msg || "Login failed");
 					}
 				} catch (error) {
 					console.error("Error during login:", error);

@@ -23,7 +23,6 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # Asegúrate de que CORS esté configurado para la aplicación Flask
 
-CORS(app, resources={r"/*": {"origins": "*"}})  # Asegúrate de que CORS esté configurado para la aplicación Flask
 
 api = Blueprint('api', __name__)
 CORS(api)  # Asegúrate de que CORS esté configurado para el Blueprint
@@ -42,9 +41,8 @@ wcapi = API(
     timeout=30
 )
 
-app.config['JWT_SECRET_KEY'] = 'your_jwt_secret_key'  # Cambia esto por una clave secreta segura
-jwt = JWTManager(app)
-bcrypt = Bcrypt(app)
+
+# bcrypt = Bcrypt(app)
 
 @api.route('/hello', methods=['POST', 'GET'])
 def handle_hello():
@@ -59,6 +57,7 @@ def handle_hello():
 ############ CUSTOMERS ############
 
 @api.route("/import_customers", methods=["GET"])
+@jwt_required()
 def import_customers():
     try:
         roles = ['all', 'administrator', 'subscriber', 'desactivados', 'customer', 'fotgrafo_profesional', 'pago_con_tarjeta', 'transferencia_bancaria', 'domiciliacin_bancaria', 'transferencia_o_bizum_fin_de_mes', 'contrareembolso', 'translator', 'shop_manager', 'blocked']  # Lista de roles válidos
@@ -179,6 +178,7 @@ def import_customers():
         return jsonify({"msg": f"Error al importar clientes: {str(e)}"}), 500
 
 @api.route('/customers', methods=['GET'])
+@jwt_required()
 def get_customers():
     try:
         page = request.args.get('page', 1, type=int)
@@ -196,6 +196,7 @@ def get_customers():
         return jsonify({"error": str(e)}), 500
     
 @api.route('/customers/<int:customer_id>', methods=['GET'])
+@jwt_required()
 def get_customer(customer_id):
     try:
         customer = Customer.query.get(customer_id)
@@ -209,6 +210,7 @@ def get_customer(customer_id):
         return jsonify({"error": str(e)}), 500
     
 @api.route('/customers/<int:customer_id>', methods=['PUT'])
+@jwt_required()
 def update_customer(customer_id):
     try:
         data = request.json
@@ -302,6 +304,7 @@ def update_customer(customer_id):
 ############ ORDERS ############
 
 @api.route("/import_orders", methods=["GET"])
+@jwt_required()
 def import_orders():
     try:
         page = 1
@@ -435,6 +438,7 @@ def import_orders():
         return jsonify({"msg": f"Error al importar órdenes: {str(e)}"}), 500
 
 @api.route("/import_line_items", methods=["GET"])
+@jwt_required()
 def import_line_items():
     try:
         page = 1
@@ -495,6 +499,7 @@ def import_line_items():
 
 
 @api.route('/orders', methods=['GET'])
+# @jwt_required()
 def get_orders():
     try:
         page = request.args.get('page', 1, type=int)
@@ -569,6 +574,7 @@ def filter_orders_by_status():
 
 
 @api.route('/orders/<int:order_id>', methods=['GET'])
+@jwt_required()
 def get_order(order_id):
     try:
         response = wcapi.get(f"orders/{order_id}")
@@ -605,6 +611,7 @@ def get_order(order_id):
         return jsonify({"error": str(e)}), 500
 
 @api.route('/line_items', methods=['GET'])
+@jwt_required()
 def get_line_items():
     try:
         page = request.args.get('page', 1, type=int)
@@ -629,6 +636,7 @@ def get_line_items():
 
 
 @api.route('/orders/update', methods=['PUT'])
+@jwt_required()
 def update_order():
     try:
         data = request.json
@@ -670,6 +678,7 @@ def update_order():
         return jsonify({"error": str(e)}), 500
 
 @api.route('/orders/in-progress', methods=['GET'])
+@jwt_required()
 def get_orders_in_progress():
     try:
         page = request.args.get('page', 1, type=int)
@@ -727,6 +736,7 @@ def get_orders_in_progress():
         return jsonify({"error": str(e)}), 500
 
 @api.route('/import-data', methods=['POST'])
+@jwt_required()
 def import_data():
     try:
         data = request.json
@@ -741,6 +751,7 @@ def import_data():
         return jsonify({"error": str(e)}), 500
 
 @api.route('/orders/<int:order_id>', methods=['DELETE'])
+@jwt_required()
 def delete_order(order_id):
     try:
         order = Order.query.get(order_id)
@@ -772,21 +783,25 @@ def login():
     email = data.get('email')
     password = data.get('password')
 
-    user = User.query.filter_by(email=email).first()
+    print(f"Login attempt for email: {email}")  # Agregar registro
+
+    user = User.query.filter_by(email=email, password=password).first()
     if user:
         try:
-            if bcrypt.check_password_hash(user.password, password):
-                access_token = create_access_token(identity={'email': user.email})
-                return jsonify(access_token=access_token), 200
-            else:
-                print("Invalid credentials")  # Agregar registro
-                return jsonify({"msg": "Invalid credentials"}), 401
+            # if bcrypt.check_password_hash(user.password, password):
+            
+            access_token = create_access_token(identity={'email': user.email})
+            print(f"Login successful for email: {email}")  # Agregar registro
+            return jsonify(access_token=access_token), 200
+            
         except ValueError as e:
             print(f"Invalid password hash: {e}")  # Agregar registro
             return jsonify({"msg": "Invalid password hash"}), 500
-    print("User not found")  # Agregar registro
-    return jsonify({"msg": "User not found"}), 404
+    else:
+        print("Invalid credentials")  # Agregar registro
+        return jsonify({"msg": "Invalid credentials"}), 401
 
+          
 @api.route('/protected', methods=['GET'])
 @jwt_required()
 def protected():
@@ -794,11 +809,14 @@ def protected():
     return jsonify(logged_in_as=current_user), 200
 
 @api.route('/update_passwords', methods=['POST'])
+@jwt_required()
 def update_passwords():
     try:
         users = User.query.all()
         for user in users:
-            user.password = bcrypt.generate_password_hash("default_password").decode('utf-8')
+            # Generar una contraseña segura y única para cada usuario
+            new_password = bcrypt.generate_password_hash("default_password").decode('utf-8')
+            user.password = new_password
         db.session.commit()
         return jsonify({"msg": "Passwords updated successfully"}), 200
     except Exception as e:
