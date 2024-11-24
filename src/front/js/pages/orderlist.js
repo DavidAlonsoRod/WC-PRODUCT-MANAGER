@@ -110,6 +110,7 @@ const Orders = () => {
         // Añadir más estados según sea necesario
     ];
 
+
     useEffect(() => {
         const fetchOrders = async () => {
             try {
@@ -209,6 +210,18 @@ const Orders = () => {
         return sortOrder === 'asc' ? (fieldA > fieldB ? 1 : -1) : (fieldA < fieldB ? 1 : -1);
     });
 
+    const handleDeleteOrders = async () => {
+        try {
+            for (const orderId of selectedOrders) {
+                await axios.delete(`${process.env.BACKEND_URL}/api/orders/${orderId}`);
+            }
+            setSelectedOrders([]);
+            fetchOrders(); // Refrescar la lista de pedidos
+        } catch (error) {
+            console.error("Error deleting orders:", error);
+        }
+    };
+
     const totalPages = Math.ceil(totalOrders / perPage);
 
     return (
@@ -217,12 +230,14 @@ const Orders = () => {
                 activeKey="allOrders"
                 onSelect={(k) => navigate(k === "allOrders" ? "/orders" : "/orders-in-progress")}
                 id="order-tabs"
-                className="m-3 custom-tabs"
+                className="m-5 custom-tabs"
             >
-                <Tab eventKey="allOrders" title="Todos los Pedidos">
+                <Tab  className='m-3' eventKey="allOrders" title="Todos los Pedidos">
                     <div className='border rounded-3 m-5 justify-content-center'>
-                        
+
+
                         <button onClick={handleBatchAction} className="btn btn-primary m-3">Realizar acción en pedidos seleccionados</button>
+                        <button onClick={handleDeleteOrders} className="btn btn-danger m-3">Borrar pedidos seleccionados</button>
                         <table className='table caption-top'>
                             <caption className='p-3'>Pedidos</caption>
                             <thead className='bg-light'>

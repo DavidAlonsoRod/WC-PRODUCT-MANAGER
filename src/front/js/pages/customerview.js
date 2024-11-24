@@ -163,17 +163,17 @@ const CustomerView = () => {
                             </div>
                             <div className='m-5 p-3 border rounded-3'>
                                 <h4>Detalles de facturación</h4>
-                                <p>Nombre comercial: <strong>{customer.billing.company}</strong> </p>
-                                <p>Nombre:  <strong>{customer.billing.first_name}</strong></p>
-                                <p>Apellidos:  <strong>{customer.billing.last_name}</strong></p>
-                                <p>Dirección:  <strong>{customer.billing.address_1} {customer.billing.address_2}</strong></p>
-                                <p>Ciudad:  <strong>{customer.billing.city}</strong></p>
-                                <p>Provincia:  <strong></strong>{customer.billing.state}</p>
-                                <p>C. Postal:  <strong>{customer.billing.postcode}</strong></p>
-                                <p>Nif:  <strong>{customer.billing.nif}</strong></p>
-                                <p>Email:  <strong>{customer.billing.email}</strong></p>
-                                <p>Teléfono:  <strong>{customer.billing.phone}</strong></p>
-                                <p>Iban:  <strong>{customer.billing.iban}</strong></p>
+                                <p>Nombre comercial: <strong>{customer.billing ? customer.billing.company : 'N/A'}</strong> </p>
+                                <p>Nombre:  <strong>{customer.billing ? customer.billing.first_name : 'N/A'}</strong></p>
+                                <p>Apellidos:  <strong>{customer.billing ? customer.billing.last_name : 'N/A'}</strong></p>
+                                <p>Dirección:  <strong>{customer.billing ? `${customer.billing.address_1} ${customer.billing.address_2}` : 'N/A'}</strong></p>
+                                <p>Ciudad:  <strong>{customer.billing ? customer.billing.city : 'N/A'}</strong></p>
+                                <p>Provincia:  <strong>{customer.billing ? customer.billing.state : 'N/A'}</strong></p>
+                                <p>C. Postal:  <strong>{customer.billing ? customer.billing.postcode : 'N/A'}</strong></p>
+                                <p>Nif:  <strong>{customer.billing ? customer.billing.nif : 'N/A'}</strong></p>
+                                <p>Email:  <strong>{customer.billing ? customer.billing.email : 'N/A'}</strong></p>
+                                <p>Teléfono:  <strong>{customer.billing ? customer.billing.phone : 'N/A'}</strong></p>
+                                <p>Iban:  <strong>{customer.billing ? customer.billing.iban : 'N/A'}</strong></p>
                                 <button className='btn btn-custom mb-3' onClick={handleBillingEditClick}>Editar Facturación</button>
                                 {isBillingModalOpen && customer && (
                                     <EditBillingModal

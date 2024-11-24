@@ -43,6 +43,7 @@ const Customers = () => {
                             <th>Ciudad</th>
                             <th>Provincia</th>
                             <th>Email</th>
+                            <th>Rol</th> {/* Nueva columna para el rol */}
                         </tr>
                     </thead>
                     <tbody>
@@ -60,6 +61,7 @@ const Customers = () => {
                                 <td>{customer.city}</td>
                                 <td>{customer.state}</td>
                                 <td>{customer.email}</td>
+                                <td>{customer.role}</td>
                             </tr>
                         ))}
                     </tbody>

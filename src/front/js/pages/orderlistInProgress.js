@@ -20,7 +20,7 @@ const OrdersInProgress = () => {
         payment_method: '',
         status: ''
     });
-    const [sortOrder, setSortOrder] = useState('asc'); 
+    const [sortOrder, setSortOrder] = useState('asc');
     const [sortBy, setSortBy] = useState('date_created');
     const [selectedOrders, setSelectedOrders] = useState([]);
     const navigate = useNavigate();
@@ -110,6 +110,8 @@ const OrdersInProgress = () => {
     ];
 
     useEffect(() => {
+        let isMounted = true; // Variable para controlar si el componente está montado
+
         const fetchOrders = async () => {
             try {
                 const params = {
@@ -123,17 +125,24 @@ const OrdersInProgress = () => {
                 const endpoint = `${process.env.BACKEND_URL}/api/orders/in-progress`;
                 const response = await axios.get(endpoint, { params });
 
-                setOrders(response.data.orders || []);
-                setTotalOrders(response.data.total_orders || 0);
+                if (isMounted) { // Solo actualizar el estado si el componente está montado
+                    setOrders(response.data.orders || []);
+                    setTotalOrders(response.data.total_orders || 0);
+                }
             } catch (error) {
-                setOrders([]);
+                if (isMounted) { // Solo actualizar el estado si el componente está montado
+                    setOrders([]);
+                }
             }
         };
 
         fetchOrders();
         const intervalId = setInterval(fetchOrders, 300000); // Actualizar cada 5 minutos
 
-        return () => clearInterval(intervalId); // Limpiar el intervalo al desmontar el componente
+        return () => {
+            isMounted = false; // Marcar el componente como desmontado
+            clearInterval(intervalId); // Limpiar el intervalo al desmontar el componente
+        };
     }, [page, perPage, customerId, filters]); // Añadir filtros a las dependencias
 
     const handleRowClick = (orderId) => {
@@ -187,6 +196,18 @@ const OrdersInProgress = () => {
         // axios.post('/api/orders/batch-update', { orderIds: selectedOrders, newStatus: 'completed' });
     };
 
+    const handleDeleteOrders = async () => {
+        try {
+            for (const orderId of selectedOrders) {
+                await axios.delete(`${process.env.BACKEND_URL}/api/orders/${orderId}`);
+            }
+            setSelectedOrders([]);
+            fetchOrders(); // Refrescar la lista de pedidos
+        } catch (error) {
+            console.error("Error deleting orders:", error);
+        }
+    };
+
     const handlePerPageChange = (event) => {
         setPerPage(parseInt(event.target.value));
         setPage(1); // Reiniciar a la primera página al cambiar el número de elementos por p��gina
@@ -219,7 +240,7 @@ const OrdersInProgress = () => {
                 activeKey="inProgressOrders"
                 onSelect={(k) => navigate(k === "inProgressOrders" ? "/orders-in-progress" : "/orders")}
                 id="order-tabs"
-                className="m-3 custom-tabs custom-tabs-margin"
+                className="m-5 custom-tabs custom-tabs-margin"
             >
                 <Tab eventKey="allOrders" title="Todos los Pedidos">
                     <div className='border rounded-3 m-5 justify-content-center'>
@@ -229,6 +250,7 @@ const OrdersInProgress = () => {
                 <Tab eventKey="inProgressOrders" title="Pedidos en Proceso">
                     <div className='border rounded-3 m-5 justify-content-center'>
                         <button onClick={handleBatchAction} className="btn btn-primary m-3">Realizar acción en pedidos seleccionados</button>
+                        <button onClick={handleDeleteOrders} className="btn btn-danger m-3">Borrar pedidos seleccionados</button>
                         <div className="d-flex justify-content-between align-items-center m-3">
                             <div>
                                 <label htmlFor="perPageSelect">Mostrar:</label>

@@ -16,66 +16,81 @@ const getState = ({ getStore, getActions, setStore }) => {
 			],
 			auth: false,
 			customers: [],
-			totalCustomers: 0  // Asegúrate de tener este campo en el store
+			totalCustomers: 0 
 		},
 		actions: {
-			// Use getActions to call a function within a fuction
+			
 			exampleFunction: () => {
 				getActions().changeColor(0, "green");
 			},
 			logout: () => {
-				console.log('logout desde flux')
+				setStore({ auth: false });
 				localStorage.removeItem("token");
-				setStore({
-					auth: false,
-					customer: null
-				});
 			},
+
 			handleLogout: () => {
 
 				localStorage.removeItem("token");
 				setStore({ auth: false })
 			},
-			login: (email, password) => {
-
+			login: async (email, password) => {
 				const requestOptions = {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(
-						{
-							"email": email,
-							"password": password
-						}
-					)
+					body: JSON.stringify({ email, password })
 				};
 
-				fetch(`${process.env.BACKEND_URL}/api/login`, requestOptions)
-					.then(response => {
-						if (response.ok) {
-							setStore({ auth: true });
-							return response.json();
-						} else {
-							throw new Error("Login failed");
-						}
-					})
-					.then(data => {
+				try {
+					const response = await fetch(`${process.env.BACKEND_URL}/api/login`, requestOptions);
+					if (response.ok) {
+						const data = await response.json();
 						localStorage.setItem("token", data.access_token);
-						setStore({
-							auth: true,
-							customer: {
-								email: data.email,
-								username: data.username, // Asegúrate de que tu API devuelva estos datos
-								first_name: data.first_name,
-								last_name: data.last_name
-							}
-						});
-					})
-					.catch(error => {
-						console.error("Error during login:", error);
-					});
-
-
+						setStore({ auth: true });
+						return response; 
+					} else {
+						throw new Error("Login failed");
+					}
+				} catch (error) {
+					console.error("Error during login:", error);
+					return { ok: false }; 
+				}
 			},
+			
+			verifyToken: async () => {
+				const token = localStorage.getItem("token");
+
+				if (!token) {
+					setStore({ auth: false });
+					return false;
+				}
+
+				const requestOptions = {
+					method: 'GET',
+					headers: {
+						"Content-Type": "application/json",
+						"Authorization": `Bearer ${token}`
+					}
+				};
+
+				try {
+					const response = await fetch(process.env.BACKEND_URL + "/api/privatepage", requestOptions);
+
+					if (response.status === 200) {
+						setStore({ auth: true });
+						return true;
+					} else {
+						localStorage.removeItem("token");
+						setStore({ auth: false });
+						return false;
+					}
+				} catch (error) {
+					console.error('Error verifying token:', error);
+					setStore({ auth: false });
+					return false;
+				}
+			},
+
+
 
 			getMessage: async () => {
 				try {

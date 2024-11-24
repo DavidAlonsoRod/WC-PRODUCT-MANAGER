@@ -15,10 +15,14 @@ import os
 from datetime import datetime, timedelta
 from api.insert_line_items import insert_line_item
 from .controllers import get_order_by_id
+from flask_bcrypt import Bcrypt
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Asegúrate de que CORS esté configurado para la aplicación Flask
+
 CORS(app, resources={r"/*": {"origins": "*"}})  # Asegúrate de que CORS esté configurado para la aplicación Flask
 
 api = Blueprint('api', __name__)
@@ -27,17 +31,20 @@ CORS(api)  # Asegúrate de que CORS esté configurado para el Blueprint
 database_url = os.getenv('DATABASE_URL')
 consumer_key = os.getenv('WC_CONSUMER_KEY')
 consumer_secret = os.getenv('WC_CONSUMER_SECRET')
+wc_api_url = os.getenv('WC_API_URL')
 
 wcapi = API(
-    url="https://piedrapapelytijeras.es",  
+    url=wc_api_url.rstrip('/'),  # Asegúrate de que no haya una barra al final
     consumer_key=consumer_key,  
     consumer_secret=consumer_secret, 
     wp_api=True,
     version="wc/v3",
     timeout=30
-    
 )
 
+app.config['JWT_SECRET_KEY'] = 'your_jwt_secret_key'  # Cambia esto por una clave secreta segura
+jwt = JWTManager(app)
+bcrypt = Bcrypt(app)
 
 @api.route('/hello', methods=['POST', 'GET'])
 def handle_hello():
@@ -54,113 +61,117 @@ def handle_hello():
 @api.route("/import_customers", methods=["GET"])
 def import_customers():
     try:
-        page = 1
-        while True:
-            response = wcapi.get("customers", params={"per_page": 100, "page": page, "timeout": 30})
-            
-            if response.status_code != 200:
-                return jsonify({"msg": f"Error al importar clientes: {response.text}"}), 401
-            
-            wc_customers = response.json()
+        roles = ['all', 'administrator', 'subscriber', 'desactivados', 'customer', 'fotgrafo_profesional', 'pago_con_tarjeta', 'transferencia_bancaria', 'domiciliacin_bancaria', 'transferencia_o_bizum_fin_de_mes', 'contrareembolso', 'translator', 'shop_manager', 'blocked']  # Lista de roles válidos
+        for role in roles:
+            page = 1
+            while True:
+                response = wcapi.get("customers", params={"per_page": 100, "page": page, "role": role, "timeout": 30})
+                print(f"Request URL: {response.url}")  # Añadir esta línea para depurar la URL
+                if response.status_code == 401:
+                    return jsonify({"msg": "Error de autenticación: Verifica tus credenciales de WooCommerce"}), 401
+                if response.status_code != 200:
+                    return jsonify({"msg": f"Error al importar clientes: {response.text}"}), response.status_code
+                
+                wc_customers = response.json()
 
-            if not isinstance(wc_customers, list) or not wc_customers:
-                break  # Salir del bucle si no hay más clientes
+                if not isinstance(wc_customers, list) or not wc_customers:
+                    break  # Salir del bucle si no hay más clientes
 
-            for wc_customer in wc_customers:
-                existing_customer = Customer.query.filter_by(id=wc_customer["id"]).first()
+                for wc_customer in wc_customers:
+                    existing_customer = Customer.query.filter_by(id=wc_customer["id"]).first()
 
-                if existing_customer:
-                    existing_customer.email = wc_customer["email"]
-                    existing_customer.first_name = wc_customer["first_name"]
-                    existing_customer.last_name = wc_customer["last_name"]
-                    existing_customer.role = wc_customer["role"]
-                    existing_customer.username = wc_customer["username"]
-                    existing_customer.is_paying_customer = wc_customer["is_paying_customer"]
-                else:
-                    new_customer = Customer(
-                        id=wc_customer["id"],
-                        email=wc_customer["email"],
-                        first_name=wc_customer["first_name"],
-                        last_name=wc_customer["last_name"],
-                        role=wc_customer["role"],
-                        username=wc_customer["username"],
-                        password="default_password",
-                        is_paying_customer=wc_customer["is_paying_customer"]
-                    )
-                    db.session.add(new_customer)
-
-                billing_info = wc_customer.get("billing", {})
-                if billing_info:
-                    billing = Billing.query.filter_by(id=wc_customer["id"]).first()  # Actualizar la consulta
-                    if billing:
-                        billing.first_name = billing_info["first_name"]
-                        billing.last_name = billing_info["last_name"]
-                        billing.company = billing_info.get("company")
-                        billing.address_1 = billing_info.get("address_1", "")
-                        billing.address_2 = billing_info.get("address_2", "")
-                        billing.city = billing_info.get("city", "")
-                        billing.state = billing_info.get("state", "")
-                        billing.postcode = billing_info.get("postcode", "")
-                        billing.country = billing_info.get("country", "")[:100]  # Limitar la longitud del campo country
-                        billing.email = billing_info.get("email", "")
-                        billing.phone = billing_info.get("phone", "")
-                        billing.iban = billing_info.get("iban", "")  # Importar IBAN
-                        billing.nif = billing_info.get("nif", "")  # Importar NIF
+                    if existing_customer:
+                        existing_customer.email = wc_customer["email"]
+                        existing_customer.first_name = wc_customer["first_name"]
+                        existing_customer.last_name = wc_customer["last_name"]
+                        existing_customer.role = wc_customer["role"]
+                        existing_customer.username = wc_customer["username"]
+                        existing_customer.is_paying_customer = wc_customer["is_paying_customer"]
                     else:
-                        new_billing = Billing(
-                            first_name=billing_info["first_name"],
-                            last_name=billing_info["last_name"],
-                            company=billing_info.get("company"),
-                            address_1=billing_info.get("address_1", ""),
-                            address_2=billing_info.get("address_2", ""),
-                            city=billing_info.get("city", ""),
-                            state=billing_info.get("state", ""),
-                            postcode=billing_info.get("postcode", ""),
-                            country=billing_info.get("country", "")[:100],  # Limitar la longitud del campo country
-                            email=billing_info.get("email", ""),
-                            phone=billing_info.get("phone", ""),
-                            iban=billing_info.get("iban", ""),  # Importar IBAN
-                            nif=billing_info.get("nif", "")  # Importar NIF
+                        new_customer = Customer(
+                            id=wc_customer["id"],
+                            email=wc_customer["email"],
+                            first_name=wc_customer["first_name"],
+                            last_name=wc_customer["last_name"],
+                            role=wc_customer["role"],
+                            username=wc_customer["username"],
+                            password="default_password",
+                            is_paying_customer=wc_customer["is_paying_customer"]
                         )
-                        db.session.add(new_billing)
-                        if existing_customer:
-                            existing_customer.billing = new_billing
-                        else:
-                            new_customer.billing = new_billing
+                        db.session.add(new_customer)
 
-                shipping_info = wc_customer.get("shipping", {})
-                if shipping_info:
-                    shipping = Shipping.query.filter_by(id=wc_customer["id"]).first()  # Actualizar la consulta
-                    if shipping:
-                        shipping.first_name = shipping_info["first_name"]
-                        shipping.last_name = shipping_info["last_name"]
-                        shipping.company = shipping_info.get("company")
-                        shipping.address_1 = shipping_info.get("address_1", "")
-                        shipping.address_2 = shipping_info.get("address_2", "")
-                        shipping.city = shipping_info.get("city", "")
-                        shipping.state = shipping_info.get("state", "")
-                        shipping.postcode = shipping_info.get("postcode", "")
-                        shipping.country = shipping_info.get("country", "")[:100]  # Limitar la longitud del campo country
-                    else:
-                        new_shipping = Shipping(
-                            first_name=shipping_info["first_name"],
-                            last_name=shipping_info["last_name"],
-                            company=shipping_info.get("company"),
-                            address_1=shipping_info.get("address_1", ""),
-                            address_2=shipping_info.get("address_2", ""),
-                            city=shipping_info.get("city", ""),
-                            state=shipping_info.get("state", ""),
-                            postcode=shipping_info.get("postcode", ""),
-                            country=shipping_info.get("country", "")[:100]  # Limitar la longitud del campo country
-                        )
-                        db.session.add(new_shipping)
-                        if existing_customer:
-                            existing_customer.shipping = new_shipping
+                    billing_info = wc_customer.get("billing", {})
+                    if billing_info:
+                        billing = Billing.query.filter_by(id=wc_customer["id"]).first()  # Actualizar la consulta
+                        if billing:
+                            billing.first_name = billing_info["first_name"]
+                            billing.last_name = billing_info["last_name"]
+                            billing.company = billing_info.get("company")
+                            billing.address_1 = billing_info.get("address_1", "")
+                            billing.address_2 = billing_info.get("address_2", "")
+                            billing.city = billing_info.get("city", "")
+                            billing.state = billing_info.get("state", "")
+                            billing.postcode = billing_info.get("postcode", "")
+                            billing.country = billing_info.get("country", "")[:100]  # Limitar la longitud del campo country
+                            billing.email = billing_info.get("email", "")
+                            billing.phone = billing_info.get("phone", "")[:20]  # Limitar la longitud del campo phone
+                            billing.iban = billing_info.get("iban", "")  # Importar IBAN
+                            billing.nif = billing_info.get("nif", "")  # Importar NIF
                         else:
-                            new_customer.shipping = new_shipping
+                            new_billing = Billing(
+                                first_name=billing_info["first_name"],
+                                last_name=billing_info["last_name"],
+                                company=billing_info.get("company"),
+                                address_1=billing_info.get("address_1", ""),
+                                address_2=billing_info.get("address_2", ""),
+                                city=billing_info.get("city", ""),
+                                state=billing_info.get("state", ""),
+                                postcode=billing_info.get("postcode", ""),
+                                country=billing_info.get("country", "")[:100],  # Limitar la longitud del campo country
+                                email=billing_info.get("email", ""),
+                                phone=billing_info.get("phone", "")[:20],  # Limitar la longitud del campo phone
+                                iban=billing_info.get("iban", ""),  # Importar IBAN
+                                nif=billing_info.get("nif", "")  # Importar NIF
+                            )
+                            db.session.add(new_billing)
+                            if existing_customer:
+                                existing_customer.billing = new_billing
+                            else:
+                                new_customer.billing = new_billing
 
-            db.session.commit()
-            page += 1  # Pasar a la siguiente página
+                    shipping_info = wc_customer.get("shipping", {})
+                    if shipping_info:
+                        shipping = Shipping.query.filter_by(id=wc_customer["id"]).first()  # Actualizar la consulta
+                        if shipping:
+                            shipping.first_name = shipping_info["first_name"]
+                            shipping.last_name = shipping_info["last_name"]
+                            shipping.company = shipping_info.get("company")
+                            shipping.address_1 = shipping_info.get("address_1", "")
+                            shipping.address_2 = shipping_info.get("address_2", "")
+                            shipping.city = shipping_info.get("city", "")
+                            shipping.state = shipping_info.get("state", "")
+                            shipping.postcode = shipping_info.get("postcode", "")
+                            shipping.country = shipping_info.get("country", "")[:100]  # Limitar la longitud del campo country
+                        else:
+                            new_shipping = Shipping(
+                                first_name=shipping_info["first_name"],
+                                last_name=shipping_info["last_name"],
+                                company=shipping_info.get("company"),
+                                address_1=shipping_info.get("address_1", ""),
+                                address_2=shipping_info.get("address_2", ""),
+                                city=shipping_info.get("city", ""),
+                                state=shipping_info.get("state", ""),
+                                postcode=shipping_info.get("postcode", ""),
+                                country=shipping_info.get("country", "")[:100]  # Limitar la longitud del campo country
+                            )
+                            db.session.add(new_shipping)
+                            if existing_customer:
+                                existing_customer.shipping = new_shipping
+                            else:
+                                new_customer.shipping = new_shipping
+
+                db.session.commit()
+                page += 1  # Pasar a la siguiente página
 
         return jsonify({"msg": "Clientes importados y actualizados correctamente"}), 200
 
@@ -713,6 +724,85 @@ def get_orders_in_progress():
         return jsonify({"orders": serialized_orders, "total_orders": total_orders, "page": page, "per_page": per_page}), 200
     except Exception as e:
         print(f"Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@api.route('/import-data', methods=['POST'])
+def import_data():
+    try:
+        data = request.json
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        
+        # Aquí puedes agregar la lógica para importar datos usando las fechas proporcionadas
+        # Por ejemplo, podrías llamar a las funciones import_customers() e import_orders() con las fechas
+
+        return jsonify({"message": "Datos importados correctamente"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@api.route('/orders/<int:order_id>', methods=['DELETE'])
+def delete_order(order_id):
+    try:
+        order = Order.query.get(order_id)
+        if not order:
+            return jsonify({"error": "Order not found"}), 404
+
+        # Eliminar los artículos de línea asociados al pedido
+        LineItem.query.filter_by(order_id=order_id).delete()
+
+        # Eliminar el pedido de la base de datos local
+        db.session.delete(order)
+        db.session.commit()
+
+        # Eliminar el pedido de WooCommerce
+        response = wcapi.delete(f"orders/{order_id}", params={"force": True})
+        if response.status_code != 200:
+            print(f"Error deleting order in WooCommerce: {response.text}")
+            return jsonify({"error": "Error deleting order in WooCommerce"}), response.status_code
+
+        return jsonify({"msg": "Order deleted successfully"}), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@api.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+
+    user = User.query.filter_by(email=email).first()
+    if user:
+        try:
+            if bcrypt.check_password_hash(user.password, password):
+                access_token = create_access_token(identity={'email': user.email})
+                return jsonify(access_token=access_token), 200
+            else:
+                print("Invalid credentials")  # Agregar registro
+                return jsonify({"msg": "Invalid credentials"}), 401
+        except ValueError as e:
+            print(f"Invalid password hash: {e}")  # Agregar registro
+            return jsonify({"msg": "Invalid password hash"}), 500
+    print("User not found")  # Agregar registro
+    return jsonify({"msg": "User not found"}), 404
+
+@api.route('/protected', methods=['GET'])
+@jwt_required()
+def protected():
+    current_user = get_jwt_identity()
+    return jsonify(logged_in_as=current_user), 200
+
+@api.route('/update_passwords', methods=['POST'])
+def update_passwords():
+    try:
+        users = User.query.all()
+        for user in users:
+            user.password = bcrypt.generate_password_hash("default_password").decode('utf-8')
+        db.session.commit()
+        return jsonify({"msg": "Passwords updated successfully"}), 200
+    except Exception as e:
+        print(f"Error updating passwords: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 app.register_blueprint(api, url_prefix='/api')

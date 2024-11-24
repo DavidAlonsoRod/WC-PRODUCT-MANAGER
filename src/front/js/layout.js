@@ -16,6 +16,7 @@ import CustomerView from "./pages/customerview";
 import LineItems from "./pages/lineitems";
 import OrderView from "./pages/orderview";
 import OrdersInProgress from "./pages/orderlistInProgress";
+import Settings from "./pages/settings";
 // import CustomerForm from "./pages/customerform"; 
 
 const Layout = () => {
@@ -38,6 +39,7 @@ const Layout = () => {
                         <Route element={<LineItems />} path="/lineitems" />
                         <Route element={<OrderView />} path="/orders/:orderId" />
                         <Route element={<CustomerView />} path="/customer/:customerId" />
+                        <Route element={<Settings />} path="/settings" />
                         {/* <Route element={<CustomerForm />} path="/customerform" />  */}
                         <Route element={<h1>Not found!</h1>} />
                     </Routes>

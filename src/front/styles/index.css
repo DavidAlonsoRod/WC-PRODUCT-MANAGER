@@ -1,3 +1,38 @@
 /* 
     General Styles used on every website (Don't Repeat Yourself)
 */
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f9f9f9; /* Cambiar el color de fondo */
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #444959; /* Fondo del formulario */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    color: #ffffff; 
+    font-weight: 100; /* Hacer el texto más fino */
+    
+}
+
+button.login {
+    background-color: #007bff; /* Color de fondo del botón de login */
+    color: #e21515; /* Color del texto del botón de login */
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button.login:hover {
+    background-color: #0056b3; /* Color de fondo del botón de login al pasar el ratón */
+}
