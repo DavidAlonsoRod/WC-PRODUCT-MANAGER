@@ -15,7 +15,6 @@ import os
 from datetime import datetime, timedelta
 from api.insert_line_items import insert_line_item
 from .controllers import get_order_by_id
-from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
 load_dotenv()
@@ -23,6 +22,8 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # Asegúrate de que CORS esté configurado para la aplicación Flask
 
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  # Configura la clave secreta del JWT
+jwt = JWTManager(app)
 
 api = Blueprint('api', __name__)
 CORS(api)  # Asegúrate de que CORS esté configurado para el Blueprint
@@ -57,7 +58,7 @@ def handle_hello():
 ############ CUSTOMERS ############
 
 @api.route("/import_customers", methods=["GET"])
-@jwt_required()
+
 def import_customers():
     try:
         roles = ['all', 'administrator', 'subscriber', 'desactivados', 'customer', 'fotgrafo_profesional', 'pago_con_tarjeta', 'transferencia_bancaria', 'domiciliacin_bancaria', 'transferencia_o_bizum_fin_de_mes', 'contrareembolso', 'translator', 'shop_manager', 'blocked']  # Lista de roles válidos
@@ -178,7 +179,6 @@ def import_customers():
         return jsonify({"msg": f"Error al importar clientes: {str(e)}"}), 500
 
 @api.route('/customers', methods=['GET'])
-@jwt_required()
 def get_customers():
     try:
         page = request.args.get('page', 1, type=int)
@@ -196,7 +196,6 @@ def get_customers():
         return jsonify({"error": str(e)}), 500
     
 @api.route('/customers/<int:customer_id>', methods=['GET'])
-@jwt_required()
 def get_customer(customer_id):
     try:
         customer = Customer.query.get(customer_id)
@@ -210,7 +209,7 @@ def get_customer(customer_id):
         return jsonify({"error": str(e)}), 500
     
 @api.route('/customers/<int:customer_id>', methods=['PUT'])
-@jwt_required()
+
 def update_customer(customer_id):
     try:
         data = request.json
@@ -304,7 +303,7 @@ def update_customer(customer_id):
 ############ ORDERS ############
 
 @api.route("/import_orders", methods=["GET"])
-@jwt_required()
+
 def import_orders():
     try:
         page = 1
@@ -438,7 +437,7 @@ def import_orders():
         return jsonify({"msg": f"Error al importar órdenes: {str(e)}"}), 500
 
 @api.route("/import_line_items", methods=["GET"])
-@jwt_required()
+
 def import_line_items():
     try:
         page = 1
@@ -492,62 +491,33 @@ def import_line_items():
             db.session.commit()
             page += 1  # Pasar a la siguiente página
 
-        return jsonify({"msg": "Artículos de línea importados y actualizados correctamente"}), 200
+        return jsonify({"msg": "Art��culos de línea importados y actualizados correctamente"}), 200
 
     except Exception as e:
         return jsonify({"msg": f"Error al importar artículos de línea: {str(e)}"}), 500
 
 
 @api.route('/orders', methods=['GET'])
-# @jwt_required()
+
 def get_orders():
     try:
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         customer_id = request.args.get('customer_id', type=int)
-        
-        params = {"per_page": per_page, "page": page}
+
+        query = Order.query
         if customer_id:
-            params["customer"] = customer_id
-        
-        response = wcapi.get("orders", params=params)
-        
-        if (response.status_code != 200):
-            return jsonify({"error": "Error fetching orders from WooCommerce"}), response.status_code
+            query = query.filter_by(customer_id=customer_id)
 
-        wc_orders = response.json()
-        total_orders = response.headers.get('X-WP-Total', 0)
-        orders = []
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        orders = pagination.items
+        total_orders = pagination.total
 
-        for wc_order in wc_orders:
-            date_created = datetime.strptime(wc_order["date_created"], "%Y-%m-%dT%H:%M:%S")
-            shipping_date = date_created + timedelta(days=9)
-            order = {
-                "id": wc_order["id"],
-                "number": wc_order["number"],
-                "status": wc_order["status"],  # Asegúrate de que el campo esté correctamente mapeado
-                "date_created": wc_order["date_created"],  # Asegúrate de que el campo esté correctamente mapeado
-                "shipping_date": shipping_date.isoformat(),
-                "discount_total": wc_order["discount_total"],
-                "discount_tax": wc_order["discount_tax"],
-                "shipping_total": wc_order["shipping_total"],
-                "shipping_tax": wc_order["shipping_tax"],
-                "cart_tax": wc_order["cart_tax"],
-                "total_tax": wc_order["total_tax"],
-                "total": wc_order["total"],
-                "payment_method": wc_order["payment_method"],
-                "payment_method_title": wc_order["payment_method_title"],
-                "customer_note": wc_order["customer_note"],
-                "date_completed": wc_order["date_completed"],
-                "customer_id": wc_order["customer_id"],
-                "billing": wc_order.get("billing", {}),
-                "shipping": wc_order.get("shipping", {})
-            }
-            orders.append(order)
+        serialized_orders = [order.serialize() for order in orders]
 
-        return jsonify({"orders": orders, "total_orders": int(total_orders), "page": page, "per_page": per_page}), 200
+        return jsonify({"orders": serialized_orders, "total_orders": total_orders, "page": page, "per_page": per_page}), 200
     except Exception as e:
-        print(f"Error: {str(e)}")  # Imprimir el error
+        print(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @api.route('/orders/filter', methods=['GET'])
@@ -574,44 +544,20 @@ def filter_orders_by_status():
 
 
 @api.route('/orders/<int:order_id>', methods=['GET'])
-@jwt_required()
 def get_order(order_id):
     try:
-        response = wcapi.get(f"orders/{order_id}")
-        if response.status_code != 200:
-            return jsonify({"error": "Error fetching order from WooCommerce"}), response.status_code
-        wc_order = response.json()
-        date_created = datetime.strptime(wc_order["date_created"], "%Y-%m-%dT%H:%M:%S")
-        shipping_date = date_created + timedelta(days=9)
-        order = {
-            "id": wc_order["id"],
-            "number": wc_order["number"],
-            "status": wc_order["status"],  # Asegúrate de que el campo esté correctamente mapeado
-            "date_created": wc_order["date_created"],  # Asegúrate de que el campo esté correctamente mapeado
-            "shipping_date": shipping_date.isoformat(),
-            "discount_total": wc_order["discount_total"],
-            "discount_tax": wc_order["discount_tax"],
-            "shipping_total": wc_order["shipping_total"],
-            "shipping_tax": wc_order["shipping_tax"],
-            "cart_tax": wc_order["cart_tax"],
-            "total_tax": wc_order["total_tax"],
-            "total": wc_order["total"],
-            "payment_method": wc_order["payment_method"],
-            "payment_method_title": wc_order["payment_method_title"],
-            "customer_note": wc_order["customer_note"],
-            "date_completed": wc_order["date_completed"],
-            "customer_id": wc_order["customer_id"],
-            "billing": wc_order.get("billing", {}),
-            "shipping": wc_order.get("shipping", {}),
-            "line_items": wc_order.get("line_items", [])  # Asegúrate de incluir los line_items
-        }
-        return jsonify(order), 200
+        order = Order.query.get(order_id)
+        if not order:
+            return jsonify({"error": "Order not found"}), 404
+
+        serialized_order = order.serialize()
+        return jsonify(serialized_order), 200
     except Exception as e:
-        print(f"Error: {str(e)}") 
+        print(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @api.route('/line_items', methods=['GET'])
-@jwt_required()
+
 def get_line_items():
     try:
         page = request.args.get('page', 1, type=int)
@@ -636,7 +582,7 @@ def get_line_items():
 
 
 @api.route('/orders/update', methods=['PUT'])
-@jwt_required()
+
 def update_order():
     try:
         data = request.json
@@ -678,7 +624,7 @@ def update_order():
         return jsonify({"error": str(e)}), 500
 
 @api.route('/orders/in-progress', methods=['GET'])
-@jwt_required()
+
 def get_orders_in_progress():
     try:
         page = request.args.get('page', 1, type=int)
@@ -736,7 +682,7 @@ def get_orders_in_progress():
         return jsonify({"error": str(e)}), 500
 
 @api.route('/import-data', methods=['POST'])
-@jwt_required()
+
 def import_data():
     try:
         data = request.json
@@ -751,7 +697,7 @@ def import_data():
         return jsonify({"error": str(e)}), 500
 
 @api.route('/orders/<int:order_id>', methods=['DELETE'])
-@jwt_required()
+
 def delete_order(order_id):
     try:
         order = Order.query.get(order_id)
@@ -769,13 +715,41 @@ def delete_order(order_id):
         response = wcapi.delete(f"orders/{order_id}", params={"force": True})
         if response.status_code != 200:
             print(f"Error deleting order in WooCommerce: {response.text}")
-            return jsonify({"error": "Error deleting order in WooCommerce"}), response.status_code
+            return jsonify({"error": response.json().get("message", "Error deleting order in WooCommerce")}), response.status_code
 
         return jsonify({"msg": "Order deleted successfully"}), 200
     except Exception as e:
         print(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+@api.route('/orders/bulk-delete', methods=['DELETE'])
+def bulk_delete_orders():
+    try:
+        order_ids = request.json.get('order_ids', [])
+        if not order_ids:
+            return jsonify({"error": "No order IDs provided"}), 400
+
+        for order_id in order_ids:
+            order = Order.query.get(order_id)
+            if not order:
+                continue
+
+            # Eliminar los artículos de línea asociados al pedido
+            LineItem.query.filter_by(order_id=order_id).delete()
+
+            # Eliminar el pedido de la base de datos local
+            db.session.delete(order)
+
+            # Eliminar el pedido de WooCommerce
+            response = wcapi.delete(f"orders/{order_id}", params={"force": True})
+            if response.status_code != 200:
+                print(f"Error deleting order {order_id} in WooCommerce: {response.text}")
+
+        db.session.commit()
+        return jsonify({"msg": "Orders deleted successfully"}), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @api.route('/login', methods=['POST'])
 def login():
@@ -783,7 +757,7 @@ def login():
     email = data.get('email')
     password = data.get('password')
 
-    print(f"Login attempt for email: {email}")  # Agregar registro
+    print(f"Login attempt for email: {email}") 
 
     user = User.query.filter_by(email=email, password=password).first()
     if user:
@@ -791,14 +765,14 @@ def login():
             # if bcrypt.check_password_hash(user.password, password):
             
             access_token = create_access_token(identity={'email': user.email})
-            print(f"Login successful for email: {email}")  # Agregar registro
+            print(f"Login successful for email: {email}")  
             return jsonify(access_token=access_token), 200
             
         except ValueError as e:
-            print(f"Invalid password hash: {e}")  # Agregar registro
+            print(f"Invalid password hash: {e}") 
             return jsonify({"msg": "Invalid password hash"}), 500
     else:
-        print("Invalid credentials")  # Agregar registro
+        print("Invalid credentials")  
         return jsonify({"msg": "Invalid credentials"}), 401
 
           
@@ -809,7 +783,7 @@ def protected():
     return jsonify(logged_in_as=current_user), 200
 
 @api.route('/update_passwords', methods=['POST'])
-@jwt_required()
+
 def update_passwords():
     try:
         users = User.query.all()
@@ -824,3 +798,6 @@ def update_passwords():
         return jsonify({"error": str(e)}), 500
 
 app.register_blueprint(api, url_prefix='/api')
+
+if __name__ == "__main__":
+    api.run()

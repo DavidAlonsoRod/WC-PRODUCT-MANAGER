@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
+import { Context } from '../store/appContext';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import "../../styles/orderlist.css";
 import { Tab, Tabs } from 'react-bootstrap';
 // import OrderActionsFooter from '../component/OrderActionsFooter';
 
-const Orders = () => {
-    const [orders, setOrders] = useState([]);
+function Orders() {
+    const { store, actions } = useContext(Context);
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(20);
-    const [totalOrders, setTotalOrders] = useState(0);
     const [customerId, setCustomerId] = useState(null);
     const [filters, setFilters] = useState({
         id: '',
@@ -112,33 +112,11 @@ const Orders = () => {
 
 
     useEffect(() => {
-        const fetchOrders = async () => {
-            try {
-                const params = {
-                    page: page,
-                    per_page: perPage,
-                };
-                if (customerId) {
-                    params.customer_id = customerId;
-                }
-                const endpoint = filters.status ? `${process.env.BACKEND_URL}/api/orders/filter` : `${process.env.BACKEND_URL}/api/orders`;
-                if (filters.status) {
-                    params.status = filters.status;
-                }
-                const response = await axios.get(endpoint, { params });
-
-                setOrders(response.data.orders || []);
-                setTotalOrders(response.data.total_orders || 0);
-            } catch (error) {
-                setOrders([]);
-            }
-        };
-
-        fetchOrders();
-        const intervalId = setInterval(fetchOrders, 300000); // Actualizar cada 5 minutos
+        actions.getOrders(page, perPage, customerId);
+        const intervalId = setInterval(() => actions.getOrders(page, perPage, customerId), 300000); // Actualizar cada 5 minutos
 
         return () => clearInterval(intervalId); // Limpiar el intervalo al desmontar el componente
-    }, [page, perPage, customerId, filters.status]);
+    }, [page, perPage, customerId, filters]);
 
     const handleRowClick = (orderId) => {
         navigate(`/orders/${orderId}`);
@@ -177,10 +155,9 @@ const Orders = () => {
     };
 
     const handleSelectOrder = (orderId) => {
-        setSelectedOrders(prevSelectedOrders =>
-            prevSelectedOrders.includes(orderId)
-                ? prevSelectedOrders.filter(id => id !== orderId)
-                : [...prevSelectedOrders, orderId]
+        setSelectedOrders(prevSelectedOrders => prevSelectedOrders.includes(orderId)
+            ? prevSelectedOrders.filter(id => id !== orderId)
+            : [...prevSelectedOrders, orderId]
         );
     };
 
@@ -191,7 +168,11 @@ const Orders = () => {
         // axios.post('/api/orders/batch-update', { orderIds: selectedOrders, newStatus: 'completed' });
     };
 
-    const filteredOrders = orders.filter(order => {
+    const handleDeleteOrders = async () => {
+        await actions.deleteOrders(selectedOrders);
+    };
+
+    const filteredOrders = store.orders.filter(order => {
         return (
             (filters.id === '' || order.id.toString().includes(filters.id)) &&
             (filters.customer === '' || (order.billing && `${order.billing.first_name} ${order.billing.last_name}`.toLowerCase().includes(filters.customer.toLowerCase()))) &&
@@ -210,19 +191,7 @@ const Orders = () => {
         return sortOrder === 'asc' ? (fieldA > fieldB ? 1 : -1) : (fieldA < fieldB ? 1 : -1);
     });
 
-    const handleDeleteOrders = async () => {
-        try {
-            for (const orderId of selectedOrders) {
-                await axios.delete(`${process.env.BACKEND_URL}/api/orders/${orderId}`);
-            }
-            setSelectedOrders([]);
-            fetchOrders(); // Refrescar la lista de pedidos
-        } catch (error) {
-            console.error("Error deleting orders:", error);
-        }
-    };
-
-    const totalPages = Math.ceil(totalOrders / perPage);
+    const totalPages = Math.ceil(store.totalOrders / perPage);
 
     return (
         <div>
@@ -232,7 +201,7 @@ const Orders = () => {
                 id="order-tabs"
                 className="m-5 custom-tabs"
             >
-                <Tab  className='m-3' eventKey="allOrders" title="Todos los Pedidos">
+                <Tab className='m-3' eventKey="allOrders" title="Todos los Pedidos">
                     <div className='border rounded-3 m-5 justify-content-center'>
 
 
@@ -247,13 +216,12 @@ const Orders = () => {
                                             type="checkbox"
                                             onChange={(e) => {
                                                 if (e.target.checked) {
-                                                    setSelectedOrders(orders.map(order => order.id));
+                                                    setSelectedOrders(store.orders.map(order => order.id));
                                                 } else {
                                                     setSelectedOrders([]);
                                                 }
-                                            }}
-                                            checked={selectedOrders.length === orders.length}
-                                        />
+                                            } }
+                                            checked={selectedOrders.length === store.orders.length} />
                                     </th>
                                     <th>
                                         ID
@@ -265,8 +233,7 @@ const Orders = () => {
                                             name="id"
                                             value={filters.id}
                                             onChange={handleFilterChange}
-                                            className="form-control"
-                                        />
+                                            className="form-control" />
                                     </th>
                                     <th>
                                         Cliente
@@ -275,8 +242,7 @@ const Orders = () => {
                                             name="customer"
                                             value={filters.customer}
                                             onChange={handleFilterChange}
-                                            className="form-control"
-                                        />
+                                            className="form-control" />
                                     </th>
                                     <th>
                                         Fecha creación
@@ -285,8 +251,7 @@ const Orders = () => {
                                             name="date_created"
                                             value={filters.date_created}
                                             onChange={(e) => handleDateChange('date_created', e.target.value)}
-                                            className="form-control"
-                                        />
+                                            className="form-control" />
                                     </th>
                                     <th>
                                         Salida estimada
@@ -295,8 +260,7 @@ const Orders = () => {
                                             name="shipping_date"
                                             value={filters.shipping_date}
                                             onChange={(e) => handleDateChange('shipping_date', e.target.value)}
-                                            className="form-control"
-                                        />
+                                            className="form-control" />
                                     </th>
                                     <th>
                                         Ciudad
@@ -305,8 +269,7 @@ const Orders = () => {
                                             name="city"
                                             value={filters.city}
                                             onChange={handleFilterChange}
-                                            className="form-control"
-                                        />
+                                            className="form-control" />
                                     </th>
                                     <th>
                                         Total
@@ -361,8 +324,7 @@ const Orders = () => {
                                                 type="checkbox"
                                                 checked={selectedOrders.includes(order.id)}
                                                 onChange={() => handleSelectOrder(order.id)}
-                                                onClick={(e) => e.stopPropagation()}
-                                            />
+                                                onClick={(e) => e.stopPropagation()} />
                                         </td>
                                         <td className='fw-light'>{order.id}</td>
                                         <td>
@@ -409,6 +371,6 @@ const Orders = () => {
             </Tabs>
         </div>
     );
-};
+}
 
 export default Orders;

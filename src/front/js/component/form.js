@@ -18,15 +18,15 @@ const Form = () => {
 
     return (
         <>
-            {store.auth === true ? <Navigate to="/demo" /> :
-                <div style={{ width: '400px', margin: '60px', padding: '15px' }}>
-                    <form className="w-50 mx-auto" onSubmit={sendData}>
+            {store.auth === true ? <Navigate to="/orders" /> :
+                <div style={{ width: '500px', margin: '70px', padding: '15px' }}>
+                    <form className="form w-50 mx-auto" onSubmit={sendData}>
                         <div className="mb-3">
-                            <label htmlFor="exampleInputEmail1" className="form-label">Email address</label>
+                            <label htmlFor="exampleInputEmail1" className="form-label">Usuario</label>
                             <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="form-control" id="exampleInputEmail1" />
                         </div>
                         <div className="mb-3">
-                            <label htmlFor="exampleInputPassword1" className="form-label">Password</label>
+                            <label htmlFor="exampleInputPassword1" className="form-label">Contraseña</label>
                             <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" className="form-control" id="exampleInputPassword1" />
                         </div>
                         {error && <div className="alert alert-danger" role="alert">{error}</div>}

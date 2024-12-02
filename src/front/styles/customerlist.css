@@ -81,10 +81,3 @@ span{
     border-radius: 0.2rem;
 }
 
-.form-control {
-    font-size: 0.875rem; /* Tamaño de fuente más pequeño */
-    padding: 0.25rem 0.5rem; /* Espaciado interno más pequeño */
-    height: auto; /* Ajustar altura automáticamente */
-}
-
-/* Puedes añadir más estilos según sea necesario */

@@ -13,8 +13,8 @@ const CustomerView = () => {
     const [error, setError] = useState(null);
     const componentRef = useRef();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isBillingModalOpen, setIsBillingModalOpen] = useState(false); // Estado para el modal de facturación
-    const [isShippingModalOpen, setIsShippingModalOpen] = useState(false); // Estado para el modal de envío
+    const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
+    const [isShippingModalOpen, setIsShippingModalOpen] = useState(false);
     const isMounted = useRef(true);
 
     const [orders, setOrders] = useState([]);
@@ -31,19 +31,19 @@ const CustomerView = () => {
     };
 
     const handleBillingEditClick = () => {
-        setIsBillingModalOpen(true); // Abrir el modal de facturación
+        setIsBillingModalOpen(true);
     };
 
     const handleCloseBillingModal = () => {
-        setIsBillingModalOpen(false); // Cerrar el modal de facturación
+        setIsBillingModalOpen(false);
     };
 
     const handleShippingEditClick = () => {
-        setIsShippingModalOpen(true); // Abrir el modal de envío
+        setIsShippingModalOpen(true);
     };
 
     const handleCloseShippingModal = () => {
-        setIsShippingModalOpen(false); // Cerrar el modal de envío
+        setIsShippingModalOpen(false);
     };
 
     const handleUpdateCustomer = async (updatedCustomer) => {
@@ -56,8 +56,8 @@ const CustomerView = () => {
             if (isMounted.current) {
                 setCustomer(updatedCustomer);
                 setIsModalOpen(false);
-                setIsBillingModalOpen(false); // Cerrar el modal de facturación después de actualizar
-                setIsShippingModalOpen(false); // Cerrar el modal de envío después de actualizar
+                setIsBillingModalOpen(false);
+                setIsShippingModalOpen(false);
             }
         } catch (err) {
             if (isMounted.current) {
@@ -131,66 +131,64 @@ const CustomerView = () => {
             <div className="container mt-0" ref={componentRef}>
                 <Tabs defaultActiveKey="customer" id="customer-tabs" className="mb-1 custom-tabs">
                     <Tab className='p-2' eventKey="customer" title="Datos de envio">
-                        <div className='d-flex'>
-                            <div className='m-5 p-3 border rounded-3'>
-                                <h4 className='p-2'>{customer.id}</h4>
-                                <h4>{customer.shipping.company}</h4>
-                                <h5>{customer.first_name} {customer.last_name}</h5>
-
-                                <p>Forma de pago: {customer.role}</p>
-                                <p>Usuario: {customer.username}</p>
-
+                        {customer && (
+                            <div className='d-flex'>
+                                <div className='m-5 p-3 border rounded-3'>
+                                    <h4 className='p-2'>{customer.id}</h4>
+                                    <h4>{customer.shipping?.company || 'N/A'}</h4>
+                                    <h5>{customer.first_name} {customer.last_name}</h5>
+                                    <p>Forma de pago: {customer.role}</p>
+                                    <p>Usuario: {customer.username}</p>
+                                </div>
+                                <div className='m-5 p-3 border rounded-3 customerboxes'>
+                                    <h4>Información de envio</h4>
+                                    <p>Nombre: <strong>{customer.shipping?.first_name || 'N/A'}</strong></p>
+                                    <p>Apellidos:  <strong>{customer.shipping?.last_name || 'N/A'}</strong></p>
+                                    <p>Dirección:  <strong>{customer.shipping?.address_1 || 'N/A'} {customer.shipping?.address_2 || ''}</strong></p>
+                                    <p>Ciudad:  <strong>{customer.shipping?.city || 'N/A'}</strong> </p>
+                                    <p>Provincia:  <strong>{customer.shipping?.state || 'N/A'}</strong></p>
+                                    <p>C.P.:  <strong>{customer.shipping?.postcode || 'N/A'}</strong></p>
+                                    <p>Teléfono:  <strong>{customer.billing?.phone || 'N/A'}</strong></p>
+                                    <button className='btn btn-custom mb-3' onClick={handleShippingEditClick}>Editar Envío</button>
+                                    {isShippingModalOpen && customer && (
+                                        <EditShippingModal
+                                            show={isShippingModalOpen}
+                                            handleClose={handleCloseShippingModal}
+                                            customer={customer}
+                                            updateCustomer={handleUpdateCustomer}
+                                        />
+                                    )}
+                                </div>
+                                <div className='m-5 p-3 border rounded-3'>
+                                    <h4>Detalles de facturación</h4>
+                                    <p>Nombre comercial: <strong>{customer.billing?.company || 'N/A'}</strong> </p>
+                                    <p>Nombre:  <strong>{customer.billing?.first_name || 'N/A'}</strong></p>
+                                    <p>Apellidos:  <strong>{customer.billing?.last_name || 'N/A'}</strong></p>
+                                    <p>Dirección:  <strong>{customer.billing?.address_1 || 'N/A'} {customer.billing?.address_2 || ''}</strong></p>
+                                    <p>Ciudad:  <strong>{customer.billing?.city || 'N/A'}</strong></p>
+                                    <p>Provincia:  <strong>{customer.billing?.state || 'N/A'}</strong></p>
+                                    <p>C. Postal:  <strong>{customer.billing?.postcode || 'N/A'}</strong></p>
+                                    <p>Nif:  <strong>{customer.billing?.nif || 'N/A'}</strong></p>
+                                    <p>Email:  <strong>{customer.billing?.email || 'N/A'}</strong></p>
+                                    <p>Teléfono:  <strong>{customer.billing?.phone || 'N/A'}</strong></p>
+                                    <p>Iban:  <strong>{customer.billing?.iban || 'N/A'}</strong></p>
+                                    <button className='btn btn-custom mb-3' onClick={handleBillingEditClick}>Editar Facturación</button>
+                                    {isBillingModalOpen && customer && (
+                                        <EditBillingModal
+                                            show={isBillingModalOpen}
+                                            handleClose={handleCloseBillingModal}
+                                            customer={customer}
+                                            updateCustomer={handleUpdateCustomer}
+                                        />
+                                    )}
+                                </div>
                             </div>
-                            <div className='m-5 p-3 border rounded-3 customerboxes'>
-                                <h4>Información de envio</h4>
-                                <p>Nombre: <strong>{customer.shipping.first_name}</strong></p>
-                                <p>Apellidos:  <strong>{customer.shipping.last_name}</strong></p>
-                                <p>Dirección:  <strong>{customer.shipping.address_1} {customer.shipping.address_2}</strong></p>
-                                <p>Ciudad:  <strong>{customer.shipping.city}</strong> </p>
-                                <p>Provincia:  <strong>{customer.shipping.state}</strong></p>
-                                <p>C.P.:  <strong>{customer.shipping.postcode}</strong></p>
-                                {/* <p>Email:  <strong>{customer.email}</strong></p> */}
-                                <p>Teléfono:  <strong>{customer.billing.phone}</strong></p>
-                                <button className='btn btn-custom mb-3' onClick={handleShippingEditClick}>Editar Envío</button>
-                                {isShippingModalOpen && customer && (
-                                    <EditShippingModal
-                                        show={isShippingModalOpen}
-                                        handleClose={handleCloseShippingModal}
-                                        customer={customer}
-                                        updateCustomer={handleUpdateCustomer}
-                                    />
-                                )}
-                            </div>
-                            <div className='m-5 p-3 border rounded-3'>
-                                <h4>Detalles de facturación</h4>
-                                <p>Nombre comercial: <strong>{customer.billing ? customer.billing.company : 'N/A'}</strong> </p>
-                                <p>Nombre:  <strong>{customer.billing ? customer.billing.first_name : 'N/A'}</strong></p>
-                                <p>Apellidos:  <strong>{customer.billing ? customer.billing.last_name : 'N/A'}</strong></p>
-                                <p>Dirección:  <strong>{customer.billing ? `${customer.billing.address_1} ${customer.billing.address_2}` : 'N/A'}</strong></p>
-                                <p>Ciudad:  <strong>{customer.billing ? customer.billing.city : 'N/A'}</strong></p>
-                                <p>Provincia:  <strong>{customer.billing ? customer.billing.state : 'N/A'}</strong></p>
-                                <p>C. Postal:  <strong>{customer.billing ? customer.billing.postcode : 'N/A'}</strong></p>
-                                <p>Nif:  <strong>{customer.billing ? customer.billing.nif : 'N/A'}</strong></p>
-                                <p>Email:  <strong>{customer.billing ? customer.billing.email : 'N/A'}</strong></p>
-                                <p>Teléfono:  <strong>{customer.billing ? customer.billing.phone : 'N/A'}</strong></p>
-                                <p>Iban:  <strong>{customer.billing ? customer.billing.iban : 'N/A'}</strong></p>
-                                <button className='btn btn-custom mb-3' onClick={handleBillingEditClick}>Editar Facturación</button>
-                                {isBillingModalOpen && customer && (
-                                    <EditBillingModal
-                                        show={isBillingModalOpen}
-                                        handleClose={handleCloseBillingModal}
-                                        customer={customer}
-                                        updateCustomer={handleUpdateCustomer}
-                                    />
-                                )}
-                            </div>
-                        </div>
+                        )}
                     </Tab>
-
                     <Tab eventKey="shipping" title="Pedidos">
-                        {customer.shipping ? (
+                        {customer?.shipping ? (
                             <div className='m-5 p-3 border rounded-3'>
-                                <h4>Pedidos de {customer.billing.company}</h4>
+                                <h4>Pedidos de {customer.billing?.company || 'N/A'}</h4>
                                 {orders && orders.length > 0 ? (
                                     <>
                                         <table className='table caption-top'>
@@ -241,7 +239,6 @@ const CustomerView = () => {
                         )}
                     </Tab>
                 </Tabs>
-
             </div>
         </div>
     );

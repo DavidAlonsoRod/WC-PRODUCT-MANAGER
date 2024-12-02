@@ -15,7 +15,7 @@ export const Navbar = () => {
 	}
 
 	return (
-		<nav className="navbar border-bottom border-body fixed-top" id="navbar">
+		<nav className="navbar border-bottom border-body" id="navbar">
 			<div className="container-fluid">
 				<div className="d-flex col-2 justify-content-center">
 					<img src={logo} alt="Logo" className="navbar-logo ms-3" />
@@ -32,7 +32,7 @@ export const Navbar = () => {
 								Pedidos
 							</button>
 						</Link>
-						<Link to="/demo">
+						<Link to="/invoices">
 							<button className="btn" id="button">
 								<svg className="m-2" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="20px" fill="#629a97"><path d="M240-80q-50 0-85-35t-35-85v-120h120v-560l60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60v680q0 50-35 85t-85 35H240Zm480-80q17 0 28.5-11.5T760-200v-560H320v440h360v120q0 17 11.5 28.5T720-160ZM360-600v-80h240v80H360Zm0 120v-80h240v80H360Zm320-120q-17 0-28.5-11.5T640-640q0-17 11.5-28.5T680-680q17 0 28.5 11.5T720-640q0 17-11.5 28.5T680-600Zm0 120q-17 0-28.5-11.5T640-520q0-17 11.5-28.5T680-560q17 0 28.5 11.5T720-520q0 17-11.5 28.5T680-480ZM240-160h360v-80H200v40q0 17 11.5 28.5T240-160Zm-40 0v-80 80Z" /></svg>
 								Facturas
@@ -51,8 +51,8 @@ export const Navbar = () => {
 							</button>
 							<ul className="dropdown-menu">
 								<li><Link to="/customers" className="dropdown-item">Listado de clientes</Link></li>
-								<li><Link to="/customer-orders" className="dropdown-item">Pedidos por cliente</Link></li>
-								<li><Link to="/another-option" className="dropdown-item">Otra opción</Link></li>
+								{/* <li><Link to="/customer-orders" className="dropdown-item">Pedidos por cliente</Link></li>
+								<li><Link to="/another-option" className="dropdown-item">Otra opción</Link></li> */}
 							</ul>
 						</div>
 						<Link to="/settings">
