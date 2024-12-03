@@ -179,6 +179,7 @@ def import_customers():
         return jsonify({"msg": f"Error al importar clientes: {str(e)}"}), 500
 
 @api.route('/customers', methods=['GET'])
+@jwt_required()
 def get_customers():
     try:
         page = request.args.get('page', 1, type=int)
@@ -498,7 +499,7 @@ def import_line_items():
 
 
 @api.route('/orders', methods=['GET'])
-
+@jwt_required()
 def get_orders():
     try:
         page = request.args.get('page', 1, type=int)
@@ -624,7 +625,7 @@ def update_order():
         return jsonify({"error": str(e)}), 500
 
 @api.route('/orders/in-progress', methods=['GET'])
-
+@jwt_required()
 def get_orders_in_progress():
     try:
         page = request.args.get('page', 1, type=int)
@@ -697,7 +698,7 @@ def import_data():
         return jsonify({"error": str(e)}), 500
 
 @api.route('/orders/<int:order_id>', methods=['DELETE'])
-
+@jwt_required()
 def delete_order(order_id):
     try:
         order = Order.query.get(order_id)

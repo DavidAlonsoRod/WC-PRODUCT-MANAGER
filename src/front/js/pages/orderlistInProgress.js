@@ -122,8 +122,15 @@ const OrdersInProgress = () => {
                 if (customerId) {
                     params.customer_id = customerId;
                 }
+                const headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+
                 const endpoint = `${process.env.BACKEND_URL}/api/orders/in-progress`;
-                const response = await axios.get(endpoint, { params });
+                const response = await axios.get(endpoint, { params, headers });
+
+
 
                 if (isMounted) { // Solo actualizar el estado si el componente está montado
                     setOrders(response.data.orders || []);

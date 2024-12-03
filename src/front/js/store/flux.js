@@ -21,7 +21,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 			totalOrders: 0,
 			lineItems: [],
 			totalLineItems: 0,
-			notification: null 
+			notification: null
 		},
 		actions: {
 
@@ -64,39 +64,39 @@ const getState = ({ getStore, getActions, setStore }) => {
 				}
 			},
 
-			verifyToken: async () => {
-				const token = localStorage.getItem("token");
+			// verifyToken: async () => {
+			// 	const token = localStorage.getItem("token");
 
-				if (!token) {
-					setStore({ auth: false });
-					return false;
-				}
+			// 	if (!token) {
+			// 		setStore({ auth: false });
+			// 		return false;
+			// 	}
 
-				const requestOptions = {
-					method: 'GET',
-					headers: {
-						"Content-Type": "application/json",
-						"Authorization": `Bearer ${token}`
-					}
-				};
+			// 	const requestOptions = {
+			// 		method: 'GET',
+			// 		headers: {
+			// 			"Content-Type": "application/json",
+			// 			"Authorization": `Bearer ${token}`
+			// 		}
+			// 	};
 
-				try {
-					const response = await fetch(process.env.BACKEND_URL + "/api/privatepage", requestOptions);
+			// 	try {
+			// 		const response = await fetch(process.env.BACKEND_URL + "/api/privatepage", requestOptions);
 
-					if (response.status === 200) {
-						setStore({ auth: true });
-						return true;
-					} else {
-						localStorage.removeItem("token");
-						setStore({ auth: false });
-						return false;
-					}
-				} catch (error) {
-					console.error('Error verifying token:', error);
-					setStore({ auth: false });
-					return false;
-				}
-			},
+			// 		if (response.status === 200) {
+			// 			setStore({ auth: true });
+			// 			return true;
+			// 		} else {
+			// 			localStorage.removeItem("token");
+			// 			setStore({ auth: false });
+			// 			return false;
+			// 		}
+			// 	} catch (error) {
+			// 		console.error('Error verifying token:', error);
+			// 		setStore({ auth: false });
+			// 		return false;
+			// 	}
+			// },
 
 
 

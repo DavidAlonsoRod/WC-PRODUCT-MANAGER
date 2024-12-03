@@ -26,7 +26,7 @@ const Layout = () => {
     const basename = process.env.BASENAME || "";
 
     useEffect(() => {
-        actions.verifyToken();
+        // actions.verifyToken();
     }, []);
 
     if (!process.env.BACKEND_URL || process.env.BACKEND_URL == "") return <BackendURL />;
