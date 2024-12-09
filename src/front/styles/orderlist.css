@@ -43,10 +43,14 @@ span{
 
 }
 
+td, th {
+    border-bottom: 1px solid #dee2e6;
+}
+
 .btn-warning {
     background-color: #ffebb1;
     border-color: #ffebb1;
-    
+    border-bottom: 1px solid #dee2e6;
     color: #392d2d;
 }
 
@@ -73,11 +77,26 @@ span{
     border-color: #f8f9fa;
     color: #212529;
 }
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
 .btn-urgent {
     background-color: #1c1663;
-    /* border-color: #f8f9fa; */
-    color: #48dc12;
-    display: table-cell; /* Asegurar que se muestre como celda de tabla */
+    color: #f80101;
+    display: table-cell; 
+    animation: blink 2s infinite; 
+    line-height: 1.5;
+    border-bottom: 1px solid #dee2e6;
+    align-content: flex-start;
 }
 
 .btn-small {

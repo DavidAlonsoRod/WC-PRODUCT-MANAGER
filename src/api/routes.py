@@ -19,7 +19,7 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__)  # Añadir esta línea para crear la instancia de Flask
 CORS(app, resources={r"/*": {"origins": "*"}})  # Asegúrate de que CORS esté configurado para la aplicación Flask
 
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  # Configura la clave secreta del JWT
@@ -179,7 +179,7 @@ def import_customers():
         return jsonify({"msg": f"Error al importar clientes: {str(e)}"}), 500
 
 @api.route('/customers', methods=['GET'])
-@jwt_required()
+
 def get_customers():
     try:
         page = request.args.get('page', 1, type=int)
@@ -195,7 +195,7 @@ def get_customers():
     except Exception as e:
         print(f"Error: {str(e)}")  # Imprimir el error
         return jsonify({"error": str(e)}), 500
-    
+
 @api.route('/customers/<int:customer_id>', methods=['GET'])
 def get_customer(customer_id):
     try:
@@ -499,7 +499,7 @@ def import_line_items():
 
 
 @api.route('/orders', methods=['GET'])
-@jwt_required()
+
 def get_orders():
     try:
         page = request.args.get('page', 1, type=int)
@@ -625,7 +625,7 @@ def update_order():
         return jsonify({"error": str(e)}), 500
 
 @api.route('/orders/in-progress', methods=['GET'])
-@jwt_required()
+
 def get_orders_in_progress():
     try:
         page = request.args.get('page', 1, type=int)
@@ -778,27 +778,13 @@ def login():
 
           
 @api.route('/protected', methods=['GET'])
-@jwt_required()
+
 def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
-
-@api.route('/update_passwords', methods=['POST'])
-
-def update_passwords():
-    try:
-        users = User.query.all()
-        for user in users:
-            # Generar una contraseña segura y única para cada usuario
-            new_password = bcrypt.generate_password_hash("default_password").decode('utf-8')
-            user.password = new_password
-        db.session.commit()
-        return jsonify({"msg": "Passwords updated successfully"}), 200
-    except Exception as e:
-        print(f"Error updating passwords: {str(e)}")
-        return jsonify({"error": str(e)}), 500
 
 app.register_blueprint(api, url_prefix='/api')
 
 if __name__ == "__main__":
     api.run()
+

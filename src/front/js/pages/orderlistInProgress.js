@@ -111,26 +111,26 @@ const OrdersInProgress = () => {
 
     useEffect(() => {
         let isMounted = true; // Variable para controlar si el componente está montado
+        const token = localStorage.getItem("token"); // Definir la variable token
 
         const fetchOrders = async () => {
+            if (!isMounted) return; // Evitar múltiples solicitudes
             try {
-                const params = {
-                    page: page,
-                    per_page: perPage,
-                    ...filters // Añadir filtros a los parámetros
-                };
+                const params = new URLSearchParams({
+                    page: String(page),
+                    per_page: String(perPage),
+                    ...Object.fromEntries(Object.entries(filters).map(([key, value]) => [key, value ? String(value) : '']))
+                });
                 if (customerId) {
-                    params.customer_id = customerId;
+                    params.append('customer_id', String(customerId));
                 }
                 const headers = {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 }
 
-                const endpoint = `${process.env.BACKEND_URL}/api/orders/in-progress`;
-                const response = await axios.get(endpoint, { params, headers });
-
-
+                const endpoint = `${process.env.BACKEND_URL}/api/orders/in-progress?${params.toString()}`;
+                const response = await axios.get(endpoint, { headers });
 
                 if (isMounted) { // Solo actualizar el estado si el componente está montado
                     setOrders(response.data.orders || []);
@@ -138,6 +138,7 @@ const OrdersInProgress = () => {
                 }
             } catch (error) {
                 if (isMounted) { // Solo actualizar el estado si el componente está montado
+                    console.error("Error fetching orders:", error.response ? error.response.data : error.message);
                     setOrders([]);
                 }
             }
@@ -211,7 +212,7 @@ const OrdersInProgress = () => {
             setSelectedOrders([]);
             fetchOrders(); // Refrescar la lista de pedidos
         } catch (error) {
-            console.error("Error deleting orders:", error);
+            console.error("Error deleting orders:", error.response ? error.response.data : error.message);
         }
     };
 

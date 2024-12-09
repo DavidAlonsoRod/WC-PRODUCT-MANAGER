@@ -19,8 +19,6 @@ ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../public/')
 app = Flask(__name__)
-app.config['JWT_SECRET_KEY'] = 'clave-secreta'  
-jwt = JWTManager(app)
 app.url_map.strict_slashes = False
 
 # database configuration
@@ -35,8 +33,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db, compare_type=True)
 db.init_app(app)
 
-with app.app_context():
-    init_engine()  # Inicializar el engine dentro del contexto de la aplicación
+# with app.app_context():
+#     init_engine()  # Inicializar el engine dentro del contexto de la aplicación
 
 # add the admin
 setup_admin(app)
@@ -45,9 +43,14 @@ setup_admin(app)
 setup_commands(app)
 
 # Add all endpoints form the API with a "api" prefix
-app.register_blueprint(api, url_prefix='/api')
+
 
 # Handle/serialize errors like a JSON object
+app.config['JWT_SECRET_KEY'] = 'clave-secreta'  
+jwt = JWTManager(app)
+
+app.register_blueprint(api, url_prefix='/api')
+
 @app.errorhandler(APIException)
 def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code

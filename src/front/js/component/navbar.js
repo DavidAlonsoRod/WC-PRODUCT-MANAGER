@@ -12,6 +12,8 @@ export const Navbar = () => {
 	function handleLogout() {
 		actions.logout();
 		navigate('/');
+		setOpen(false);
+		navigate("/logoutok");
 	}
 
 	return (
@@ -25,7 +27,7 @@ export const Navbar = () => {
 					<h5 className="m-1">Gestión de fabricación y envío de productos de Woocommerce</h5>
 				</div>
 				{store.auth && (
-					<div className="col-6 navbar-links">
+					<div className="col-6 navbar-links d-flex align-items-center">
 						<Link to="/orders">
 							<button className="btn" id="button">
 								<svg className="m-2" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="24px" fill="#629a97"><path d="M320-280q17 0 28.5-11.5T360-320q0-17-11.5-28.5T320-360q-17 0-28.5 11.5T280-320q0 17 11.5 28.5T320-280Zm0-160q17 0 28.5-11.5T360-480q0-17-11.5-28.5T320-520q-17 0-28.5 11.5T280-480q0 17 11.5 28.5T320-440Zm0-160q17 0 28.5-11.5T360-640q0-17-11.5-28.5T320-680q-17 0-28.5 11.5T280-640q0 17 11.5 28.5T320-600Zm120 320h240v-80H440v80Zm0-160h240v-80H440v80Zm0-160h240v-80H440v80ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z" /></svg>
@@ -61,6 +63,14 @@ export const Navbar = () => {
 								Configuración
 							</button>
 						</Link>
+						<div className="ms-auto">
+							<Link to="/">
+								<button onClick={handleLogout} className="btn" id="button">
+									<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="red"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h280v80H200Zm440-160-55-58 102-102H360v-80h327L585-622l55-58 200 200-200 200Z" /></svg>
+									Salir
+								</button>
+							</Link>
+						</div>
 					</div>
 				)}
 			</div>

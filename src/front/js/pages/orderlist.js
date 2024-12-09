@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import "../../styles/orderlist.css";
 import { Tab, Tabs } from 'react-bootstrap';
-// import OrderActionsFooter from '../component/OrderActionsFooter';
+
 
 function Orders() {
     const { store, actions } = useContext(Context);
@@ -98,7 +98,7 @@ function Orders() {
         "PayPal",
         "Credit Card",
         "Bank Transfer",
-        // A��adir más métodos de pago según sea necesario
+       
     ];
 
     const orderStatuses = [
@@ -107,15 +107,26 @@ function Orders() {
         "completed",
         "pending",
         "cancelled",
-        // Añadir más estados según sea necesario
+       
     ];
 
-
     useEffect(() => {
-        actions.getOrders(page, perPage, customerId);
-        const intervalId = setInterval(() => actions.getOrders(page, perPage, customerId), 300000); // Actualizar cada 5 minutos
-
-        return () => clearInterval(intervalId); // Limpiar el intervalo al desmontar el componente
+        const token = localStorage.getItem("token");
+        if (token) {
+            if (isNaN(page) || isNaN(perPage)) {
+                console.error("Invalid page or perPage value");
+                return;
+            }
+            actions.getOrders(page, perPage, customerId, filters).catch(error => {
+                console.error("Error fetching orders:", error.response ? error.response.data : error.message);
+            });
+            const intervalId = setInterval(() => actions.getOrders(page, perPage, customerId, filters).catch(error => {
+                console.error("Error fetching orders:", error.response ? error.response.data : error.message);
+            }), 300000);
+            return () => clearInterval(intervalId);
+        } else {
+            console.error("No token found");
+        }
     }, [page, perPage, customerId, filters]);
 
     const handleRowClick = (orderId) => {
@@ -164,12 +175,15 @@ function Orders() {
     const handleBatchAction = () => {
         // Realizar la acción deseada con los pedidos seleccionados
         console.log('Pedidos seleccionados:', selectedOrders);
-        // Ejemplo: cambiar el estado de los pedidos seleccionados
-        // axios.post('/api/orders/batch-update', { orderIds: selectedOrders, newStatus: 'completed' });
+        
     };
 
     const handleDeleteOrders = async () => {
-        await actions.deleteOrders(selectedOrders);
+        try {
+            await actions.deleteOrders(selectedOrders);
+        } catch (error) {
+            console.error("Error deleting orders:", error.response ? error.response.data : error.message);
+        }
     };
 
     const filteredOrders = store.orders.filter(order => {
@@ -205,7 +219,7 @@ function Orders() {
                     <div className='border rounded-3 m-5 justify-content-center'>
 
 
-                        <button onClick={handleBatchAction} className="btn btn-primary m-3">Realizar acción en pedidos seleccionados</button>
+                        {/* <button onClick={handleBatchAction} className="btn btn-primary m-3">Realizar acción en pedidos seleccionados</button> */}
                         <button onClick={handleDeleteOrders} className="btn btn-danger m-3">Borrar pedidos seleccionados</button>
                         <table className='table caption-top'>
                             <caption className='p-3'>Pedidos</caption>
