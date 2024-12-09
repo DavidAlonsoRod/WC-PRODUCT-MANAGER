@@ -179,7 +179,7 @@ def import_customers():
         return jsonify({"msg": f"Error al importar clientes: {str(e)}"}), 500
 
 @api.route('/customers', methods=['GET'])
-
+@jwt_required()
 def get_customers():
     try:
         page = request.args.get('page', 1, type=int)

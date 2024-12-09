@@ -13,7 +13,7 @@ export const Navbar = () => {
 		actions.logout();
 		navigate('/');
 		setOpen(false);
-		navigate("/logoutok");
+		
 	}
 
 	return (
@@ -26,7 +26,7 @@ export const Navbar = () => {
 					<h2 className="m-1">Woocomerce Product Manager</h2>
 					<h5 className="m-1">Gestión de fabricación y envío de productos de Woocommerce</h5>
 				</div>
-				{store.auth && (
+				{store.auth || localStorage.getItem("token") && (
 					<div className="col-6 navbar-links d-flex align-items-center">
 						<Link to="/orders">
 							<button className="btn" id="button">

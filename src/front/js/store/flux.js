@@ -69,39 +69,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 				}
 			},
 
-			// verifyToken: async () => {
-			// 	const token = localStorage.getItem("token");
-
-			// 	if (!token) {
-			// 		setStore({ auth: false });
-			// 		return false;
-			// 	}
-
-			// 	const requestOptions = {
-			// 		method: 'GET',
-			// 		headers: {
-			// 			"Content-Type": "application/json",
-			// 			"Authorization": `Bearer ${token}`
-			// 		}
-			// 	};
-
-			// 	try {
-			// 		const response = await fetch(process.env.BACKEND_URL + "/api/privatepage", requestOptions);
-
-			// 		if (response.status === 200) {
-			// 			setStore({ auth: true });
-			// 			return true;
-			// 		} else {
-			// 			localStorage.removeItem("token");
-			// 			setStore({ auth: false });
-			// 			return false;
-			// 		}
-			// 	} catch (error) {
-			// 		console.error('Error verifying token:', error);
-			// 		setStore({ auth: false });
-			// 		return false;
-			// 	}
-			// },
 
 
 
@@ -118,46 +85,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log("Error loading message from backend", error)
 				}
 			},
-			// getCustomers: async (page = 1, per_page = 20) => {
-			// 	const store = getStore();
-			// 	if (store.isFetchingCustomers) return; // Evitar múltiples solicitudes
-			// 	setStore({ isFetchingCustomers: true });
-			// 	const token = localStorage.getItem("token");
-			// 	if (!token) {
-			// 		console.error("No token found");
-			// 		setStore({ auth: false });
-			// 		return;
-			// 	}
-			// 	const params = new URLSearchParams({
-			// 		page: String(page),
-			// 		per_page: String(per_page)
-			// 	});
-			// 	const requestOptions = {
-			// 		method: 'GET',
-			// 		headers: {
-			// 			"Content-Type": "application/json",
-			// 			"Authorization": `Bearer ${token}`  // Asegúrate de que el token JWT se envíe correctamente
-			// 		}
-			// 	};
-			// 	try {
-			// 		const response = await fetch(`${process.env.BACKEND_URL}/api/customers?${params.toString()}`, requestOptions);
-			// 		if (response.ok) {
-			// 			const data = await response.json();
-			// 			setStore({ customers: data.customers, totalCustomers: data.total_customers, isFetchingCustomers: false });
-			// 		} else {
-			// 			const errorData = await response.json();
-			// 			console.error("Failed to fetch customers:", errorData);
-			// 			if (response.status === 401) {
-			// 				localStorage.removeItem("token");
-			// 				setStore({ auth: false });
-			// 			}
-			// 			throw new Error("Failed to fetch customers");
-			// 		}
-			// 	} catch (error) {
-			// 		console.error("Error fetching customers:", error);
-			// 		setStore({ isFetchingCustomers: false });
-			// 	}
-			// },
+			
 			getOrders: async (page = 1, per_page = 20, customerId = null, filters = {}) => {
 				const store = getStore();
 				if (store.isFetchingOrders) return; // Evitar múltiples solicitudes

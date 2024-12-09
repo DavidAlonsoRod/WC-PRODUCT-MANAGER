@@ -265,9 +265,7 @@ const CustomerView = () => {
                                                         <td>{new Date(order.date_created).toLocaleDateString()}</td>
                                                         <td>{new Date(order.date_created).toLocaleDateString()}</td>
                                                         <td>{order.status}</td>
-                                                        <td>
-                                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteOrder(order.id); }} className="btn btn-danger">Eliminar</button>
-                                                        </td>
+                                                        
                                                     </tr>
                                                 ))}
                                             </tbody>

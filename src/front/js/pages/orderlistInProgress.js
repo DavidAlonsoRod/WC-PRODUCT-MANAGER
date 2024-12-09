@@ -60,6 +60,16 @@ const OrdersInProgress = () => {
                 return status;
         }
     };
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.error("No token found");
+            navigate("/");
+            return;
+        }
+
+    }, []);
+
 
     const getStatusClass = (status) => {
         switch (status) {

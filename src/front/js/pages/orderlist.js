@@ -26,6 +26,7 @@ function Orders() {
     const [selectedOrders, setSelectedOrders] = useState([]);
     const navigate = useNavigate();
 
+
     const formatDate = (dateString) => {
         if (!dateString) return 'Fecha no disponible';
         const date = new Date(dateString);
@@ -78,6 +79,17 @@ function Orders() {
                 return 'btn-small';
         }
     };
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.error("No token found");
+            navigate("/");
+            return;
+        }
+
+    }, []);
+
+
 
     const getShippingDateClass = (shippingDate) => {
         if (!shippingDate) return 'btn-small';
@@ -98,7 +110,7 @@ function Orders() {
         "PayPal",
         "Credit Card",
         "Bank Transfer",
-       
+
     ];
 
     const orderStatuses = [
@@ -107,7 +119,7 @@ function Orders() {
         "completed",
         "pending",
         "cancelled",
-       
+
     ];
 
     useEffect(() => {
@@ -175,7 +187,7 @@ function Orders() {
     const handleBatchAction = () => {
         // Realizar la acción deseada con los pedidos seleccionados
         console.log('Pedidos seleccionados:', selectedOrders);
-        
+
     };
 
     const handleDeleteOrders = async () => {
@@ -219,7 +231,7 @@ function Orders() {
                     <div className='border rounded-3 m-5 justify-content-center'>
 
 
-                        {/* <button onClick={handleBatchAction} className="btn btn-primary m-3">Realizar acción en pedidos seleccionados</button> */}
+
                         <button onClick={handleDeleteOrders} className="btn btn-danger m-3">Borrar pedidos seleccionados</button>
                         <table className='table caption-top'>
                             <caption className='p-3'>Pedidos</caption>
@@ -234,7 +246,7 @@ function Orders() {
                                                 } else {
                                                     setSelectedOrders([]);
                                                 }
-                                            } }
+                                            }}
                                             checked={selectedOrders.length === store.orders.length} />
                                     </th>
                                     <th>
