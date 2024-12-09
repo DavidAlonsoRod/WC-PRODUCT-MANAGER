@@ -43,10 +43,14 @@ span{
 
 }
 
+td, th {
+    border-bottom: 1px solid #dee2e6;
+}
+
 .btn-warning {
     background-color: #ffebb1;
     border-color: #ffebb1;
-    
+    border-bottom: 1px solid #dee2e6;
     color: #392d2d;
 }
 
@@ -73,11 +77,43 @@ span{
     border-color: #f8f9fa;
     color: #212529;
 }
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.btn-urgent {
+    background-color: #1c1663;
+    color: #f80101;
+    display: table-cell; 
+    animation: blink 2s infinite; 
+    line-height: 1.5;
+    border-bottom: 1px solid #dee2e6;
+    align-content: flex-start;
+}
 
 .btn-small {
     padding: 0.25rem 0.5rem;
-    font-size: 0.70rem;
+    font-size: 0.1rem;
     line-height: 1.5;
     border-radius: 0.2rem;
 }
 
+.form-control {
+    font-size: 0.875rem; /* Tamaño de fuente más pequeño */
+    padding: 0.25rem 0.5rem; /* Espaciado interno más pequeño */
+    height: auto; /* Ajustar altura automáticamente */
+}
+
+.custom-tabs-margin {
+    margin: 20px; /* Ajustar el valor según sea necesario */
+}
+
+/* Puedes añadir más estilos según sea necesario */

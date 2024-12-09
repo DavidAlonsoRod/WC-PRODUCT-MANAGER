@@ -1,11 +1,12 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import { Tab, Tabs } from 'react-bootstrap';
 import "../../styles/customerview.css";
-// import CustomerEditModal from '../component/CustomerEditModal';
+import { useNavigate, Link } from 'react-router-dom';
 import EditBillingModal from '../component/EditBillingModal';
 import EditShippingModal from '../component/EditShippingModal';
+import { Context } from '../store/appContext';
 
 const CustomerView = () => {
     const { customerId } = useParams();
@@ -14,9 +15,17 @@ const CustomerView = () => {
     const [error, setError] = useState(null);
     const componentRef = useRef();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isBillingModalOpen, setIsBillingModalOpen] = useState(false); // Estado para el modal de facturación
-    const [isShippingModalOpen, setIsShippingModalOpen] = useState(false); // Estado para el modal de envío
+    const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
+    const [isShippingModalOpen, setIsShippingModalOpen] = useState(false);
     const isMounted = useRef(true);
+    const navigate = useNavigate();
+    const { actions } = useContext(Context);
+
+    const [orders, setOrders] = useState([]);
+    const [ordersPage, setOrdersPage] = useState(1);
+    const [ordersPerPage, setOrdersPerPage] = useState(20);
+    const [totalOrders, setTotalOrders] = useState(0);
+    const [selectedOrders, setSelectedOrders] = useState([]);
 
     const handleEditClick = () => {
         setIsModalOpen(true);
@@ -25,21 +34,54 @@ const CustomerView = () => {
     const handleCloseModal = () => {
         setIsModalOpen(false);
     };
-
+    const handleSelectOrder = (orderId) => {
+        setSelectedOrders(prevSelectedOrders => prevSelectedOrders.includes(orderId)
+            ? prevSelectedOrders.filter(id => id !== orderId)
+            : [...prevSelectedOrders, orderId]
+        );
+    };
+    const handleDeleteOrders = async () => {
+        try {
+            await actions.deleteOrders(selectedOrders);
+        } catch (error) {
+            console.error("Error deleting orders:", error.response ? error.response.data : error.message);
+        }
+    };
+    const handleDeleteOrder = async (orderId) => {
+        try {
+            await actions.deleteOrder(orderId);
+            // Actualizar la lista de pedidos después de eliminar
+            const response = await axios.get(`${process.env.BACKEND_URL}/api/orders`, {
+                params: {
+                    customer_id: customerId,
+                    page: ordersPage,
+                    per_page: ordersPerPage,
+                    order: 'desc',
+                    orderby: 'date_created'
+                }
+            });
+            if (isMounted.current) {
+                setOrders(response.data.orders);
+                setTotalOrders(response.data.total_orders);
+            }
+        } catch (error) {
+            console.error("Error deleting order:", error.response ? error.response.data : error.message);
+        }
+    };
     const handleBillingEditClick = () => {
-        setIsBillingModalOpen(true); // Abrir el modal de facturación
+        setIsBillingModalOpen(true);
     };
 
     const handleCloseBillingModal = () => {
-        setIsBillingModalOpen(false); // Cerrar el modal de facturación
+        setIsBillingModalOpen(false);
     };
 
     const handleShippingEditClick = () => {
-        setIsShippingModalOpen(true); // Abrir el modal de envío
+        setIsShippingModalOpen(true);
     };
 
     const handleCloseShippingModal = () => {
-        setIsShippingModalOpen(false); // Cerrar el modal de envío
+        setIsShippingModalOpen(false);
     };
 
     const handleUpdateCustomer = async (updatedCustomer) => {
@@ -52,8 +94,8 @@ const CustomerView = () => {
             if (isMounted.current) {
                 setCustomer(updatedCustomer);
                 setIsModalOpen(false);
-                setIsBillingModalOpen(false); // Cerrar el modal de facturación después de actualizar
-                setIsShippingModalOpen(false); // Cerrar el modal de envío después de actualizar
+                setIsBillingModalOpen(false);
+                setIsShippingModalOpen(false);
             }
         } catch (err) {
             if (isMounted.current) {
@@ -87,6 +129,42 @@ const CustomerView = () => {
         };
     }, [customerId]);
 
+    useEffect(() => {
+        const fetchOrders = async () => {
+            try {
+                const response = await axios.get(`${process.env.BACKEND_URL}/api/orders`, {
+                    params: {
+                        customer_id: customerId,
+                        page: ordersPage,
+                        per_page: ordersPerPage,
+                        order: 'desc',
+                        orderby: 'date_created'
+                    }
+                });
+                if (isMounted.current) {
+                    setOrders(response.data.orders);
+                    setTotalOrders(response.data.total_orders);
+                }
+            } catch (err) {
+                if (isMounted.current) {
+                    setError(err.message);
+                }
+            }
+        };
+
+        fetchOrders();
+    }, [customerId, ordersPage, ordersPerPage]);
+    const handleRowClick = (orderId) => {
+        navigate(`/orders/${orderId}`);
+    };
+
+
+    const totalPages = Math.ceil(totalOrders / ordersPerPage);
+
+    const handleOrdersPageClick = (pageNumber) => {
+        setOrdersPage(pageNumber);
+    };
+
     if (loading) return <p className='p-3'>Loading...</p>;
     if (error) return <p className='p-3'>Error: {error}</p>;
 
@@ -95,81 +173,119 @@ const CustomerView = () => {
             <div className="container mt-0" ref={componentRef}>
                 <Tabs defaultActiveKey="customer" id="customer-tabs" className="mb-1 custom-tabs">
                     <Tab className='p-2' eventKey="customer" title="Datos de envio">
-                        <div className='d-flex'>
-                            <div className='m-5 p-3 border rounded-3'>
-                                <h4 className='p-2'>{customer.id}</h4>
-                                <h4>{customer.shipping.company}</h4>
-                                <h5>{customer.first_name} {customer.last_name}</h5>
-
-                                <p>Forma de pago: {customer.role}</p>
-                                <p>Usuario: {customer.username}</p>
-                                <div>
-                                    <button className='btn btn-custom mb-3' onClick={handleEditClick}>Editar Cliente</button>
-
-                                    {isModalOpen && customer && (
-                                        <CustomerEditModal
+                        {customer && (
+                            <div className='d-flex'>
+                                <div className='m-5 p-3 border rounded-3'>
+                                    <h4 className='p-2'>{customer.id}</h4>
+                                    <h4>{customer.shipping?.company || 'N/A'}</h4>
+                                    <h5>{customer.first_name} {customer.last_name}</h5>
+                                    <p>Forma de pago: {customer.role}</p>
+                                    <p>Usuario: {customer.username}</p>
+                                </div>
+                                <div className='m-5 p-3 border rounded-3 customerboxes'>
+                                    <h4>Información de envio</h4>
+                                    <p>Nombre: <strong>{customer.shipping?.first_name || 'N/A'}</strong></p>
+                                    <p>Apellidos:  <strong>{customer.shipping?.last_name || 'N/A'}</strong></p>
+                                    <p>Dirección:  <strong>{customer.shipping?.address_1 || 'N/A'} {customer.shipping?.address_2 || ''}</strong></p>
+                                    <p>Ciudad:  <strong>{customer.shipping?.city || 'N/A'}</strong> </p>
+                                    <p>Provincia:  <strong>{customer.shipping?.state || 'N/A'}</strong></p>
+                                    <p>C.P.:  <strong>{customer.shipping?.postcode || 'N/A'}</strong></p>
+                                    <p>Teléfono:  <strong>{customer.billing?.phone || 'N/A'}</strong></p>
+                                    <button className='btn btn-custom mb-3' onClick={handleShippingEditClick}>Editar Envío</button>
+                                    {isShippingModalOpen && customer && (
+                                        <EditShippingModal
+                                            show={isShippingModalOpen}
+                                            handleClose={handleCloseShippingModal}
                                             customer={customer}
-                                            onClose={handleCloseModal}
-                                            onUpdate={handleUpdateCustomer}
+                                            updateCustomer={handleUpdateCustomer}
+                                        />
+                                    )}
+                                </div>
+                                <div className='m-5 p-3 border rounded-3'>
+                                    <h4>Detalles de facturación</h4>
+                                    <p>Nombre comercial: <strong>{customer.billing?.company || 'N/A'}</strong> </p>
+                                    <p>Nombre:  <strong>{customer.billing?.first_name || 'N/A'}</strong></p>
+                                    <p>Apellidos:  <strong>{customer.billing?.last_name || 'N/A'}</strong></p>
+                                    <p>Dirección:  <strong>{customer.billing?.address_1 || 'N/A'} {customer.billing?.address_2 || ''}</strong></p>
+                                    <p>Ciudad:  <strong>{customer.billing?.city || 'N/A'}</strong></p>
+                                    <p>Provincia:  <strong>{customer.billing?.state || 'N/A'}</strong></p>
+                                    <p>C. Postal:  <strong>{customer.billing?.postcode || 'N/A'}</strong></p>
+                                    <p>Nif:  <strong>{customer.billing?.nif || 'N/A'}</strong></p>
+                                    <p>Email:  <strong>{customer.billing?.email || 'N/A'}</strong></p>
+                                    <p>Teléfono:  <strong>{customer.billing?.phone || 'N/A'}</strong></p>
+                                    <p>Iban:  <strong>{customer.billing?.iban || 'N/A'}</strong></p>
+                                    <button className='btn btn-custom mb-3' onClick={handleBillingEditClick}>Editar Facturación</button>
+                                    {isBillingModalOpen && customer && (
+                                        <EditBillingModal
+                                            show={isBillingModalOpen}
+                                            handleClose={handleCloseBillingModal}
+                                            customer={customer}
+                                            updateCustomer={handleUpdateCustomer}
                                         />
                                     )}
                                 </div>
                             </div>
-                            <div className='m-5 p-3 border rounded-3 customerboxes'>
-                                <h4>Información de envio</h4>
-                                <p>Nombre: <strong>{customer.shipping.first_name}</strong></p>
-                                <p>Apellidos:  <strong>{customer.shipping.last_name}</strong></p>
-                                <p>Dirección:  <strong>{customer.shipping.address_1} {customer.shipping.address_2}</strong></p>
-                                <p>Ciudad:  <strong>{customer.shipping.city}</strong> </p>
-                                <p>Provincia:  <strong>{customer.shipping.state}</strong></p>
-                                <p>C.P.:  <strong>{customer.shipping.postcode}</strong></p>
-                                {/* <p>Email:  <strong>{customer.email}</strong></p> */}
-                                <p>Teléfono:  <strong>{customer.billing.phone}</strong></p>
-                                <button className='btn btn-custom mb-3' onClick={handleShippingEditClick}>Editar Envío</button>
-                                {isShippingModalOpen && customer && (
-                                    <EditShippingModal
-                                        show={isShippingModalOpen}
-                                        handleClose={handleCloseShippingModal}
-                                        customer={customer}
-                                        updateCustomer={handleUpdateCustomer}
-                                    />
-                                )}
-                            </div>
-                            <div className='m-5 p-3 border rounded-3'>
-                                <h4>Detalles de facturación</h4>
-                                <p>Nombre comercial: <strong>{customer.billing.company}</strong> </p>
-                                <p>Nombre:  <strong>{customer.billing.first_name}</strong></p>
-                                <p>Apellidos:  <strong>{customer.billing.last_name}</strong></p>
-                                <p>Dirección:  <strong>{customer.billing.address_1} {customer.billing.address_2}</strong></p>
-                                <p>Ciudad:  <strong>{customer.billing.city}</strong></p>
-                                <p>Provincia:  <strong></strong>{customer.billing.state}</p>
-                                <p>C. Postal:  <strong>{customer.billing.postcode}</strong></p>
-                                <p>Nif:  <strong>{customer.billing.nif}</strong></p>
-                                <p>Email:  <strong>{customer.billing.email}</strong></p>
-                                <p>Teléfono:  <strong>{customer.billing.phone}</strong></p>
-                                <button className='btn btn-custom mb-3' onClick={handleBillingEditClick}>Editar Facturación</button>
-                                {isBillingModalOpen && customer && (
-                                    <EditBillingModal
-                                        show={isBillingModalOpen}
-                                        handleClose={handleCloseBillingModal}
-                                        customer={customer}
-                                        updateCustomer={handleUpdateCustomer}
-                                    />
-                                )}
-                            </div>
-                        </div>
+                        )}
                     </Tab>
-
                     <Tab eventKey="shipping" title="Pedidos">
-                        {customer.shipping ? (
+                        {customer?.shipping ? (
                             <div className='m-5 p-3 border rounded-3'>
-                                <h4>Pedidos de {customer.billing.company}</h4>
-                                {customer.orders && customer.orders.length > 0 ? (
-                                    <ul>
-                                        {customer.orders.map(order => (
-                                            <li key={order.id}>Order Number: {order.number} - Total: {order.total}</li>
-                                        ))}
-                                    </ul>
+                                <h4>Pedidos de {customer.billing?.company || 'N/A'}</h4>
+                                
+                                <button onClick={handleDeleteOrders} className="btn btn-danger m-3">Borrar pedidos seleccionados</button>
+                                {orders && orders.length > 0 ? (
+                                    <>
+                                        <table className='table caption-top'>
+                                            <caption className='p-3'>Pedidos</caption>
+                                            <thead className='bg-light'>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Total</th>
+                                                    <th>Fecha de Creación</th>
+                                                    <th>Fecha Prevista de Salida</th>
+                                                    <th>Estado</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {orders.map(order => (
+                                                    <tr 
+                                                    key={order.id}
+                                                    className='fw-light'
+                                                    style={{ cursor: 'pointer' }}
+                                                    onClick={() => handleRowClick(order.id)}>
+                                                        <td>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedOrders.includes(order.id)}
+                                                                onChange={() => handleSelectOrder(order.id)}
+                                                                onClick={(e) => e.stopPropagation()} />
+                                                        </td>
+                                                        <td>{order.id}</td>
+                                                        <td>{order.total}</td>
+                                                        <td>{new Date(order.date_created).toLocaleDateString()}</td>
+                                                        <td>{new Date(order.date_created).toLocaleDateString()}</td>
+                                                        <td>{order.status}</td>
+                                                        
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                        <div className="d-flex justify-content-end m-2 pagination">
+                                            {Array.from({ length: totalPages }, (_, index) => (
+                                                <span
+                                                    key={index + 1}
+                                                    onClick={() => handleOrdersPageClick(index + 1)}
+                                                    style={{
+                                                        cursor: 'pointer',
+                                                        fontWeight: ordersPage === index + 1 ? 'bold' : 'normal',
+                                                        margin: '0 5px'
+                                                    }}
+                                                >
+                                                    {index + 1}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </>
                                 ) : (
                                     <p>No hay pedidos de este cliente.</p>
                                 )}
@@ -179,7 +295,6 @@ const CustomerView = () => {
                         )}
                     </Tab>
                 </Tabs>
-
             </div>
         </div>
     );

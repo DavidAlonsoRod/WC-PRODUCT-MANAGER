@@ -17,6 +17,8 @@ INSTALL:
 - pipenv install python-dotenv
 - pipenv install woocommerce
 - pipenv shell
+https://curity.io/resources/learn/jwt-best-practices/
+https://stackoverflow.com/questions/30523238/best-practices-for-server-side-handling-of-jwt-tokens
 
 ### 1) Installation:
 
