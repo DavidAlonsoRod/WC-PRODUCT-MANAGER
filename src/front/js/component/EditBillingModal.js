@@ -105,7 +105,7 @@ const EditBillingModal = ({ show, handleClose, customer, updateCustomer }) => {
                             onChange={handleChange}
                         />
                     </Form.Group>
-                   
+
                     <Form.Group controlId="billingEmail">
                         <Form.Label>Email</Form.Label>
                         <Form.Control
@@ -130,6 +130,15 @@ const EditBillingModal = ({ show, handleClose, customer, updateCustomer }) => {
                             type="text"
                             name="nif"
                             value={billingDetails.nif}
+                            onChange={handleChange}
+                        />
+                    </Form.Group>
+                    <Form.Group controlId="billingNif">
+                        <Form.Label>Iban</Form.Label>
+                        <Form.Control
+                            type="text"
+                            name="nif"
+                            value={billingDetails.iban}
                             onChange={handleChange}
                         />
                     </Form.Group>

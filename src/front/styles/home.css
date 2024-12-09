@@ -5,3 +5,14 @@
     one more css for each page that will contain the selected used 
     on that page only (the ones not reused in other pages).
 */
+
+h2 {
+    margin-top: 100px; /* Ajustar este valor según sea necesario */
+}
+
+@media (max-width: 768px) {
+    h2 {
+        margin-top: 100px; /* Ajustar el margen superior para pantallas más pequeñas */
+    }
+}
+

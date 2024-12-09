@@ -1,22 +1,49 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { Context } from '../store/appContext';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import "../../styles/customerlist.css";
 
 const Customers = () => {
-    const { store, actions } = useContext(Context);
+    const [customers, setCustomers] = useState([]);
     const [page, setPage] = useState(1);
-    const [perPage, setPerPage] = useState(20);  
+    const [perPage, setPerPage] = useState(20);
+    const [totalCustomers, setTotalCustomers] = useState(0);
     const navigate = useNavigate();
 
     useEffect(() => {
-        let isMounted = true;
-        actions.getCustomers(page, perPage).then(() => {
-            if (!isMounted) return;
-        });
-        return () => {
-            isMounted = false;
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.error("No token found");
+            navigate("/");
+            return;
+        }
+
+    }, []);
+
+    useEffect(() => {
+        const fetchCustomers = async () => {
+            try {
+                console.log("Fetching customers from:", `${process.env.BACKEND_URL}/api/customers`);
+                const response = await axios.get(`${process.env.BACKEND_URL}/api/customers`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                        "Content-Type": "application/json",
+                    },
+                    params: {
+
+                        page: page,
+                        per_page: perPage,
+                    },
+                });
+                console.log("Response data:", response.data);
+                setCustomers(response.data.customers);
+                setTotalCustomers(response.data.total_customers);
+            } catch (error) {
+                console.error("Error fetching customers", error);
+            }
         };
+
+        fetchCustomers();
     }, [page, perPage]);
 
     const handleRowClick = (customerId) => {
@@ -27,7 +54,7 @@ const Customers = () => {
         setPage(pageNumber);
     };
 
-    const totalPages = Math.ceil(store.totalCustomers / perPage);
+    const totalPages = Math.ceil(totalCustomers / perPage);
 
     return (
         <div>
@@ -46,10 +73,10 @@ const Customers = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {store.customers.map(customer => (
-                            <tr 
-                                key={customer.id} 
-                                className='fw-light' 
+                        {customers.map(customer => (
+                            <tr
+                                key={customer.id}
+                                className='fw-light'
                                 onClick={() => handleRowClick(customer.id)}
                                 style={{ cursor: 'pointer' }}
                             >
@@ -66,11 +93,11 @@ const Customers = () => {
                 </table>
                 <div className="d-flex justify-content-end m-2 pagination">
                     {Array.from({ length: totalPages }, (_, index) => (
-                        <span 
-                            key={index + 1} 
-                            onClick={() => handlePageClick(index + 1)} 
-                            style={{ 
-                                cursor: 'pointer', 
+                        <span
+                            key={index + 1}
+                            onClick={() => handlePageClick(index + 1)}
+                            style={{
+                                cursor: 'pointer',
                                 fontWeight: page === index + 1 ? 'bold' : 'normal',
                                 margin: '0 5px'
                             }}

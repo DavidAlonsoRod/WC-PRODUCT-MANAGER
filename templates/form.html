@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Formulario de Cliente</title>
+</head>
+<body>
+    <form action="/generate_xml" method="post">
+        <label for="nombre">Nombre:</label>
+        <input type="text" id="nombre" name="nombre" required><br><br>
+        
+        <label for="numero_cuenta">Número de cuenta:</label>
+        <input type="text" id="numero_cuenta" name="numero_cuenta" required><br><br>
+        
+        <label for="cantidad">Cantidad:</label>
+        <input type="text" id="cantidad" name="cantidad" required><br><br>
+        
+        <input type="submit" value="Generar XML">
+    </form>
+</body>
+</html>

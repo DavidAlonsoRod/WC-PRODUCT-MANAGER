@@ -1,15 +1,14 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { Context } from '../store/appContext';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
-import "../../styles/orderlist.css";
 import { Tab, Tabs } from 'react-bootstrap';
+import "../../styles/orderlist.css";
 
-
-function Orders() {
-    const { store, actions } = useContext(Context);
+const OrdersInProgress = () => {
+    const [orders, setOrders] = useState([]);
     const [page, setPage] = useState(1);
-    const [perPage, setPerPage] = useState(20);
+    const [perPage, setPerPage] = useState(25); // Cambiar a 25 por defecto
+    const [totalOrders, setTotalOrders] = useState(0);
     const [customerId, setCustomerId] = useState(null);
     const [filters, setFilters] = useState({
         id: '',
@@ -21,11 +20,10 @@ function Orders() {
         payment_method: '',
         status: ''
     });
-    const [sortOrder, setSortOrder] = useState('desc');
-    const [sortBy, setSortBy] = useState('id');
+    const [sortOrder, setSortOrder] = useState('asc');
+    const [sortBy, setSortBy] = useState('date_created');
     const [selectedOrders, setSelectedOrders] = useState([]);
     const navigate = useNavigate();
-
 
     const formatDate = (dateString) => {
         if (!dateString) return 'Fecha no disponible';
@@ -62,6 +60,16 @@ function Orders() {
                 return status;
         }
     };
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.error("No token found");
+            navigate("/");
+            return;
+        }
+
+    }, []);
+
 
     const getStatusClass = (status) => {
         switch (status) {
@@ -79,17 +87,6 @@ function Orders() {
                 return 'btn-small';
         }
     };
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            console.error("No token found");
-            navigate("/");
-            return;
-        }
-
-    }, []);
-
-
 
     const getShippingDateClass = (shippingDate) => {
         if (!shippingDate) return 'btn-small';
@@ -110,7 +107,7 @@ function Orders() {
         "PayPal",
         "Credit Card",
         "Bank Transfer",
-
+        // A��adir más métodos de pago según sea necesario
     ];
 
     const orderStatuses = [
@@ -119,27 +116,52 @@ function Orders() {
         "completed",
         "pending",
         "cancelled",
-
+        // Añadir más estados según sea necesario
     ];
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (token) {
-            if (isNaN(page) || isNaN(perPage)) {
-                console.error("Invalid page or perPage value");
-                return;
+        let isMounted = true; // Variable para controlar si el componente está montado
+        const token = localStorage.getItem("token"); // Definir la variable token
+
+        const fetchOrders = async () => {
+            if (!isMounted) return; // Evitar múltiples solicitudes
+            try {
+                const params = new URLSearchParams({
+                    page: String(page),
+                    per_page: String(perPage),
+                    ...Object.fromEntries(Object.entries(filters).map(([key, value]) => [key, value ? String(value) : '']))
+                });
+                if (customerId) {
+                    params.append('customer_id', String(customerId));
+                }
+                const headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+
+                const endpoint = `${process.env.BACKEND_URL}/api/orders/in-progress?${params.toString()}`;
+                const response = await axios.get(endpoint, { headers });
+
+                if (isMounted) { // Solo actualizar el estado si el componente está montado
+                    setOrders(response.data.orders || []);
+                    setTotalOrders(response.data.total_orders || 0);
+                }
+            } catch (error) {
+                if (isMounted) { // Solo actualizar el estado si el componente está montado
+                    console.error("Error fetching orders:", error.response ? error.response.data : error.message);
+                    setOrders([]);
+                }
             }
-            actions.getOrders(page, perPage, customerId, filters).catch(error => {
-                console.error("Error fetching orders:", error.response ? error.response.data : error.message);
-            });
-            const intervalId = setInterval(() => actions.getOrders(page, perPage, customerId, filters).catch(error => {
-                console.error("Error fetching orders:", error.response ? error.response.data : error.message);
-            }), 300000);
-            return () => clearInterval(intervalId);
-        } else {
-            console.error("No token found");
-        }
-    }, [page, perPage, customerId, filters]);
+        };
+
+        fetchOrders();
+        const intervalId = setInterval(fetchOrders, 300000); // Actualizar cada 5 minutos
+
+        return () => {
+            isMounted = false; // Marcar el componente como desmontado
+            clearInterval(intervalId); // Limpiar el intervalo al desmontar el componente
+        };
+    }, [page, perPage, customerId, filters]); // Añadir filtros a las dependencias
 
     const handleRowClick = (orderId) => {
         navigate(`/orders/${orderId}`);
@@ -178,27 +200,38 @@ function Orders() {
     };
 
     const handleSelectOrder = (orderId) => {
-        setSelectedOrders(prevSelectedOrders => prevSelectedOrders.includes(orderId)
-            ? prevSelectedOrders.filter(id => id !== orderId)
-            : [...prevSelectedOrders, orderId]
+        setSelectedOrders(prevSelectedOrders =>
+            prevSelectedOrders.includes(orderId)
+                ? prevSelectedOrders.filter(id => id !== orderId)
+                : [...prevSelectedOrders, orderId]
         );
     };
 
     const handleBatchAction = () => {
         // Realizar la acción deseada con los pedidos seleccionados
         console.log('Pedidos seleccionados:', selectedOrders);
-
+        // Ejemplo: cambiar el estado de los pedidos seleccionados
+        // axios.post('/api/orders/batch-update', { orderIds: selectedOrders, newStatus: 'completed' });
     };
 
     const handleDeleteOrders = async () => {
         try {
-            await actions.deleteOrders(selectedOrders);
+            for (const orderId of selectedOrders) {
+                await axios.delete(`${process.env.BACKEND_URL}/api/orders/${orderId}`);
+            }
+            setSelectedOrders([]);
+            fetchOrders(); // Refrescar la lista de pedidos
         } catch (error) {
             console.error("Error deleting orders:", error.response ? error.response.data : error.message);
         }
     };
 
-    const filteredOrders = store.orders.filter(order => {
+    const handlePerPageChange = (event) => {
+        setPerPage(parseInt(event.target.value));
+        setPage(1); // Reiniciar a la primera página al cambiar el número de elementos por p��gina
+    };
+
+    const filteredOrders = orders.filter(order => {
         return (
             (filters.id === '' || order.id.toString().includes(filters.id)) &&
             (filters.customer === '' || (order.billing && `${order.billing.first_name} ${order.billing.last_name}`.toLowerCase().includes(filters.customer.toLowerCase()))) &&
@@ -217,24 +250,52 @@ function Orders() {
         return sortOrder === 'asc' ? (fieldA > fieldB ? 1 : -1) : (fieldA < fieldB ? 1 : -1);
     });
 
-    const totalPages = Math.ceil(store.totalOrders / perPage);
+    const totalPages = Math.ceil(totalOrders / perPage);
 
     return (
         <div>
             <Tabs
-                activeKey="allOrders"
-                onSelect={(k) => navigate(k === "allOrders" ? "/orders" : "/orders-in-progress")}
+                activeKey="inProgressOrders"
+                onSelect={(k) => navigate(k === "inProgressOrders" ? "/orders-in-progress" : "/orders")}
                 id="order-tabs"
-                className="m-5 custom-tabs"
+                className="m-5 custom-tabs custom-tabs-margin"
             >
-                <Tab className='m-3' eventKey="allOrders" title="Todos los Pedidos">
+                <Tab eventKey="allOrders" title="Todos los Pedidos">
                     <div className='border rounded-3 m-5 justify-content-center'>
-
-
-
+                        <p>Redirigiendo a Todos los Pedidos...</p>
+                    </div>
+                </Tab>
+                <Tab eventKey="inProgressOrders" title="Pedidos en Proceso">
+                    <div className='border rounded-3 m-5 justify-content-center'>
+                        <button onClick={handleBatchAction} className="btn btn-primary m-3">Realizar acción en pedidos seleccionados</button>
                         <button onClick={handleDeleteOrders} className="btn btn-danger m-3">Borrar pedidos seleccionados</button>
+                        <div className="d-flex justify-content-between align-items-center m-3">
+                            <div>
+                                <label htmlFor="perPageSelect">Mostrar:</label>
+                                <select id="perPageSelect" value={perPage} onChange={handlePerPageChange} className="form-select d-inline-block w-auto ms-2">
+                                    <option value={25}>25</option>
+                                    <option value={50}>50</option>
+                                    <option value={100}>100</option>
+                                </select>
+                            </div>
+                            <div className="pagination">
+                                {Array.from({ length: totalPages }, (_, index) => (
+                                    <span
+                                        key={index + 1}
+                                        onClick={() => handlePageClick(index + 1)}
+                                        style={{
+                                            cursor: 'pointer',
+                                            fontWeight: page === index + 1 ? 'bold' : 'normal',
+                                            margin: '0 5px'
+                                        }}
+                                    >
+                                        {index + 1}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
                         <table className='table caption-top'>
-                            <caption className='p-3'>Pedidos</caption>
+                            <caption className='p-3'>Pedidos en Proceso</caption>
                             <thead className='bg-light'>
                                 <tr>
                                     <th>
@@ -242,12 +303,14 @@ function Orders() {
                                             type="checkbox"
                                             onChange={(e) => {
                                                 if (e.target.checked) {
-                                                    setSelectedOrders(store.orders.map(order => order.id));
+                                                    setSelectedOrders(orders.map(order => order.id));
                                                 } else {
                                                     setSelectedOrders([]);
                                                 }
                                             }}
-                                            checked={selectedOrders.length === store.orders.length} />
+                                            checked={selectedOrders.length === orders.length}
+                                        />
+                                        <span className="ms-2">({selectedOrders.length})</span>
                                     </th>
                                     <th>
                                         ID
@@ -259,7 +322,8 @@ function Orders() {
                                             name="id"
                                             value={filters.id}
                                             onChange={handleFilterChange}
-                                            className="form-control" />
+                                            className="form-control"
+                                        />
                                     </th>
                                     <th>
                                         Cliente
@@ -268,7 +332,8 @@ function Orders() {
                                             name="customer"
                                             value={filters.customer}
                                             onChange={handleFilterChange}
-                                            className="form-control" />
+                                            className="form-control"
+                                        />
                                     </th>
                                     <th>
                                         Fecha creación
@@ -277,7 +342,8 @@ function Orders() {
                                             name="date_created"
                                             value={filters.date_created}
                                             onChange={(e) => handleDateChange('date_created', e.target.value)}
-                                            className="form-control" />
+                                            className="form-control"
+                                        />
                                     </th>
                                     <th>
                                         Salida estimada
@@ -286,7 +352,8 @@ function Orders() {
                                             name="shipping_date"
                                             value={filters.shipping_date}
                                             onChange={(e) => handleDateChange('shipping_date', e.target.value)}
-                                            className="form-control" />
+                                            className="form-control"
+                                        />
                                     </th>
                                     <th>
                                         Ciudad
@@ -295,7 +362,8 @@ function Orders() {
                                             name="city"
                                             value={filters.city}
                                             onChange={handleFilterChange}
-                                            className="form-control" />
+                                            className="form-control"
+                                        />
                                     </th>
                                     <th>
                                         Total
@@ -350,7 +418,8 @@ function Orders() {
                                                 type="checkbox"
                                                 checked={selectedOrders.includes(order.id)}
                                                 onChange={() => handleSelectOrder(order.id)}
-                                                onClick={(e) => e.stopPropagation()} />
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
                                         </td>
                                         <td className='fw-light'>{order.id}</td>
                                         <td>
@@ -389,14 +458,9 @@ function Orders() {
                         </div>
                     </div>
                 </Tab>
-                <Tab eventKey="inProgressOrders" title="Pedidos en Proceso">
-                    <div className='border rounded-3 m-5 justify-content-center'>
-                        <p>Redirigiendo a Pedidos en Proceso...</p>
-                    </div>
-                </Tab>
             </Tabs>
         </div>
     );
-}
+};
 
-export default Orders;
+export default OrdersInProgress;
