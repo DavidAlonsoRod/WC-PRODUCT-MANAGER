@@ -28,6 +28,9 @@ const getState = ({ getStore, getActions, setStore }) => {
 		},
 		actions: {
 
+
+//########################## !!!! CUSTOMER ¡¡¡¡¡ ################################//
+
 			exampleFunction: () => {
 				getActions().changeColor(0, "green");
 			},
@@ -85,7 +88,11 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log("Error loading message from backend", error)
 				}
 			},
-			
+
+
+//########################## !!!! ORDERS ¡¡¡¡¡ ################################//
+
+
 			getOrders: async (page = 1, per_page = 20, customerId = null, filters = {}) => {
 				const store = getStore();
 				if (store.isFetchingOrders) return; // Evitar múltiples solicitudes
@@ -199,7 +206,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 						throw new Error(`Failed to delete orders: ${errorData.error || response.statusText}`);
 					}
 					setStore({ selectedOrders: [] });
-					getActions().getOrders(); // Refrescar la lista de pedidos
+					await getActions().getOrders(); // Refrescar la lista de pedidos
 					setStore({ notification: "Órdenes eliminadas con éxito" }); // Mostrar mensaje de éxito
 					setTimeout(() => setStore({ notification: null }), 3000); // Limpiar mensaje después de 3 segundos
 				} catch (error) {
@@ -223,7 +230,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 						const errorData = await response.json();
 						throw new Error(`Failed to delete order: ${errorData.error || response.statusText}`);
 					}
-					getActions().getOrders(); // Refrescar la lista de pedidos
+					await getActions().getOrders(); // Refrescar la lista de pedidos
 					setStore({ notification: "Orden eliminada con éxito" }); // Mostrar mensaje de éxito
 					setTimeout(() => setStore({ notification: null }), 3000); // Limpiar mensaje después de 3 segundos
 				} catch (error) {
@@ -232,19 +239,61 @@ const getState = ({ getStore, getActions, setStore }) => {
 					setTimeout(() => setStore({ notification: null }), 3000); // Limpiar mensaje después de 3 segundos
 				}
 			},
-			getCustomer: async (customerId) => {
+			getOrder: async (orderId) => {
 				try {
-					const response = await fetch(`${process.env.BACKEND_URL}/api/customers/${customerId}`);
+					const token = localStorage.getItem("token");
+					if (!token) {
+						console.error("No token found");
+						setStore({ auth: false });
+						return;
+					}
+					
+					const response = await fetch(`${process.env.BACKEND_URL}/api/orders/${orderId}`, {
+						headers: {
+							"Content-Type": "application/json",
+							"Authorization": `Bearer ${token}`
+						}
+					});
 					if (response.ok) {
 						const data = await response.json();
-						setStore({ customer: data });
+						setStore({ order: data });
+					} else {
+						throw new Error("Failed to fetch order");
+					}
+				} catch (error) {
+					console.error("Error fetching order:", error);
+				}
+			},
+
+//########################## !!!! CUSTOMER ¡¡¡¡¡ ################################//
+
+			getCustomer: async (customerId) => {
+				try {
+					const token = localStorage.getItem("token");
+					if (!token) {
+						console.error("No token found");
+						setStore({ auth: false });
+						return;
+					}
+					
+					const response = await fetch(`${process.env.BACKEND_URL}/api/customers/${customerId}`, {
+						headers: {
+							"Content-Type": "application/json",
+							"Authorization": `Bearer ${token}`
+						}
+					});
+					if (response.ok) {
+						const data = await response.json();
+						return data;
 					} else {
 						throw new Error("Failed to fetch customer");
 					}
 				} catch (error) {
 					console.error("Error fetching customer:", error);
+					throw error;
 				}
 			},
+			
 			updateCustomer: async (customerId, updatedCustomer) => {
 				try {
 					const response = await fetch(`${process.env.BACKEND_URL}/api/customers/${customerId}`, {
