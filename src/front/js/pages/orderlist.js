@@ -128,7 +128,7 @@ function Orders() {
             if (isNaN(page) || isNaN(perPage)) {
                 console.error("Invalid page or perPage value");
                 return;
-            }
+            };
             actions.getOrders(page, perPage, customerId, filters).catch(error => {
                 console.error("Error fetching orders:", error.response ? error.response.data : error.message);
             });
@@ -138,6 +138,7 @@ function Orders() {
             return () => clearInterval(intervalId);
         } else {
             console.error("No token found");
+            navigate("/");
         }
     }, [page, perPage, customerId, filters]);
 
@@ -185,7 +186,7 @@ function Orders() {
     };
 
     const handleBatchAction = () => {
-        // Realizar la acción deseada con los pedidos seleccionados
+        
         console.log('Pedidos seleccionados:', selectedOrders);
 
     };

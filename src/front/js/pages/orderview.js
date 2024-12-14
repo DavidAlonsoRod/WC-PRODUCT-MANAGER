@@ -1,35 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState, useContext } from 'react';
+import { Context } from '../store/appContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import "../../styles/customerview.css";
 
 const OrderView = () => {
     const { orderId } = useParams();
-    const [order, setOrder] = useState(null);
+    const { store, actions } = useContext(Context);
     const [error, setError] = useState(null); // Estado para manejar errores
     const navigate = useNavigate();
+    const pdfPrintUrl = `https://www.almabooks.es/wp-admin/post.php?post=${orderId}&action=edit`;
 
     useEffect(() => {
-        const fetchOrder = async () => {
-            try {
-                const response = await axios.get(`${process.env.BACKEND_URL}/api/orders/${orderId}`);
-                setOrder(response.data);
-            } catch (error) {
-                setError('Error al cargar la orden.'); // Establecer mensaje de error
-                setOrder(null);
-            }
-        };
-
-        fetchOrder();
-    }, [orderId]);
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.error("No token found");
+            navigate("/");
+            return;
+        }
+        actions.getOrder(orderId).catch(() => {
+            setError('Error al cargar la orden.');
+        });
+    }, [orderId, actions, navigate]);
 
     if (error) {
-        return <div>{error}</div>; // Mostrar mensaje de error
+        return <div>{error}</div>; 
     }
 
-    if (!order) {
-        return <div className='m-3'>Cagando...</div>;
+    if (!store.order) {
+        return <div className='m-3'>Cargando...</div>;
     }
+
+    const order = store.order;
 
     const formatDate = (dateString) => {
         if (!dateString) return 'Fecha no disponible';
@@ -74,19 +75,23 @@ const OrderView = () => {
     return (
         <div className='order-view m-5'>
             <h1>Pedido {order.id}</h1>
-            <div className='order-details'>
-
-                <p><strong>{order.billing ? `${order.billing.first_name} ${order.billing.last_name}` : 'N/A'}</strong></p>
-                <p><strong>Fecha de Creación:</strong> {formatDate(order.date_created)}</p>
-                <p><strong>Fecha de Envío:</strong> {formatDate(order.shipping_date)}</p>
-                <p><strong>Ciudad:</strong> {order.billing.city}</p>
-
-                <p><strong>Método de Pago:</strong> {order.payment_method_title}</p>
-                <p><strong>Estado:</strong>
-                    <button className={getStatusClass(order.status)}>
-                        {translateStatus(order.status)}
-                    </button>
-                </p>
+            <div className='customer-details'>
+                <div className='order-details'>
+                    <p><strong>{order.billing ? `${order.billing.first_name} ${order.billing.last_name}` : 'N/A'}</strong></p>
+                    <p><strong>Fecha de Creación:</strong> {formatDate(order.date_created)}</p>
+                    <p><strong>Fecha de Envío:</strong> {formatDate(order.shipping_date)}</p>
+                    <p><strong>Ciudad:</strong> {order.billing.city}</p>
+                    <p><strong>Método de Pago:</strong> {order.payment_method_title}</p>
+                    <p><strong>Estado:</strong>
+                        <button className={getStatusClass(order.status)}>
+                            {translateStatus(order.status)}
+                        </button>
+                    </p>
+                </div>
+                <div className='order-actions'>
+                    <button onClick={() => window.open(pdfPrintUrl, '_blank')} className='btn btn-primary'>Ver detalles del pedido</button>
+                    <button className='btn btn-danger m-2'>Eliminar no funciona (aún)</button>
+                </div>
             </div>
             <h2>Artículos de Línea</h2>
             <table className='table'>
@@ -108,7 +113,6 @@ const OrderView = () => {
                             <td>{item.price}</td>
                             <td>{item.total}</td>
                         </tr>
-
                     ))}
                     <tr>
                         <td colSpan="4"><strong>Total</strong></td>
