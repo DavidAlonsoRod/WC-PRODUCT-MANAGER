@@ -17,16 +17,16 @@ from api.insert_line_items import insert_line_item
 from .controllers import get_order_by_id
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
-load_dotenv()
+# load_dotenv()
 
-app = Flask(__name__)  # Añadir esta línea para crear la instancia de Flask
-CORS(app, resources={r"/*": {"origins": "*"}})  # Asegúrate de que CORS esté configurado para la aplicación Flask
+# app = Flask(__name__)  # Añadir esta línea para crear la instancia de Flask
+# CORS(app, resources={r"/*": {"origins": "*"}})  # Asegúrate de que CORS esté configurado para la aplicación Flask
 
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  # Configura la clave secreta del JWT
-jwt = JWTManager(app)
+# app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  # Configura la clave secreta del JWT
+# jwt = JWTManager(app)
 
 api = Blueprint('api', __name__)
-CORS(api)  # Asegúrate de que CORS esté configurado para el Blueprint
+CORS(api)  
 
 database_url = os.getenv('DATABASE_URL')
 consumer_key = os.getenv('WC_CONSUMER_KEY')
@@ -34,7 +34,7 @@ consumer_secret = os.getenv('WC_CONSUMER_SECRET')
 wc_api_url = os.getenv('WC_API_URL')
 
 wcapi = API(
-    url=wc_api_url.rstrip('/'),  # Asegúrate de que no haya una barra al final
+    url=wc_api_url.rstrip('/'),
     consumer_key=consumer_key,  
     consumer_secret=consumer_secret, 
     wp_api=True,
@@ -46,6 +46,7 @@ wcapi = API(
 # bcrypt = Bcrypt(app)
 
 @api.route('/hello', methods=['POST', 'GET'])
+
 def handle_hello():
 
     response_body = {
@@ -55,10 +56,10 @@ def handle_hello():
     return jsonify(response_body), 200
 
 
-############ CUSTOMERS ############
+# ############ CUSTOMERS ############
 
 @api.route("/import_customers", methods=["GET"])
-
+# @jwt_required()
 def import_customers():
     try:
         roles = ['all', 'administrator', 'subscriber', 'desactivados', 'customer', 'fotgrafo_profesional', 'pago_con_tarjeta', 'transferencia_bancaria', 'domiciliacin_bancaria', 'transferencia_o_bizum_fin_de_mes', 'contrareembolso', 'translator', 'shop_manager', 'blocked']  # Lista de roles válidos
@@ -197,6 +198,7 @@ def get_customers():
         return jsonify({"error": str(e)}), 500
 
 @api.route('/customers/<int:customer_id>', methods=['GET'])
+@jwt_required()
 def get_customer(customer_id):
     try:
         customer = Customer.query.get(customer_id)
@@ -210,7 +212,7 @@ def get_customer(customer_id):
         return jsonify({"error": str(e)}), 500
     
 @api.route('/customers/<int:customer_id>', methods=['PUT'])
-
+@jwt_required()
 def update_customer(customer_id):
     try:
         data = request.json
@@ -304,7 +306,7 @@ def update_customer(customer_id):
 ############ ORDERS ############
 
 @api.route("/import_orders", methods=["GET"])
-
+@jwt_required()
 def import_orders():
     try:
         page = 1
@@ -438,7 +440,7 @@ def import_orders():
         return jsonify({"msg": f"Error al importar órdenes: {str(e)}"}), 500
 
 @api.route("/import_line_items", methods=["GET"])
-
+@jwt_required()
 def import_line_items():
     try:
         page = 1
@@ -499,13 +501,12 @@ def import_line_items():
 
 
 @api.route('/orders', methods=['GET'])
-
+@jwt_required()
 def get_orders():
     try:
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         customer_id = request.args.get('customer_id', type=int)
-
         query = Order.query
         if customer_id:
             query = query.filter_by(customer_id=customer_id)
@@ -545,6 +546,7 @@ def filter_orders_by_status():
 
 
 @api.route('/orders/<int:order_id>', methods=['GET'])
+@jwt_required()
 def get_order(order_id):
     try:
         order = Order.query.get(order_id)
@@ -558,7 +560,7 @@ def get_order(order_id):
         return jsonify({"error": str(e)}), 500
 
 @api.route('/line_items', methods=['GET'])
-
+@jwt_required()
 def get_line_items():
     try:
         page = request.args.get('page', 1, type=int)
@@ -583,7 +585,7 @@ def get_line_items():
 
 
 @api.route('/orders/update', methods=['PUT'])
-
+@jwt_required()
 def update_order():
     try:
         data = request.json
@@ -625,7 +627,7 @@ def update_order():
         return jsonify({"error": str(e)}), 500
 
 @api.route('/orders/in-progress', methods=['GET'])
-
+@jwt_required()
 def get_orders_in_progress():
     try:
         page = request.args.get('page', 1, type=int)
@@ -683,7 +685,7 @@ def get_orders_in_progress():
         return jsonify({"error": str(e)}), 500
 
 @api.route('/import-data', methods=['POST'])
-
+@jwt_required()
 def import_data():
     try:
         data = request.json
@@ -724,6 +726,7 @@ def delete_order(order_id):
         return jsonify({"error": str(e)}), 500
 
 @api.route('/orders/bulk-delete', methods=['DELETE'])
+@jwt_required()
 def bulk_delete_orders():
     try:
         order_ids = request.json.get('order_ids', [])
@@ -763,9 +766,9 @@ def login():
     user = User.query.filter_by(email=email, password=password).first()
     if user:
         try:
-            # if bcrypt.check_password_hash(user.password, password):
             
-            access_token = create_access_token(identity={'email': user.email})
+            
+            access_token = create_access_token(identity= user.email,expires_delta=timedelta(days=1))
             print(f"Login successful for email: {email}")  
             return jsonify(access_token=access_token), 200
             
@@ -778,13 +781,14 @@ def login():
 
           
 @api.route('/protected', methods=['GET'])
+@jwt_required()
 
 def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
-app.register_blueprint(api, url_prefix='/api')
+# app.register_blueprint(api, url_prefix='/api')
 
-if __name__ == "__main__":
-    api.run()
+# if __name__ == "__main__":
+#     api.run()
 

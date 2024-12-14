@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useContext } from 'react';
 import "../../styles/customerlist.css";
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { Context } from '../store/appContext';
 
 const LineItems = () => {
-    const [lineItems, setLineItems] = useState([]);
+    const { store, actions } = useContext(Context);
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(20);
-    const [totalLineItems, setTotalLineItems] = useState(0);
     const navigate = useNavigate();
-
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -18,23 +16,11 @@ const LineItems = () => {
             navigate("/");
             return;
         }
-
-    }, []);
-
+    }, [navigate]);
 
     useEffect(() => {
-        fetchLineItems();
-    }, [page, perPage]);
-
-    const fetchLineItems = async () => {
-        try {
-            const response = await axios.get(`${process.env.BACKEND_URL}/api/line_items?page=${page}&per_page=${perPage}`);
-            setLineItems(response.data.line_items);
-            setTotalLineItems(response.data.total_line_items);
-        } catch (error) {
-            console.error('Error fetching line items:', error);
-        }
-    };
+        actions.getLineItems(page, perPage);
+    }, [page, perPage, actions]);
 
     const handlePageChange = (newPage) => {
         setPage(newPage);
@@ -47,7 +33,6 @@ const LineItems = () => {
     return (
         <div className='border rounded-3 m-5 justify-content-center'>
             <div className="m-3">
-
                 <table className='table caption-top'>
                     <caption className='p-3'>Items</caption>
                     <thead>
@@ -59,12 +44,10 @@ const LineItems = () => {
                             <th>Subtotal</th>
                             <th>Total</th>
                             <th>QR</th>
-
-
                         </tr>
                     </thead>
                     <tbody>
-                        {lineItems.map(item => (
+                        {store.lineItems.map(item => (
                             <tr key={item.id}>
                                 <td>{item.order_id}</td>
                                 <td>{item.id}</td>
@@ -94,7 +77,7 @@ const LineItems = () => {
                     <button onClick={() => handlePageChange(page - 1)} disabled={page === 1}>
                         Previous
                     </button>
-                    <button onClick={() => handlePageChange(page + 1)} disabled={page * perPage >= totalLineItems}>
+                    <button onClick={() => handlePageChange(page + 1)} disabled={page * perPage >= store.totalLineItems}>
                         Next
                     </button>
                 </div>

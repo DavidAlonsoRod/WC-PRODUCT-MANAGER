@@ -30,6 +30,23 @@ const CustomerView = () => {
     const handleEditClick = () => {
         setIsModalOpen(true);
     };
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.error("No token found");
+            navigate("/");
+            return;
+        }
+        actions.getCustomer(customerId)
+            .then((customer) => {
+                setCustomer(customer);
+                setLoading(false);
+            })
+            .catch(() => {
+                setError('Error al cargar el cliente.');
+                setLoading(false);
+            });
+    }, [customerId]);
 
     const handleCloseModal = () => {
         setIsModalOpen(false);
@@ -103,35 +120,27 @@ const CustomerView = () => {
             }
         }
     };
-
     useEffect(() => {
-        const fetchCustomer = async () => {
-            try {
-                const response = await axios.get(`${process.env.BACKEND_URL}/api/customers/${customerId}`);
-                if (isMounted.current) {
-                    setCustomer(response.data);
-                }
-            } catch (err) {
-                if (isMounted.current) {
-                    setError(err.message);
-                }
-            } finally {
-                if (isMounted.current) {
-                    setLoading(false);
-                }
-            }
-        };
-
-        fetchCustomer();
-
-        return () => {
-            isMounted.current = false;
-        };
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.error("No token found");
+            navigate("/");
+            return;
+        }
+        actions.getCustomer(customerId).catch(() => {
+            setError('Error al cargar el cliente.');
+        });
     }, [customerId]);
 
     useEffect(() => {
         const fetchOrders = async () => {
             try {
+                const token = localStorage.getItem("token");
+                if (!token) {
+                    console.error("No token found");
+                    navigate("/");
+                    return;
+                }
                 const response = await axios.get(`${process.env.BACKEND_URL}/api/orders`, {
                     params: {
                         customer_id: customerId,
@@ -139,6 +148,9 @@ const CustomerView = () => {
                         per_page: ordersPerPage,
                         order: 'desc',
                         orderby: 'date_created'
+                    },
+                    headers: {
+                        "Authorization": `Bearer ${token}`
                     }
                 });
                 if (isMounted.current) {
@@ -154,6 +166,7 @@ const CustomerView = () => {
 
         fetchOrders();
     }, [customerId, ordersPage, ordersPerPage]);
+    
     const handleRowClick = (orderId) => {
         navigate(`/orders/${orderId}`);
     };
@@ -165,7 +178,7 @@ const CustomerView = () => {
         setOrdersPage(pageNumber);
     };
 
-    if (loading) return <p className='p-3'>Loading...</p>;
+    if (loading) return <p className='p-3'>CAgando...</p>;
     if (error) return <p className='p-3'>Error: {error}</p>;
 
     return (
