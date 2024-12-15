@@ -8,7 +8,7 @@ const OrderView = () => {
     const { store, actions } = useContext(Context);
     const [error, setError] = useState(null); // Estado para manejar errores
     const navigate = useNavigate();
-    const pdfPrintUrl = `https://www.almabooks.es/wp-admin/post.php?post=${orderId}&action=edit`;
+    const pdfPrintUrl = `https://www.piedrapapelytijeras.es/wp-admin/post.php?post=${orderId}&action=edit`;
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -23,7 +23,7 @@ const OrderView = () => {
     }, [orderId, actions, navigate]);
 
     if (error) {
-        return <div>{error}</div>; 
+        return <div>{error}</div>;
     }
 
     if (!store.order) {
@@ -90,7 +90,7 @@ const OrderView = () => {
                 </div>
                 <div className='order-actions'>
                     <button onClick={() => window.open(pdfPrintUrl, '_blank')} className='btn btn-primary'>Ver detalles del pedido</button>
-                    <button className='btn btn-danger m-2'>Eliminar no funciona (aún)</button>
+                    <button className='btn btn-danger m-2'>Eliminar no funciona (aún !! no usar !!)</button>
                 </div>
             </div>
             <h2>Artículos de Línea</h2>

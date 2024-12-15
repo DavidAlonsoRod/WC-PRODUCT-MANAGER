@@ -53,6 +53,30 @@ td, th {
     border-bottom: 1px solid #dee2e6;
     color: #392d2d;
 }
+.btn-1day {
+    background-color: #ffebb1;
+    border-color: #ffebb1;
+    border-bottom: 1px solid #dee2e6;
+    color: #ed0c0c;
+}
+.btn-2days {
+    background-color: #ffebb1;
+    border-color: #ffebb1;
+    border-bottom: 1px solid #dee2e6;
+    color: #0cf9fd;
+}
+.btn-3days {
+    background-color: #ffebb1;
+    border-color: #ffebb1;
+    border-bottom: 1px solid #dee2e6;
+    color: #0cf9fd;
+}
+.btn-6days {
+    background-color: #ffebb1;
+    border-color: #ffebb1;
+    border-bottom: 1px solid #dee2e6;
+    color: #f104c1;
+}
 
 .btn-success {
     background-color: #a1cbab;

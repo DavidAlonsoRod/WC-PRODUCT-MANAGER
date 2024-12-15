@@ -13,7 +13,8 @@ const EditBillingModal = ({ show, handleClose, customer, updateCustomer }) => {
         postcode: customer.billing.postcode || '',
         email: customer.billing.email || '',
         phone: customer.billing.phone || '',
-        nif: customer.billing.nif || ''
+        nif: customer.billing.nif || '',
+        iban: customer.billing.iban || ''
     });
 
     const handleChange = (e) => {
@@ -137,7 +138,7 @@ const EditBillingModal = ({ show, handleClose, customer, updateCustomer }) => {
                         <Form.Label>Iban</Form.Label>
                         <Form.Control
                             type="text"
-                            name="nif"
+                            name="iban"
                             value={billingDetails.iban}
                             onChange={handleChange}
                         />

@@ -141,7 +141,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					setStore({ isFetchingOrders: false });
 				}
 			},
-			getLineItems: async (page = 1, per_page = 20, orderId = null) => {
+			getLineItems: async (page = 1, per_page = 20, orderId = null, search = '') => {
 				const store = getStore();
 				if (store.isFetchingLineItems) return; // Evitar múltiples solicitudes
 				setStore({ isFetchingLineItems: true });
@@ -151,6 +151,14 @@ const getState = ({ getStore, getActions, setStore }) => {
 					setStore({ auth: false });
 					return;
 				}
+				const params = new URLSearchParams({
+					page: String(page),
+					per_page: String(per_page),
+					search: search
+				});
+				if (orderId) {
+					params.append('order_id', String(orderId));
+				}
 				const requestOptions = {
 					method: 'GET',
 					headers: {
@@ -159,7 +167,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					}
 				};
 				try {
-					const response = await fetch(`${process.env.BACKEND_URL}/api/line_items?page=${page}&per_page=${per_page}${orderId ? `&order_id=${orderId}` : ''}`, requestOptions);
+					const response = await fetch(`${process.env.BACKEND_URL}/api/line_items?${params.toString()}`, requestOptions);
 					if (response.ok) {
 						const data = await response.json();
 						setStore({ lineItems: data.line_items, totalLineItems: data.total_items, isFetchingLineItems: false });
@@ -296,10 +304,18 @@ const getState = ({ getStore, getActions, setStore }) => {
 			
 			updateCustomer: async (customerId, updatedCustomer) => {
 				try {
+					const token = localStorage.getItem("token");
+					if (!token) {
+						console.error("No token found");
+						setStore({ auth: false });
+						return;
+					}
+			
 					const response = await fetch(`${process.env.BACKEND_URL}/api/customers/${customerId}`, {
 						method: 'PUT',
 						headers: {
-							'Content-Type': 'application/json'
+							'Content-Type': 'application/json',
+							'Authorization': `Bearer ${token}`
 						},
 						body: JSON.stringify(updatedCustomer)
 					});

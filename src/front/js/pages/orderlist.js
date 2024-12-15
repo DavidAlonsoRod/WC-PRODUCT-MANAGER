@@ -5,7 +5,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import "../../styles/orderlist.css";
 import { Tab, Tabs } from 'react-bootstrap';
 
-
 function Orders() {
     const { store, actions } = useContext(Context);
     const [page, setPage] = useState(1);
@@ -26,7 +25,6 @@ function Orders() {
     const [selectedOrders, setSelectedOrders] = useState([]);
     const navigate = useNavigate();
 
-
     const formatDate = (dateString) => {
         if (!dateString) return 'Fecha no disponible';
         const date = new Date(dateString);
@@ -36,7 +34,7 @@ function Orders() {
         if (diffDays === 0) {
             const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
             const diffMinutes = Math.floor(diffMs / (1000 * 60)) % 60;
-            if (diffHours > 0) {
+            if (diffHours >= 0) {
                 return `${diffHours} horas`;
             } else {
                 return `${diffMinutes} minutos`;
@@ -79,17 +77,6 @@ function Orders() {
                 return 'btn-small';
         }
     };
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            console.error("No token found");
-            navigate("/");
-            return;
-        }
-
-    }, []);
-
-
 
     const getShippingDateClass = (shippingDate) => {
         if (!shippingDate) return 'btn-small';
@@ -99,8 +86,18 @@ function Orders() {
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
         if (diffDays <= 0) {
             return 'btn btn-urgent btn-small';
-        } else if (diffDays <= 3) {
-            return 'btn btn-warning btn-small';
+        } else if (diffDays === 1) {
+            return 'btn btn-1day btn-small';
+        } else if (diffDays === 2) {
+            return 'btn btn-2days btn-small';
+        } else if (diffDays === 3) {
+            return 'btn btn-3days btn-small';
+        } else if (diffDays === 4) {
+            return 'btn btn-4days btn-small';
+        } else if (diffDays === 5) {
+            return 'btn btn-5days btn-small';
+        } else if (diffDays === 6) {
+            return 'btn btn-6days btn-small';
         } else {
             return 'btn btn-success btn-small';
         }
@@ -110,7 +107,6 @@ function Orders() {
         "PayPal",
         "Credit Card",
         "Bank Transfer",
-
     ];
 
     const orderStatuses = [
@@ -119,8 +115,17 @@ function Orders() {
         "completed",
         "pending",
         "cancelled",
-
     ];
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.error("No token found");
+            navigate("/");
+            return;
+        }
+
+    }, []);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -134,7 +139,7 @@ function Orders() {
             });
             const intervalId = setInterval(() => actions.getOrders(page, perPage, customerId, filters).catch(error => {
                 console.error("Error fetching orders:", error.response ? error.response.data : error.message);
-            }), 300000);
+            }), 600000);
             return () => clearInterval(intervalId);
         } else {
             console.error("No token found");
@@ -186,9 +191,7 @@ function Orders() {
     };
 
     const handleBatchAction = () => {
-        
         console.log('Pedidos seleccionados:', selectedOrders);
-
     };
 
     const handleDeleteOrders = async () => {
@@ -230,9 +233,6 @@ function Orders() {
             >
                 <Tab className='m-3' eventKey="allOrders" title="Todos los Pedidos">
                     <div className='border rounded-3 m-5 justify-content-center'>
-
-
-
                         <button onClick={handleDeleteOrders} className="btn btn-danger m-3">Borrar pedidos seleccionados</button>
                         <table className='table caption-top'>
                             <caption className='p-3'>Pedidos</caption>

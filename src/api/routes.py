@@ -1,4 +1,101 @@
 """
+from flask import request, jsonify
+from flask_jwt_extended import jwt_required
+from . import api
+from ..models import db, Customer, Billing, Shipping
+from ..woocommerce import wcapi
+
+@api.route('/customers/<int:customer_id>', methods=['PUT'])
+@jwt_required()
+def update_customer(customer_id):
+    try:
+        data = request.json
+        customer = Customer.query.get(customer_id)
+        
+        if not customer:
+            return jsonify({"error": "Customer not found"}), 404
+        
+        customer.first_name = data.get('first_name', customer.first_name)
+        customer.last_name = data.get('last_name', customer.last_name)
+        customer.email = data.get('email', customer.email)
+        
+        billing_data = data.get('billing', {})
+        if billing_data:
+            billing = customer.billing
+            if not billing:
+                billing = Billing()
+                customer.billing = billing
+            billing.first_name = billing_data.get('first_name', billing.first_name or '')
+            billing.last_name = billing_data.get('last_name', billing.last_name or '')
+            billing.company = billing_data.get('company', billing.company or '')
+            billing.address_1 = billing_data.get('address_1', billing.address_1 or '')
+            billing.address_2 = billing_data.get('address_2', billing.address_2 or '')
+            billing.city = billing_data.get('city', billing.city or '')
+            billing.state = billing_data.get('state', billing.state or '')
+            billing.postcode = billing_data.get('postcode', billing.postcode or '')
+            billing.country = billing_data.get('country', billing.country or '')
+            billing.email = billing_data.get('email', billing.email or '')
+            billing.phone = billing_data.get('phone', billing.phone or '')
+            billing.nif = billing_data.get('nif', billing.nif or '')
+            billing.iban = billing_data.get('iban', billing.iban or '')
+        
+        shipping_data = data.get('shipping', {})
+        if shipping_data:
+            shipping = customer.shipping
+            if not shipping:
+                shipping = Shipping()
+                customer.shipping = shipping
+            shipping.first_name = shipping_data.get('first_name', shipping.first_name or '')
+            shipping.last_name = shipping_data.get('last_name', shipping.last_name or '')
+            shipping.company = shipping_data.get('company', shipping.company or '')
+            shipping.address_1 = shipping_data.get('address_1', shipping.address_1 or '')
+            shipping.address_2 = shipping_data.get('address_2', shipping.address_2 or '')
+            shipping.city = shipping_data.get('city', shipping.city or '')
+            shipping.state = shipping_data.get('state', shipping.state or '')
+            shipping.postcode = shipping_data.get('postcode', shipping.postcode or '')
+            shipping.country = shipping_data.get('country', shipping.country or '')
+            shipping.phone = shipping_data.get('phone', shipping.phone or '')
+        
+        db.session.commit()
+
+        # Actualizar datos en WooCommerce
+        wc_data = {
+            "billing": {
+                "first_name": billing.first_name,
+                "last_name": billing.last_name,
+                "company": billing.company,
+                "address_1": billing.address_1,
+                "address_2": billing.address_2,
+                "city": billing.city,
+                "state": billing.state,
+                "postcode": billing.postcode,
+                "country": billing.country,
+                "email": billing.email,
+                "phone": billing.phone,
+                "nif": billing.nif
+            },
+            "shipping": {
+                "first_name": shipping.first_name,
+                "last_name": shipping.last_name,
+                "company": shipping.company,
+                "address_1": shipping.address_1,
+                "address_2": shipping.address_2,
+                "city": shipping.city,
+                "state": shipping.state,
+                "postcode": shipping.postcode,
+                "country": shipping.country,
+                "phone": shipping.phone
+            }
+        }
+        response = wcapi.put(f"customers/{customer_id}", wc_data)
+        if response.status_code != 200:
+            print(f"Error updating customer in WooCommerce: {response.text}")
+            return jsonify({"error": "Error updating customer in WooCommerce"}), response.status_code
+
+        return jsonify(customer.serialize()), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 import sys
@@ -16,6 +113,7 @@ from datetime import datetime, timedelta
 from api.insert_line_items import insert_line_item
 from .controllers import get_order_by_id
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from PIL import Image  # Importar Pillow para manejar imágenes
 
 # load_dotenv()
 
@@ -34,7 +132,7 @@ consumer_secret = os.getenv('WC_CONSUMER_SECRET')
 wc_api_url = os.getenv('WC_API_URL')
 
 wcapi = API(
-    url=wc_api_url.rstrip('/'),
+    url=wc_api_url.rstrip('/'),  # Eliminar duplicados en la URL
     consumer_key=consumer_key,  
     consumer_secret=consumer_secret, 
     wp_api=True,
@@ -70,6 +168,8 @@ def import_customers():
                 print(f"Request URL: {response.url}")  # Añadir esta línea para depurar la URL
                 if response.status_code == 401:
                     return jsonify({"msg": "Error de autenticación: Verifica tus credenciales de WooCommerce"}), 401
+                if response.status_code == 404:
+                    return jsonify({"msg": "Error: No se ha encontrado ninguna ruta que coincida con la URL y el método de la solicitud."}), 404
                 if response.status_code != 200:
                     return jsonify({"msg": f"Error al importar clientes: {response.text}"}), response.status_code
                 
@@ -212,7 +312,7 @@ def get_customer(customer_id):
         return jsonify({"error": str(e)}), 500
     
 @api.route('/customers/<int:customer_id>', methods=['PUT'])
-@jwt_required()
+# @jwt_required()
 def update_customer(customer_id):
     try:
         data = request.json
@@ -306,7 +406,7 @@ def update_customer(customer_id):
 ############ ORDERS ############
 
 @api.route("/import_orders", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def import_orders():
     try:
         page = 1
@@ -429,6 +529,7 @@ def import_orders():
                         db.session.add(line_item)
                 except Exception as e:
                     print(f"Error processing order {wc_order['id']}: {str(e)}")
+                    db.session.rollback()  # Realizar rollback de la sesión en caso de error
                     continue
 
             db.session.commit()
@@ -440,12 +541,12 @@ def import_orders():
         return jsonify({"msg": f"Error al importar órdenes: {str(e)}"}), 500
 
 @api.route("/import_line_items", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def import_line_items():
     try:
         page = 1
         while True:
-            response = wcapi.get("orders", params={"per_page": 100, "page": page})
+            response = wcapi.get("orders", params={"per_page": 100, "page": page, "status": "processing"})
             
             if response.status_code != 200:
                 return jsonify({"msg": f"Error al importar artículos de línea: {response.text}"}), 401
@@ -494,10 +595,44 @@ def import_line_items():
             db.session.commit()
             page += 1  # Pasar a la siguiente página
 
-        return jsonify({"msg": "Art��culos de línea importados y actualizados correctamente"}), 200
+        return jsonify({"msg": "Artículos de línea importados y actualizados correctamente"}), 200
 
     except Exception as e:
         return jsonify({"msg": f"Error al importar artículos de línea: {str(e)}"}), 500
+
+
+@api.route('/line_items', methods=['GET'])
+@jwt_required()
+def get_line_items():
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        order_id = request.args.get('order_id', type=int)
+        search = request.args.get('search', '', type=str)
+
+        query = LineItem.query.join(Order).filter(Order.status != 'completed')
+        if order_id:
+            query = query.filter(LineItem.order_id == order_id)
+        if search:
+            query = query.filter(LineItem.name.ilike(f"%{search}%"))
+
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        line_items = pagination.items
+        total_items = pagination.total
+
+        serialized_items = []
+        for item in line_items:
+            serialized_item = item.serialize()
+            order = Order.query.get(item.order_id)
+            if order:
+                serialized_item['order'] = order.serialize()
+            serialized_items.append(serialized_item)
+
+        return jsonify({"line_items": serialized_items, "total_items": total_items, "page": page, "per_page": per_page}), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
 
 
 @api.route('/orders', methods=['GET'])
@@ -558,31 +693,6 @@ def get_order(order_id):
     except Exception as e:
         print(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
-@api.route('/line_items', methods=['GET'])
-@jwt_required()
-def get_line_items():
-    try:
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 20, type=int)
-        order_id = request.args.get('order_id', type=int)
-
-        query = LineItem.query
-        if order_id:
-            query = query.filter_by(order_id=order_id)
-
-        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-        line_items = pagination.items
-        total_items = pagination.total
-
-        serialized_items = [item.serialize() for item in line_items]
-
-        return jsonify({"line_items": serialized_items, "total_items": total_items, "page": page, "per_page": per_page}), 200
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
-
 
 @api.route('/orders/update', methods=['PUT'])
 @jwt_required()

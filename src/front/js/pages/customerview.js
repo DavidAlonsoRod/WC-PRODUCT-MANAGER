@@ -46,7 +46,7 @@ const CustomerView = () => {
                 setError('Error al cargar el cliente.');
                 setLoading(false);
             });
-    }, [customerId]);
+    }, [customerId, navigate]);
 
     const handleCloseModal = () => {
         setIsModalOpen(false);
@@ -103,9 +103,18 @@ const CustomerView = () => {
 
     const handleUpdateCustomer = async (updatedCustomer) => {
         try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                console.error("No token found");
+                navigate("/");
+                return;
+            }
+
             await axios.put(`${process.env.BACKEND_URL}/api/customers/${customerId}`, updatedCustomer, {
+                method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 }
             });
             if (isMounted.current) {
@@ -120,6 +129,7 @@ const CustomerView = () => {
             }
         }
     };
+
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -165,12 +175,44 @@ const CustomerView = () => {
         };
 
         fetchOrders();
-    }, [customerId, ordersPage, ordersPerPage]);
-    
+    }, [customerId, ordersPage, ordersPerPage, navigate]);
+
     const handleRowClick = (orderId) => {
         navigate(`/orders/${orderId}`);
     };
+    const getStatusClass = (status) => {
+        switch (status) {
+            case 'on-hold':
+                return 'btn btn-warning btn-small';
+            case 'processing':
+                return 'btn btn-success btn-small';
+            case 'completed':
+                return 'btn btn-primary btn-small';
+            case 'pending':
+                return 'btn btn-secondary btn-small';
+            case 'cancelled':
+                return 'btn btn-light btn-small';
+            default:
+                return 'btn-small';
+        }
+    };
 
+    const translateStatus = (status) => {
+        switch (status) {
+            case 'on-hold':
+                return 'En espera';
+            case 'processing':
+                return 'Procesando';
+            case 'completed':
+                return 'Completado';
+            case 'pending':
+                return 'Pendiente de pago';
+            case 'cancelled':
+                return 'Cancelado';
+            default:
+                return status;
+        }
+    };
 
     const totalPages = Math.ceil(totalOrders / ordersPerPage);
 
@@ -244,7 +286,7 @@ const CustomerView = () => {
                         {customer?.shipping ? (
                             <div className='m-5 p-3 border rounded-3'>
                                 <h4>Pedidos de {customer.billing?.company || 'N/A'}</h4>
-                                
+
                                 <button onClick={handleDeleteOrders} className="btn btn-danger m-3">Borrar pedidos seleccionados</button>
                                 {orders && orders.length > 0 ? (
                                     <>
@@ -253,6 +295,7 @@ const CustomerView = () => {
                                             <thead className='bg-light'>
                                                 <tr>
                                                     <th>#</th>
+                                                    <th>Pedido</th>
                                                     <th>Total</th>
                                                     <th>Fecha de Creación</th>
                                                     <th>Fecha Prevista de Salida</th>
@@ -261,11 +304,11 @@ const CustomerView = () => {
                                             </thead>
                                             <tbody>
                                                 {orders.map(order => (
-                                                    <tr 
-                                                    key={order.id}
-                                                    className='fw-light'
-                                                    style={{ cursor: 'pointer' }}
-                                                    onClick={() => handleRowClick(order.id)}>
+                                                    <tr
+                                                        key={order.id}
+                                                        className='fw-light'
+                                                        style={{ cursor: 'pointer' }}
+                                                        onClick={() => handleRowClick(order.id)}>
                                                         <td>
                                                             <input
                                                                 type="checkbox"
@@ -277,8 +320,12 @@ const CustomerView = () => {
                                                         <td>{order.total}</td>
                                                         <td>{new Date(order.date_created).toLocaleDateString()}</td>
                                                         <td>{new Date(order.date_created).toLocaleDateString()}</td>
-                                                        <td>{order.status}</td>
-                                                        
+                                                        <td>
+                                                        <button className={getStatusClass(order.status)}>
+                                                             {translateStatus(order.status)}
+                                                        </button>
+                                                        </td>
+
                                                     </tr>
                                                 ))}
                                             </tbody>

@@ -139,7 +139,7 @@ const OrdersInProgress = () => {
                     "Authorization": `Bearer ${token}`
                 }
 
-                const endpoint = `${process.env.BACKEND_URL}/api/orders/in-progress?${params.toString()}`;
+                const endpoint = `${process.env.WC_API_URL}/api/orders/in-progress?${params.toString()}`;
                 const response = await axios.get(endpoint, { headers });
 
                 if (isMounted) { // Solo actualizar el estado si el componente está montado
@@ -217,7 +217,7 @@ const OrdersInProgress = () => {
     const handleDeleteOrders = async () => {
         try {
             for (const orderId of selectedOrders) {
-                await axios.delete(`${process.env.BACKEND_URL}/api/orders/${orderId}`);
+                await axios.delete(`${process.env.WC_API_URL}/api/orders/${orderId}`);
             }
             setSelectedOrders([]);
             fetchOrders(); // Refrescar la lista de pedidos

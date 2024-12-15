@@ -1,19 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Alert } from 'react-bootstrap';
 
 const EditShippingModal = ({ show, handleClose, customer, updateCustomer }) => {
     const [shippingDetails, setShippingDetails] = useState({
-        first_name: customer.shipping.first_name || '',
-        last_name: customer.shipping.last_name || '',
-        company: customer.shipping.company || '',
-        address_1: customer.shipping.address_1 || '',
-        address_2: customer.shipping.address_2 || '',
-        city: customer.shipping.city || '',
-        state: customer.shipping.state || '',
-        postcode: customer.shipping.postcode || '',
-        phone: customer.shipping.phone || ''
+        first_name: '',
+        last_name: '',
+        company: '',
+        address_1: '',
+        address_2: '',
+        city: '',
+        state: '',
+        postcode: '',
+        phone: ''
     });
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (customer && customer.shipping) {
+            setShippingDetails({
+                first_name: customer.shipping.first_name || '',
+                last_name: customer.shipping.last_name || '',
+                company: customer.shipping.company || '',
+                address_1: customer.shipping.address_1 || '',
+                address_2: customer.shipping.address_2 || '',
+                city: customer.shipping.city || '',
+                state: customer.shipping.state || '',
+                postcode: customer.shipping.postcode || '',
+                phone: customer.shipping.phone || ''
+            });
+        }
+    }, [customer]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
