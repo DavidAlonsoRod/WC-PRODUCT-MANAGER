@@ -8,7 +8,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from flask import Flask, request, jsonify, url_for, Blueprint
 from api.models import db, User, Customer, Billing, Shipping, Order, LineItem
 from api.utils import generate_sitemap, APIException
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from woocommerce import API
 from dotenv import load_dotenv
 import os
@@ -59,10 +59,9 @@ def handle_hello():
 # ############ CUSTOMERS ############
 
 @api.route("/import_customers", methods=["GET"])
-# @jwt_required()
 def import_customers():
     try:
-        roles = ['all', 'administrator', 'subscriber', 'desactivados', 'customer', 'fotgrafo_profesional', 'pago_con_tarjeta', 'transferencia_bancaria', 'domiciliacin_bancaria', 'transferencia_o_bizum_fin_de_mes', 'contrareembolso', 'translator', 'shop_manager', 'blocked']  # Lista de roles válidos
+        roles = ['all', 'administrator', 'subscriber', 'desactivados', 'customer', 'fotgrafo_profesional', 'pago_con_tarjeta', 'transferencia_bancaria', 'domiciliacin_bancaria', 'transferencia_o_bizum_fin_de_mes', 'contrareembolso', 'translator', 'shop_manager', 'blocked']  
         for role in roles:
             page = 1
             while True:
@@ -103,7 +102,11 @@ def import_customers():
 
                     billing_info = wc_customer.get("billing", {})
                     if billing_info:
-                        billing = Billing.query.filter_by(id=wc_customer["id"]).first()  # Actualizar la consulta
+                        billing = Billing.query.filter_by(
+                            first_name=billing_info["first_name"],
+                            last_name=billing_info["last_name"],
+                            address_1=billing_info["address_1"]
+                        ).first()  
                         if billing:
                             billing.first_name = billing_info["first_name"]
                             billing.last_name = billing_info["last_name"]
@@ -113,11 +116,11 @@ def import_customers():
                             billing.city = billing_info.get("city", "")
                             billing.state = billing_info.get("state", "")
                             billing.postcode = billing_info.get("postcode", "")
-                            billing.country = billing_info.get("country", "")[:100]  # Limitar la longitud del campo country
+                            billing.country = billing_info.get("country", "")[:100] 
                             billing.email = billing_info.get("email", "")
-                            billing.phone = billing_info.get("phone", "")[:20]  # Limitar la longitud del campo phone
-                            billing.iban = billing_info.get("iban", "")  # Importar IBAN
-                            billing.nif = billing_info.get("nif", "")  # Importar NIF
+                            billing.phone = billing_info.get("phone", "")[:20]  
+                            billing.iban = billing_info.get("iban", "")  
+                            billing.nif = billing_info.get("nif", "") 
                         else:
                             new_billing = Billing(
                                 first_name=billing_info["first_name"],
@@ -128,11 +131,11 @@ def import_customers():
                                 city=billing_info.get("city", ""),
                                 state=billing_info.get("state", ""),
                                 postcode=billing_info.get("postcode", ""),
-                                country=billing_info.get("country", "")[:100],  # Limitar la longitud del campo country
+                                country=billing_info.get("country", "")[:100],  
                                 email=billing_info.get("email", ""),
-                                phone=billing_info.get("phone", "")[:20],  # Limitar la longitud del campo phone
-                                iban=billing_info.get("iban", ""),  # Importar IBAN
-                                nif=billing_info.get("nif", "")  # Importar NIF
+                                phone=billing_info.get("phone", "")[:20], 
+                                iban=billing_info.get("iban", ""), 
+                                nif=billing_info.get("nif", "")  
                             )
                             db.session.add(new_billing)
                             if existing_customer:
@@ -142,7 +145,11 @@ def import_customers():
 
                     shipping_info = wc_customer.get("shipping", {})
                     if shipping_info:
-                        shipping = Shipping.query.filter_by(id=wc_customer["id"]).first()  # Actualizar la consulta
+                        shipping = Shipping.query.filter_by(
+                            first_name=shipping_info["first_name"],
+                            last_name=shipping_info["last_name"],
+                            address_1=shipping_info["address_1"]
+                        ).first()  # Actualizar la consulta
                         if shipping:
                             shipping.first_name = shipping_info["first_name"]
                             shipping.last_name = shipping_info["last_name"]
@@ -152,7 +159,7 @@ def import_customers():
                             shipping.city = shipping_info.get("city", "")
                             shipping.state = shipping_info.get("state", "")
                             shipping.postcode = shipping_info.get("postcode", "")
-                            shipping.country = shipping_info.get("country", "")[:100]  # Limitar la longitud del campo country
+                            shipping.country = shipping_info.get("country", "")[:100]  
                         else:
                             new_shipping = Shipping(
                                 first_name=shipping_info["first_name"],
@@ -163,7 +170,7 @@ def import_customers():
                                 city=shipping_info.get("city", ""),
                                 state=shipping_info.get("state", ""),
                                 postcode=shipping_info.get("postcode", ""),
-                                country=shipping_info.get("country", "")[:100]  # Limitar la longitud del campo country
+                                country=shipping_info.get("country", "")[:100] 
                             )
                             db.session.add(new_shipping)
                             if existing_customer:
@@ -172,7 +179,7 @@ def import_customers():
                                 new_customer.shipping = new_shipping
 
                 db.session.commit()
-                page += 1  # Pasar a la siguiente página
+                page += 1 
 
         return jsonify({"msg": "Clientes importados y actualizados correctamente"}), 200
 
@@ -306,7 +313,6 @@ def update_customer(customer_id):
 ############ ORDERS ############
 
 @api.route("/import_orders", methods=["GET"])
-@jwt_required()
 def import_orders():
     try:
         page = 1
@@ -319,7 +325,7 @@ def import_orders():
             wc_orders = response.json()
 
             if not isinstance(wc_orders, list) or not wc_orders:
-                break  # Salir del bucle si no hay más órdenes
+                break  
 
             for wc_order in wc_orders:
                 try:
@@ -353,7 +359,7 @@ def import_orders():
                             last_name=shipping_info["last_name"],
                             company=shipping_info.get("company"),
                             address_1=shipping_info.get("address_1", ""),
-                            address_2=billing_info.get("address_2", ""),
+                            address_2=shipping_info.get("address_2", ""),
                             city=shipping_info.get("city", ""),
                             state=shipping_info.get("state", ""),
                             postcode=shipping_info.get("postcode", ""),
@@ -413,22 +419,35 @@ def import_orders():
 
                     # Importar artículos de línea
                     for item in wc_order.get("line_items", []):
-                        line_item = LineItem(
-                            id=item["id"],
-                            name=item["name"],
-                            product_id=item["product_id"],
-                            variation_id=item["variation_id"],
-                            quantity=item["quantity"],
-                            tax_class=item["tax_class"],
-                            subtotal=item["subtotal"],
-                            subtotal_tax=item["subtotal_tax"],
-                            total=item["total"],
-                            total_tax=item["total_tax"],
-                            order_id=new_order.id if not existing_order else existing_order.id
-                        )
-                        db.session.add(line_item)
+                        existing_item = LineItem.query.filter_by(id=item["id"]).first()
+                        if existing_item:
+                            existing_item.name = item["name"]
+                            existing_item.product_id = item["product_id"]
+                            existing_item.variation_id = item["variation_id"]
+                            existing_item.quantity = item["quantity"]
+                            existing_item.tax_class = item["tax_class"]
+                            existing_item.subtotal = item["subtotal"]
+                            existing_item.subtotal_tax = item["subtotal_tax"]
+                            existing_item.total = item["total"]
+                            existing_item.total_tax = item["total_tax"]
+                        else:
+                            line_item = LineItem(
+                                id=item["id"],
+                                name=item["name"],
+                                product_id=item["product_id"],
+                                variation_id=item["variation_id"],
+                                quantity=item["quantity"],
+                                tax_class=item["tax_class"],
+                                subtotal=item["subtotal"],
+                                subtotal_tax=item["subtotal_tax"],
+                                total=item["total"],
+                                total_tax=item["total_tax"],
+                                order_id=new_order.id if not existing_order else existing_order.id
+                            )
+                            db.session.add(line_item)
                 except Exception as e:
                     print(f"Error processing order {wc_order['id']}: {str(e)}")
+                    db.session.rollback()
                     continue
 
             db.session.commit()
@@ -440,7 +459,6 @@ def import_orders():
         return jsonify({"msg": f"Error al importar órdenes: {str(e)}"}), 500
 
 @api.route("/import_line_items", methods=["GET"])
-@jwt_required()
 def import_line_items():
     try:
         page = 1
@@ -494,10 +512,10 @@ def import_line_items():
             db.session.commit()
             page += 1  # Pasar a la siguiente página
 
-        return jsonify({"msg": "Art��culos de línea importados y actualizados correctamente"}), 200
+        return jsonify({"msg": "LineItems importados y actualizados correctamente"}), 200
 
     except Exception as e:
-        return jsonify({"msg": f"Error al importar artículos de línea: {str(e)}"}), 500
+        return jsonify({"msg": f"Error al importar LineItems: {str(e)}"}), 500
 
 
 @api.route('/orders', methods=['GET'])
@@ -508,7 +526,7 @@ def get_orders():
         per_page = request.args.get('per_page', 20, type=int)
         customer_id = request.args.get('customer_id', type=int)
         query = Order.query
-        if customer_id:
+        if (customer_id):
             query = query.filter_by(customer_id=customer_id)
 
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
@@ -571,6 +589,8 @@ def get_line_items():
         if order_id:
             query = query.filter_by(order_id=order_id)
 
+        query = query.order_by(LineItem.id.desc())  # Ordenar por número de trabajo de mayor a menor
+
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
         line_items = pagination.items
         total_items = pagination.total
@@ -582,7 +602,46 @@ def get_line_items():
         print(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+@api.route('/lineitems/<int:item_id>/note', methods=['PUT'])
+@jwt_required()
+def update_line_item_note(item_id):
+    try:
+        data = request.json
+        note = data.get('note')
+        if note is None:
+            return jsonify({"msg": "Note is required"}), 400
 
+        line_item = LineItem.query.get(item_id)
+        if not line_item:
+            return jsonify({"msg": "Line item not found"}), 404
+
+        line_item.internal_note = note
+        db.session.commit()
+
+        return jsonify(line_item.serialize()), 200
+    except Exception as e:
+        return jsonify({"msg": str(e)}), 500
+
+@api.route('/lineitems/<int:item_id>/status', methods=['PUT'])
+@jwt_required()
+@cross_origin()  # Agregar esta línea para permitir CORS en esta ruta
+def update_line_item_status(item_id):
+    try:
+        data = request.json
+        status = data.get('status')
+        if status is None:
+            return jsonify({"msg": "Status is required"}), 400
+
+        line_item = LineItem.query.get(item_id)
+        if not line_item:
+            return jsonify({"msg": "Line item not found"}), 404
+
+        line_item.status = status
+        db.session.commit()
+
+        return jsonify(line_item.serialize()), 200
+    except Exception as e:
+        return jsonify({"msg": str(e)}), 500
 
 @api.route('/orders/update', methods=['PUT'])
 @jwt_required()
@@ -660,6 +719,7 @@ def get_orders_in_progress():
         if filters["payment_method"]:
             query = query.filter(Order.payment_method.ilike(f"%{filters['payment_method']}%"))
         if filters["status"]:
+
             query = query.filter(Order.status.ilike(f"%{filters['status']}%"))
 
         # Obtener todas las órdenes sin paginación

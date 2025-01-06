@@ -24,12 +24,13 @@ const getState = ({ getStore, getActions, setStore }) => {
 			notification: null,
 			isFetchingCustomers: false,
 			isFetchingOrders: false,
-			isFetchingLineItems: false
+			isFetchingLineItems: false,
+			orderUpdateIntervalId: null
 		},
 		actions: {
 
 
-//########################## !!!! CUSTOMER ¡¡¡¡¡ ################################//
+			//########################## !!!! CUSTOMER ¡¡¡¡¡ ################################//
 
 			exampleFunction: () => {
 				getActions().changeColor(0, "green");
@@ -90,7 +91,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 			},
 
 
-//########################## !!!! ORDERS ¡¡¡¡¡ ################################//
+			//########################## !!!! ORDERS ¡¡¡¡¡ ################################//
 
 
 			getOrders: async (page = 1, per_page = 20, customerId = null, filters = {}) => {
@@ -148,7 +149,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 				const token = localStorage.getItem("token");
 				if (!token) {
 					console.error("No token found");
-					setStore({ auth: false });
+					setStore({ auth: false, isFetchingLineItems: false });
 					return;
 				}
 				const requestOptions = {
@@ -162,7 +163,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					const response = await fetch(`${process.env.BACKEND_URL}/api/line_items?page=${page}&per_page=${per_page}${orderId ? `&order_id=${orderId}` : ''}`, requestOptions);
 					if (response.ok) {
 						const data = await response.json();
-						setStore({ lineItems: data.line_items, totalLineItems: data.total_items, isFetchingLineItems: false });
+						setStore({ lineItems: data.line_items, totalLineItems: data.total_items });
 					} else {
 						if (response.status === 401) {
 							localStorage.removeItem("token");
@@ -172,6 +173,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					}
 				} catch (error) {
 					console.error("Error fetching line items:", error);
+				} finally {
 					setStore({ isFetchingLineItems: false });
 				}
 			},
@@ -247,7 +249,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 						setStore({ auth: false });
 						return;
 					}
-					
+
 					const response = await fetch(`${process.env.BACKEND_URL}/api/orders/${orderId}`, {
 						headers: {
 							"Content-Type": "application/json",
@@ -265,7 +267,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 				}
 			},
 
-//########################## !!!! CUSTOMER ¡¡¡¡¡ ################################//
+			//########################## !!!! CUSTOMER ¡¡¡¡¡ ################################//
 
 			getCustomer: async (customerId) => {
 				try {
@@ -275,7 +277,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 						setStore({ auth: false });
 						return;
 					}
-					
+
 					const response = await fetch(`${process.env.BACKEND_URL}/api/customers/${customerId}`, {
 						headers: {
 							"Content-Type": "application/json",
@@ -293,7 +295,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					throw error;
 				}
 			},
-			
+
 			updateCustomer: async (customerId, updatedCustomer) => {
 				try {
 					const response = await fetch(`${process.env.BACKEND_URL}/api/customers/${customerId}`, {
@@ -347,6 +349,90 @@ const getState = ({ getStore, getActions, setStore }) => {
 
 				//reset the global store
 				setStore({ demo: demo });
+			},
+			startOrderUpdateInterval: () => {
+				const intervalId = setInterval(() => {
+					getActions().getOrders().catch(error => {
+						console.error("Error fetching orders:", error);
+					});
+				}, 120000); // 2 minutos
+				setStore({ orderUpdateIntervalId: intervalId });
+			},
+			stopOrderUpdateInterval: () => {
+				const store = getStore();
+				if (store.orderUpdateIntervalId) {
+					clearInterval(store.orderUpdateIntervalId);
+					setStore({ orderUpdateIntervalId: null });
+				}
+			},
+			importOrders: async () => {
+				const token = localStorage.getItem("token");
+				const requestOptions = {
+					method: 'GET',
+					headers: {
+						"Content-Type": "application/json",
+						"Authorization": `Bearer ${token}`
+					}
+				};
+				try {
+					const response = await fetch(`${process.env.BACKEND_URL}/api/import_orders`, requestOptions);
+					if (!response.ok) {
+						const errorData = await response.json();
+						throw new Error(`Failed to import orders: ${errorData.error || response.statusText}`);
+					}
+					setStore({ notification: "Órdenes actualizadas con éxito" }); // Mostrar mensaje de éxito
+					setTimeout(() => setStore({ notification: null }), 3000); // Limpiar mensaje después de 3 segundos
+				} catch (error) {
+					console.error("Error importing orders:", error);
+					setStore({ notification: "Error al actualizar las órdenes" }); // Mostrar mensaje de error
+					setTimeout(() => setStore({ notification: null }), 3000); // Limpiar mensaje después de 3 segundos
+				}
+			},
+			updateInternalNoteToLineItem: async (itemId, note) => {
+				try {
+					const token = localStorage.getItem("token");
+					const response = await fetch(`${process.env.BACKEND_URL}/api/lineitems/${itemId}/note`, {
+						method: "PUT",
+						headers: {
+							"Content-Type": "application/json",
+							"Authorization": `Bearer ${token}`
+						},
+						body: JSON.stringify({ note })
+					});
+
+					if (!response.ok) {
+						throw new Error("Failed to update note");
+					}
+
+					const data = await response.json();
+					return data;
+				} catch (error) {
+					console.error("Error updating note:", error);
+					throw error;
+				}
+			},
+			updateLineItemStatus: async (itemId, status) => {
+				try {
+					const token = localStorage.getItem("token");
+					const response = await fetch(`${process.env.BACKEND_URL}/api/lineitems/${itemId}/status`, {
+						method: "PUT",
+						headers: {
+							"Content-Type": "application/json",
+							"Authorization": `Bearer ${token}`
+						},
+						body: JSON.stringify({ status })
+					});
+
+					if (!response.ok) {
+						throw new Error("Failed to update line item status");
+					}
+
+					const data = await response.json();
+					return data;
+				} catch (error) {
+					console.error("Error updating line item status:", error);
+					throw error;
+				}
 			}
 		}
 	};
