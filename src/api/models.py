@@ -5,6 +5,7 @@ import io
 import base64
 from sqlalchemy import create_engine
 from flask_bcrypt import Bcrypt
+from PIL import Image  
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
@@ -28,12 +29,12 @@ class User(db.Model):
             "email": self.email,
             # do not serialize the password, its a security breach
         }
+
 class Customer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     first_name = db.Column(db.String(120), nullable=False)
     last_name = db.Column(db.String(120), nullable=False)
-    company = db.Column(db.String(120), nullable=True)
     role = db.Column(db.String(120), default="customer")
     username = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
@@ -49,7 +50,6 @@ class Customer(db.Model):
             "id": self.id,
             "email": self.email,
             "first_name": self.first_name,
-            "company": self.company,
             "last_name": self.last_name,
             "role": self.role,
             "username": self.username,
@@ -61,7 +61,6 @@ class Customer(db.Model):
 
 class Billing(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    # customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)  # Eliminar columna
     first_name = db.Column(db.String(120), nullable=False)
     last_name = db.Column(db.String(120), nullable=False)
     company = db.Column(db.String(120), nullable=True)
@@ -93,7 +92,6 @@ class Billing(db.Model):
     
 class Shipping(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    # customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)  # Eliminar columna
     first_name = db.Column(db.String(120), nullable=False)
     last_name = db.Column(db.String(120), nullable=False)
     company = db.Column(db.String(120), nullable=True)
@@ -122,7 +120,7 @@ class Shipping(db.Model):
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     number = db.Column(db.String(255), nullable=False)
-    status = db.Column(db.String(255), nullable=False, default='pending')
+    status = db.Column(db.String(255), nullable=False, default='pendiente')
     date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
     discount_total = db.Column(db.String(80), nullable=True)
     discount_tax = db.Column(db.String(80), nullable=True)
@@ -190,7 +188,8 @@ class LineItem(db.Model):
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
     order = db.relationship('Order', back_populates='line_items')
     qr_code = db.Column(db.Text, nullable=True)
-    status = db.Column(db.String(50), nullable=False, default='pending')  # Nuevo campo status
+    status = db.Column(db.String(50), nullable=False, default='pendiente') 
+    internal_note = db.Column(db.String(200), nullable=True)  # Nuevo campo status
 
     def generate_qr_code(self):
         qr = qrcode.QRCode(
@@ -222,9 +221,10 @@ class LineItem(db.Model):
             "total_tax": self.total_tax,
             "order_id": self.order_id,
             "qr_code": self.qr_code,
-            "customer_name": f"{customer.first_name} {customer.last_name}" if customer else None,
-            "company_name": customer.company if customer else None,
-            "status": self.status  # Incluir el nuevo campo status
+            "customer_firstname": customer.first_name if customer else None,
+            "customer_lastname": customer.last_name if customer else None,
+            "status": self.status, 
+            "internal_note": self.internal_note 
         }
 
     @staticmethod

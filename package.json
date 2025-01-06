@@ -79,7 +79,9 @@
 		"react-bootstrap": "^2.10.5",
 		"react-dom": "^16.8.4",
 		"react-polyfills": "0.0.1",
+		"react-qr-reader": "^3.0.0-beta-1",
 		"react-router-dom": "^6.3.0",
 		"react-to-print": "^3.0.2"
-	}
+	},
+	"proxy": "https://sturdy-memory-g9jrpxp4vq92w55p-3001.app.github.dev"
 }

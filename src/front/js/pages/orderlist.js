@@ -87,6 +87,11 @@ function Orders() {
             return;
         }
 
+        actions.startOrderUpdateInterval();
+
+        return () => {
+            actions.stopOrderUpdateInterval();
+        };
     }, []);
 
 
@@ -134,7 +139,7 @@ function Orders() {
             });
             const intervalId = setInterval(() => actions.getOrders(page, perPage, customerId, filters).catch(error => {
                 console.error("Error fetching orders:", error.response ? error.response.data : error.message);
-            }), 300000);
+            }), 300000); // 5 minutos
             return () => clearInterval(intervalId);
         } else {
             console.error("No token found");
@@ -186,16 +191,28 @@ function Orders() {
     };
 
     const handleBatchAction = () => {
-        
+
         console.log('Pedidos seleccionados:', selectedOrders);
 
     };
 
     const handleDeleteOrders = async () => {
+        if (window.confirm("¿Seguro que quieres borrar estos pedidos?? Pues tú mismo, pero esto no se puede deshacer.")) {
+            try {
+                await actions.deleteOrders(selectedOrders);
+                alert("Pedidos borrados correctamente.");
+            } catch (error) {
+                console.error("Error borrando pedidos:", error.response ? error.response.data : error.message);
+            }
+        }
+    };
+
+    const handleForceUpdateOrders = async () => {
         try {
-            await actions.deleteOrders(selectedOrders);
+            await actions.importOrders();
+            await actions.getOrders(page, perPage, customerId, filters);
         } catch (error) {
-            console.error("Error deleting orders:", error.response ? error.response.data : error.message);
+            console.error("Error updating orders:", error.response ? error.response.data : error.message);
         }
     };
 
@@ -230,10 +247,8 @@ function Orders() {
             >
                 <Tab className='m-3' eventKey="allOrders" title="Todos los Pedidos">
                     <div className='border rounded-3 m-5 justify-content-center'>
-
-
-
                         <button onClick={handleDeleteOrders} className="btn btn-danger m-3">Borrar pedidos seleccionados</button>
+                        <button onClick={handleForceUpdateOrders} className="btn btn-primary m-3">Actualizar órdenes</button>
                         <table className='table caption-top'>
                             <caption className='p-3'>Pedidos</caption>
                             <thead className='bg-light'>

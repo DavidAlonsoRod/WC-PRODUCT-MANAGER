@@ -19,6 +19,7 @@ import OrderView from "./pages/orderview";
 import OrdersInProgress from "./pages/orderlistInProgress";
 import Settings from "./pages/settings";
 import Invoices from "./pages/invoices";
+import ScanQR from "./pages/scanqr";
 // import CustomerForm from "./pages/customerform"; 
 
 const Layout = () => {
@@ -49,6 +50,7 @@ const Layout = () => {
                             <Route element={<CustomerView />} path="/customer/:customerId" />
                             <Route element={<Settings />} path="/settings" />
                             <Route element={<Invoices />} path="/invoices" />
+                            <Route element={<ScanQR />} path="/scanqr" />
                             {/* <Route element={<CustomerForm />} path="/customerform" />  */}
                             <Route element={<h1>Not found!</h1>} />
                         </Routes>

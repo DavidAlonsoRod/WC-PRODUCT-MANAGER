@@ -17,6 +17,7 @@ INSTALL:
 - pipenv install python-dotenv
 - pipenv install woocommerce
 - pipenv shell
+- pipenv install qrcode
 https://curity.io/resources/learn/jwt-best-practices/
 https://stackoverflow.com/questions/30523238/best-practices-for-server-side-handling-of-jwt-tokens
 
@@ -39,6 +40,7 @@ It is recomended to install the backend first, make sure you have Python 3.8, Pi
 4. Migrate the migrations: `$ pipenv run migrate` (skip if you have not made changes to the models on the `./src/api/models.py`)
 5. Run the migrations: `$ pipenv run upgrade`
 6. Run the application: `$ pipenv run start`
+7. Update browserslist database: `$ npx browserslist@latest --update-db`
 
 > Note: Codespaces users can connect to psql by typing: `psql -h localhost -U gitpod example`
 
@@ -90,3 +92,15 @@ This boilerplate it's 100% read to deploy with Render.com and Heroku in a matter
 This template was built as part of the 4Geeks Academy [Coding Bootcamp](https://4geeksacademy.com/us/coding-bootcamp) by [Alejandro Sanchez](https://twitter.com/alesanchezr) and many other contributors. Find out more about our [Full Stack Developer Course](https://4geeksacademy.com/us/coding-bootcamps/part-time-full-stack-developer), and [Data Science Bootcamp](https://4geeksacademy.com/us/coding-bootcamps/datascience-machine-learning).
 
 You can find other templates and resources like this at the [school github page](https://github.com/4geeksacademy/).
+
+
+STEPS NEW BRANCH: 
+
+0. pipenv install qrcode
+1. pipenv install pillow
+2. pipenv run migrate
+3. pipenv run upgrade
+4. pipenv install python-dotenv
+5. pipenv install woocommerce
+6. pipenv shell
+7. npm install react-qr-reader

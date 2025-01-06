@@ -8,6 +8,7 @@ const Customers = () => {
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(20);
     const [totalCustomers, setTotalCustomers] = useState(0);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -30,7 +31,6 @@ const Customers = () => {
                         "Content-Type": "application/json",
                     },
                     params: {
-
                         page: page,
                         per_page: perPage,
                     },
@@ -40,6 +40,7 @@ const Customers = () => {
                 setTotalCustomers(response.data.total_customers);
             } catch (error) {
                 console.error("Error fetching customers", error);
+                setError(error);
             }
         };
 
@@ -55,6 +56,10 @@ const Customers = () => {
     };
 
     const totalPages = Math.ceil(totalCustomers / perPage);
+
+    if (error) {
+        return <div>Error fetching customers: {error.message}</div>;
+    }
 
     return (
         <div>
@@ -81,7 +86,7 @@ const Customers = () => {
                                 style={{ cursor: 'pointer' }}
                             >
                                 <td className='fw-light'>{customer.id}</td>
-                                <td>{customer.company}</td>
+                                <td>{customer.billing.company}</td>
                                 <td>{customer.first_name}</td>
                                 <td>{customer.last_name}</td>
                                 <td>{customer.city}</td>
