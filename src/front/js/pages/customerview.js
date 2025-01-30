@@ -166,7 +166,7 @@ const CustomerView = () => {
 
         fetchOrders();
     }, [customerId, ordersPage, ordersPerPage]);
-    
+
     const handleRowClick = (orderId) => {
         navigate(`/orders/${orderId}`);
     };
@@ -178,7 +178,7 @@ const CustomerView = () => {
         setOrdersPage(pageNumber);
     };
 
-    if (loading) return <p className='p-3'>CAgando...</p>;
+    if (loading) return <p className='p-3'>Cargando...</p>;
     if (error) return <p className='p-3'>Error: {error}</p>;
 
     return (
@@ -244,7 +244,7 @@ const CustomerView = () => {
                         {customer?.shipping ? (
                             <div className='m-5 p-3 border rounded-3'>
                                 <h4>Pedidos de {customer.billing?.company || 'N/A'}</h4>
-                                
+
                                 <button onClick={handleDeleteOrders} className="btn btn-danger m-3">Borrar pedidos seleccionados</button>
                                 {orders && orders.length > 0 ? (
                                     <>
@@ -261,11 +261,11 @@ const CustomerView = () => {
                                             </thead>
                                             <tbody>
                                                 {orders.map(order => (
-                                                    <tr 
-                                                    key={order.id}
-                                                    className='fw-light'
-                                                    style={{ cursor: 'pointer' }}
-                                                    onClick={() => handleRowClick(order.id)}>
+                                                    <tr
+                                                        key={order.id}
+                                                        className='fw-light'
+                                                        style={{ cursor: 'pointer' }}
+                                                        onClick={() => handleRowClick(order.id)}>
                                                         <td>
                                                             <input
                                                                 type="checkbox"
@@ -278,7 +278,7 @@ const CustomerView = () => {
                                                         <td>{new Date(order.date_created).toLocaleDateString()}</td>
                                                         <td>{new Date(order.date_created).toLocaleDateString()}</td>
                                                         <td>{order.status}</td>
-                                                        
+
                                                     </tr>
                                                 ))}
                                             </tbody>

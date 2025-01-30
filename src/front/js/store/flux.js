@@ -259,7 +259,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 						return;
 					}
 
-					const response = await fetch(`${process.env.BACKEND_URL} / api / orders / ${orderId}`, {
+					const response = await fetch(`${process.env.BACKEND_URL}/api/orders/${orderId}`, {
 						headers: {
 							"Content-Type": "application/json",
 							"Authorization": `Bearer ${token}`
@@ -287,7 +287,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 						return;
 					}
 
-					const response = await fetch(`${process.env.BACKEND_URL} / api / customers / ${customerId}`, {
+					const response = await fetch(`${process.env.BACKEND_URL}/api/customers/${customerId}`, {
 						headers: {
 							"Content-Type": "application/json",
 							"Authorization": `Bearer ${token}`
@@ -295,6 +295,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					});
 					if (response.ok) {
 						const data = await response.json();
+						setStore({ customer: data });
 						return data;
 					} else {
 						throw new Error("Failed to fetch customer");
@@ -400,7 +401,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 			updateInternalNoteToLineItem: async (itemId, note) => {
 				try {
 					const token = localStorage.getItem("token");
-					const response = await fetch(`${process.env.BACKEND_URL} /api/lineitems / ${itemId}/note`, {
+					const response = await fetch(`${process.env.BACKEND_URL}/api/lineitems/${itemId}/note`, {
 						method: "PUT",
 						headers: {
 							"Content-Type": "application/json",
@@ -414,6 +415,10 @@ const getState = ({ getStore, getActions, setStore }) => {
 					}
 
 					const data = await response.json();
+					const updatedLineItems = getStore().lineItems.map(item =>
+						item.id === itemId ? { ...item, internal_note: note } : item
+					);
+					setStore({ lineItems: updatedLineItems });
 					return data;
 				} catch (error) {
 					console.error("Error updating note:", error);
@@ -437,14 +442,97 @@ const getState = ({ getStore, getActions, setStore }) => {
 					}
 
 					const data = await response.json();
+					await getActions().checkAndUpdateOrderStatus(data.order_id);
 					return data;
 				} catch (error) {
 					console.error("Error updating line item status:", error);
 					throw error;
 				}
 			},
+			checkAndUpdateOrderStatus: async (orderId) => {
+				const store = getStore();
+				const lineItems = store.lineItems.filter(item => item.order_id === orderId);
+				const allFinalized = lineItems.every(item => item.status === "finalizado");
+
+				if (allFinalized) {
+					try {
+						const token = localStorage.getItem("token");
+						const response = await fetch(`${process.env.BACKEND_URL}/api/orders/${orderId}/status`, {
+							method: "PUT",
+							headers: {
+								"Content-Type": "application/json",
+								"Authorization": `Bearer ${token}`
+							},
+							body: JSON.stringify({ status: "completed" })
+						});
+
+						if (!response.ok) {
+							throw new Error("Failed to update order status");
+						}
+
+						const data = await response.json();
+						const updatedOrders = store.orders.map(order => 
+							order.id === orderId ? { ...order, status: "completed" } : order
+						);
+						setStore({ orders: updatedOrders });
+
+						// Actualizar el estado en WooCommerce
+						await fetch(`${process.env.WOOCOMMERCE_API_URL}/orders/${orderId}`, {
+							method: "PUT",
+							headers: {
+								"Content-Type": "application/json",
+								"Authorization": `Bearer ${token}`
+							},
+							body: JSON.stringify({ status: "completed" })
+						});
+					} catch (error) {
+						console.error("Error updating order status:", error);
+					}
+				}
+			},
 			setLineItems: (lineItems) => {
 				setStore({ lineItems });
+			},
+			updateOrderStatus: async (orderId, status) => {
+				try {
+					const token = localStorage.getItem("token");
+					const response = await fetch(`${process.env.BACKEND_URL}/api/orders/${orderId}/status`, {
+						method: "PUT",
+						headers: {
+							"Content-Type": "application/json",
+							"Authorization": `Bearer ${token}`,
+							"Access-Control-Allow-Origin": "*" // Agregar esta línea
+						},
+						body: JSON.stringify({ status })
+					});
+
+					if (!response.ok) {
+						throw new Error("Failed to update order status");
+					}
+
+					const data = await response.json();
+					const updatedOrders = getStore().orders.map(order => 
+						order.id === orderId ? { ...order, status } : order
+					);
+					setStore({ orders: updatedOrders });
+
+					// Actualizar el estado en WooCommerce
+					const wcResponse = await fetch(`${process.env.WOOCOMMERCE_API_URL}/orders/${orderId}`, {
+						method: "PUT",
+						headers: {
+							"Content-Type": "application/json",
+							"Authorization": `Bearer ${token}`
+						},
+						body: JSON.stringify({ status })
+					});
+
+					if (!wcResponse.ok) {
+						throw new Error("Failed to update order status in WooCommerce");
+					}
+				} catch (error) {
+					console.error("Error updating order status:", error);
+					throw error;
+				}
 			}
 		}
 	};

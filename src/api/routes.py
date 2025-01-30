@@ -551,6 +551,7 @@ def get_line_items():
 
 @api.route('/lineitems/<int:item_id>/note', methods=['PUT'])
 @jwt_required()
+@cross_origin()  # Agregar esta línea para permitir CORS en esta ruta
 def update_line_item_note(item_id):
     try:
         data = request.json
@@ -585,6 +586,20 @@ def update_line_item_status(item_id):
 
         line_item.status = status
         db.session.commit()
+
+        # Verificar si todos los line items de la orden están finalizados
+        order = line_item.order
+        all_finalized = all(item.status == "finalizado" for item in order.line_items)
+        if all_finalized:
+            order.status = "completed"
+            db.session.commit()
+
+            # Actualizar el estado en WooCommerce
+            wc_data = {"status": "completed"}
+            wc_response = wcapi.put(f"orders/{order.id}", wc_data)
+            if wc_response.status_code != 200:
+                print(f"Error updating order in WooCommerce: {wc_response.text}")
+                return jsonify({"error": "Error updating order in WooCommerce"}), wc_response.status_code
 
         return jsonify(line_item.serialize()), 200
     except Exception as e:
@@ -853,8 +868,34 @@ def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
+@api.route('/orders/<int:order_id>/status', methods=['PUT'])
+@jwt_required()
+@cross_origin()  # Agregar esta línea para permitir CORS en esta ruta
+def update_order_status(order_id):
+	try:
+		data = request.json
+		status = data.get('status')
+		if status is None:
+			return jsonify({"msg": "Status is required"}), 400
+
+		order = Order.query.get(order_id)
+		if not order:
+			return jsonify({"msg": "Order not found"}), 404
+
+		order.status = status
+		db.session.commit()
+
+		# Actualizar el estado en WooCommerce
+		wc_data = {"status": status}
+		wc_response = wcapi.put(f"orders/{order_id}", wc_data)
+		if wc_response.status_code != 200:
+			print(f"Error updating order in WooCommerce: {wc_response.text}")
+			return jsonify({"error": "Error updating order in WooCommerce"}), wc_response.status_code
+
+		return jsonify(order.serialize()), 200
+	except Exception as e:
+		return jsonify({"msg": str(e)}), 500
 # app.register_blueprint(api, url_prefix='/api')
 
 # if __name__ == "__main__":
 #     api.run()
-

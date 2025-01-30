@@ -53,12 +53,16 @@ const LineItems = () => {
 
     const handleAddNote = (itemId, note) => {
         if (note) {
-            actions.addInternalNoteToLineItem(itemId, note)
+            actions.updateInternalNoteToLineItem(itemId, note)
                 .then(() => {
-                    fetchLineItems();
+                    actions.getLineItems(page, perPage, null, { sortBy, sortOrder });
+                    setStatusMessage("Nota agregada correctamente.");
+                    setTimeout(() => setStatusMessage(""), 3000);
                 })
                 .catch(error => {
                     console.error("Error al agregar la nota:", error);
+                    setStatusMessage("Error al agregar la nota.");
+                    setTimeout(() => setStatusMessage(""), 3000);
                 });
         }
     };
@@ -68,10 +72,14 @@ const LineItems = () => {
         if (newNote !== null && newNote !== currentNote) {
             actions.updateInternalNoteToLineItem(itemId, newNote)
                 .then(() => {
-                    fetchLineItems();
+                    actions.getLineItems(page, perPage, null, { sortBy, sortOrder });
+                    setStatusMessage("Nota editada correctamente.");
+                    setTimeout(() => setStatusMessage(""), 3000);
                 })
                 .catch(error => {
                     console.error("Error al editar la nota:", error);
+                    setStatusMessage("Error al editar la nota.");
+                    setTimeout(() => setStatusMessage(""), 3000);
                 });
         }
     };
@@ -82,6 +90,7 @@ const LineItems = () => {
             updateLineItemStatusInStore(itemId, "finalizado");
             setStatusMessage("Item finalizado correctamente");
             setTimeout(() => setStatusMessage(""), 3000);
+            checkAndUpdateOrderStatus();
         } catch (error) {
             console.error("Error al finalizar el item:", error);
             setStatusMessage("Error al finalizar el item");
@@ -129,6 +138,7 @@ const LineItems = () => {
             setSelectedItems([]);
             setStatusMessage("Estados modificados correctamente");
             setTimeout(() => setStatusMessage(""), 3000);
+            checkAndUpdateOrderStatus();
         } catch (error) {
             console.error("Error al modificar los estados:", error);
             setStatusMessage("Error al modificar los estados");
@@ -144,6 +154,22 @@ const LineItems = () => {
         // Forzar actualización del componente
         setSelectedItems(prevSelectedItems => [...prevSelectedItems]);
         setPage(page); // Forzar re-renderizado
+    };
+
+    const checkAndUpdateOrderStatus = () => {
+        const allFinalized = store.lineItems.every(item => item.status === "finalizado");
+        if (allFinalized) {
+            actions.updateOrderStatus("completado")
+                .then(() => {
+                    setStatusMessage("Orden completada correctamente");
+                    setTimeout(() => setStatusMessage(""), 3000);
+                })
+                .catch(error => {
+                    console.error("Error al completar la orden:", error);
+                    setStatusMessage("Error al completar la orden");
+                    setTimeout(() => setStatusMessage(""), 3000);
+                });
+        }
     };
 
     const filteredLineItems = store.lineItems.filter(item => ["pendiente", "en_proceso", "finalizado"].includes(item.status));
@@ -225,9 +251,9 @@ const LineItems = () => {
                                 <td>{item.status}</td>
                                 <td>
                                     {item.internal_note ? (
-                                        <span onClick={() => handleEditNote(item.id, item.internal_note)}>
+                                        <button onClick={() => handleEditNote(item.id, item.internal_note)} className="btn btn-link">
                                             {item.internal_note}
-                                        </span>
+                                        </button>
                                     ) : (
                                         <button onClick={() => handleAddNote(item.id, prompt("Agregar nota interna:"))}>
                                             Agregar nota
