@@ -152,10 +152,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 					setStore({ auth: false });
 					return;
 				}
-				if (isNaN(page) || isNaN(per_page)) {
-					console.error("Invalid page or per_page value");
-					return;
-				}
 				const params = new URLSearchParams({
 					page: String(page),
 					per_page: String(per_page),
@@ -446,6 +442,9 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.error("Error updating line item status:", error);
 					throw error;
 				}
+			},
+			setLineItems: (lineItems) => {
+				setStore({ lineItems });
 			}
 		}
 	};

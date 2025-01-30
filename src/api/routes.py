@@ -518,6 +518,78 @@ def import_line_items():
         return jsonify({"msg": f"Error al importar LineItems: {str(e)}"}), 500
 
 
+@api.route('/line_items', methods=['GET'])
+@jwt_required()
+def get_line_items():
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        order_id = request.args.get('order_id', type=int)
+        sort_by = request.args.get('sortBy', 'date_created')
+        sort_order = request.args.get('sortOrder', 'desc')
+
+        query = LineItem.query.join(Order)
+        if order_id:
+            query = query.filter(LineItem.order_id == order_id)
+
+        if sort_by and sort_order:
+            if sort_order == 'asc':
+                query = query.order_by(getattr(Order, sort_by).asc())
+            else:
+                query = query.order_by(getattr(Order, sort_by).desc())
+
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        line_items = pagination.items
+        total_items = pagination.total
+
+        serialized_items = [item.serialize() for item in line_items]
+
+        return jsonify({"line_items": serialized_items, "total_items": total_items, "page": page, "per_page": per_page}), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@api.route('/lineitems/<int:item_id>/note', methods=['PUT'])
+@jwt_required()
+def update_line_item_note(item_id):
+    try:
+        data = request.json
+        note = data.get('note')
+        if note is None:
+            return jsonify({"msg": "Note is required"}), 400
+
+        line_item = LineItem.query.get(item_id)
+        if not line_item:
+            return jsonify({"msg": "Line item not found"}), 404
+
+        line_item.internal_note = note
+        db.session.commit()
+
+        return jsonify(line_item.serialize()), 200
+    except Exception as e:
+        return jsonify({"msg": str(e)}), 500
+
+@api.route('/lineitems/<int:item_id>/status', methods=['PUT'])
+@jwt_required()
+@cross_origin()  # Agregar esta línea para permitir CORS en esta ruta
+def update_line_item_status(item_id):
+    try:
+        data = request.json
+        status = data.get('status')
+        if status is None:
+            return jsonify({"msg": "Status is required"}), 400
+
+        line_item = LineItem.query.get(item_id)
+        if not line_item:
+            return jsonify({"msg": "Line item not found"}), 404
+
+        line_item.status = status
+        db.session.commit()
+
+        return jsonify(line_item.serialize()), 200
+    except Exception as e:
+        return jsonify({"msg": str(e)}), 500
+
 @api.route('/orders', methods=['GET'])
 @jwt_required()
 def get_orders():
@@ -576,72 +648,6 @@ def get_order(order_id):
     except Exception as e:
         print(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
-@api.route('/line_items', methods=['GET'])
-@jwt_required()
-def get_line_items():
-    try:
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 20, type=int)
-        order_id = request.args.get('order_id', type=int)
-
-        query = LineItem.query
-        if (order_id):
-            query = query.filter_by(order_id=order_id)
-
-        # query = query.order_by(LineItem.id.desc())  # Ordenar por número de trabajo de mayor a menor
-
-        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-        line_items = pagination.items
-        total_items = pagination.total
-
-        serialized_items = [item.serialize() for item in line_items]
-
-        return jsonify({"line_items": serialized_items, "total_items": total_items, "page": page, "per_page": per_page}), 200
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
-@api.route('/lineitems/<int:item_id>/note', methods=['PUT'])
-@jwt_required()
-def update_line_item_note(item_id):
-    try:
-        data = request.json
-        note = data.get('note')
-        if note is None:
-            return jsonify({"msg": "Note is required"}), 400
-
-        line_item = LineItem.query.get(item_id)
-        if not line_item:
-            return jsonify({"msg": "Line item not found"}), 404
-
-        line_item.internal_note = note
-        db.session.commit()
-
-        return jsonify(line_item.serialize()), 200
-    except Exception as e:
-        return jsonify({"msg": str(e)}), 500
-
-@api.route('/lineitems/<int:item_id>/status', methods=['PUT'])
-@jwt_required()
-@cross_origin()  # Agregar esta línea para permitir CORS en esta ruta
-def update_line_item_status(item_id):
-    try:
-        data = request.json
-        status = data.get('status')
-        if status is None:
-            return jsonify({"msg": "Status is required"}), 400
-
-        line_item = LineItem.query.get(item_id)
-        if not line_item:
-            return jsonify({"msg": "Line item not found"}), 404
-
-        line_item.status = status
-        db.session.commit()
-
-        return jsonify(line_item.serialize()), 200
-    except Exception as e:
-        return jsonify({"msg": str(e)}), 500
 
 @api.route('/orders/update', methods=['PUT'])
 @jwt_required()

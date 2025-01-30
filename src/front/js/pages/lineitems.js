@@ -11,11 +11,13 @@ const LineItems = () => {
     const [selectedItems, setSelectedItems] = useState([]);
     const [selectedStatus, setSelectedStatus] = useState("finalizado");
     const [statusMessage, setStatusMessage] = useState("");
+    const [sortOrder, setSortOrder] = useState('desc');
+    const [sortBy, setSortBy] = useState('date_created');
     const navigate = useNavigate();
 
     const fetchLineItems = useCallback(() => {
-        actions.getLineItems(page, perPage);
-    }, [actions, page, perPage]);
+        actions.getLineItems(page, perPage, null, { sortBy, sortOrder });
+    }, [actions, page, perPage, sortBy, sortOrder]);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -37,6 +39,15 @@ const LineItems = () => {
         const newPerPage = parseInt(event.target.value, 10);
         if (newPerPage !== perPage) {
             setPerPage(newPerPage);
+        }
+    };
+
+    const handleSort = (field) => {
+        if (sortBy === field) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortBy(field);
+            setSortOrder('asc');
         }
     };
 
@@ -65,14 +76,40 @@ const LineItems = () => {
         }
     };
 
-    const handleFinalizeItem = (itemId) => {
-        actions.updateLineItemStatus(itemId, "finalizado")
-            .then(() => {
-                fetchLineItems();
-            })
-            .catch(error => {
-                console.error("Error al finalizar el item:", error);
-            });
+    const handleFinalizeItem = async (itemId) => {
+        try {
+            await actions.updateLineItemStatus(itemId, "finalizado");
+            updateLineItemStatusInStore(itemId, "finalizado");
+            setStatusMessage("Item finalizado correctamente");
+            setTimeout(() => setStatusMessage(""), 3000);
+        } catch (error) {
+            console.error("Error al finalizar el item:", error);
+            setStatusMessage("Error al finalizar el item");
+            setTimeout(() => setStatusMessage(""), 3000);
+        }
+    };
+
+    const handlePendingItem = async (itemId) => {
+        try {
+            await actions.updateLineItemStatus(itemId, "pendiente");
+            updateLineItemStatusInStore(itemId, "pendiente");
+            setStatusMessage("Item cambiado a pendiente correctamente");
+            setTimeout(() => setStatusMessage(""), 3000);
+        } catch (error) {
+            console.error("Error al cambiar el estado a pendiente:", error);
+            setStatusMessage("Error al cambiar el estado a pendiente");
+            setTimeout(() => setStatusMessage(""), 3000);
+        }
+    };
+
+    const updateLineItemStatusInStore = (itemId, newStatus) => {
+        const updatedLineItems = store.lineItems.map(item => 
+            item.id === itemId ? { ...item, status: newStatus } : item
+        );
+        actions.setLineItems(updatedLineItems);
+        // Forzar actualización del componente
+        setSelectedItems(prevSelectedItems => [...prevSelectedItems]);
+        setPage(page); // Forzar re-renderizado
     };
 
     const handleSelectItem = (itemId) => {
@@ -83,24 +120,44 @@ const LineItems = () => {
         );
     };
 
-    const handleFinalizeSelectedItems = () => {
-        Promise.all(selectedItems.map(itemId => 
-            actions.updateLineItemStatus(itemId, selectedStatus)
-        ))
-        .then(() => {
+    const handleFinalizeSelectedItems = async () => {
+        try {
+            await Promise.all(selectedItems.map(itemId =>
+                actions.updateLineItemStatus(itemId, selectedStatus)
+            ));
+            updateSelectedItemsStatusInStore(selectedItems, selectedStatus);
             setSelectedItems([]);
-            fetchLineItems();
             setStatusMessage("Estados modificados correctamente");
             setTimeout(() => setStatusMessage(""), 3000);
-        })
-        .catch(error => {
+        } catch (error) {
             console.error("Error al modificar los estados:", error);
             setStatusMessage("Error al modificar los estados");
             setTimeout(() => setStatusMessage(""), 3000);
-        });
+        }
+    };
+
+    const updateSelectedItemsStatusInStore = (itemIds, newStatus) => {
+        const updatedLineItems = store.lineItems.map(item => 
+            itemIds.includes(item.id) ? { ...item, status: newStatus } : item
+        );
+        actions.setLineItems(updatedLineItems);
+        // Forzar actualización del componente
+        setSelectedItems(prevSelectedItems => [...prevSelectedItems]);
+        setPage(page); // Forzar re-renderizado
     };
 
     const filteredLineItems = store.lineItems.filter(item => ["pendiente", "en_proceso", "finalizado"].includes(item.status));
+
+    const getRowClass = (status) => {
+        switch (status) {
+            case 'pendiente':
+                return 'bg-light-red';
+            case 'finalizado':
+                return 'bg-light-green';
+            default:
+                return '';
+        }
+    };
 
     return (
         <div className='border rounded-3 m-5 justify-content-center'>
@@ -137,7 +194,9 @@ const LineItems = () => {
                                 />
                             </th>
                             <th>ID</th>
-                            <th>Pedido</th>
+                            <th onClick={() => handleSort('date_created')} style={{ cursor: 'pointer' }}>
+                                Pedido {sortBy === 'date_created' && (sortOrder === 'asc' ? '↑' : '↓')}
+                            </th>
                             <th>Empresa</th>
                             <th>Producto</th>
                             <th>Cliente</th>
@@ -149,7 +208,7 @@ const LineItems = () => {
                     </thead>
                     <tbody>
                         {filteredLineItems.map(item => (
-                            <tr key={item.id}>
+                            <tr key={item.id} className={getRowClass(item.status)}>
                                 <td>
                                     <input
                                         type="checkbox"
@@ -176,8 +235,11 @@ const LineItems = () => {
                                     )}
                                 </td>
                                 <td>
-                                    {item.status !== "finalizado" && (
+                                    {item.status === "pendiente" && (
                                         <button onClick={() => handleFinalizeItem(item.id)}>Finalizar</button>
+                                    )}
+                                    {item.status === "finalizado" && (
+                                        <button onClick={() => handlePendingItem(item.id)}>Pendiente</button>
                                     )}
                                 </td>
                             </tr>

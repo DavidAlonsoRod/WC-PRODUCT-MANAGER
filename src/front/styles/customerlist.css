@@ -81,3 +81,11 @@ span{
     border-radius: 0.2rem;
 }
 
+.bg-light-red {
+    background-color: #f1c7c7;
+}
+
+.bg-light-green {
+    background-color: #d1ead1;
+}
+
