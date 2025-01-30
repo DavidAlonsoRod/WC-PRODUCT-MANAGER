@@ -224,7 +224,9 @@ class LineItem(db.Model):
             "customer_firstname": customer.first_name if customer else None,
             "customer_lastname": customer.last_name if customer else None,
             "status": self.status, 
-            "internal_note": self.internal_note 
+            "internal_note": self.internal_note,
+            "order_number": self.order.number if self.order else None,
+            "billing_company": self.order.billing.company if self.order and self.order.billing else None
         }
 
     @staticmethod

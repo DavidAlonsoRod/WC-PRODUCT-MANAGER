@@ -586,10 +586,10 @@ def get_line_items():
         order_id = request.args.get('order_id', type=int)
 
         query = LineItem.query
-        if order_id:
+        if (order_id):
             query = query.filter_by(order_id=order_id)
 
-        query = query.order_by(LineItem.id.desc())  # Ordenar por número de trabajo de mayor a menor
+        # query = query.order_by(LineItem.id.desc())  # Ordenar por número de trabajo de mayor a menor
 
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
         line_items = pagination.items

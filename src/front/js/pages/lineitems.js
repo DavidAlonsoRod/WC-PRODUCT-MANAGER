@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import "../../styles/customerlist.css";
 import { useNavigate } from 'react-router-dom';
 import { Context } from '../store/appContext';
-import StatusMessage from '../component/StatusMessage'; // Importa el nuevo componente
+import StatusMessage from '../component/StatusMessage';
 
 const LineItems = () => {
     const { store, actions } = useContext(Context);
@@ -10,8 +10,12 @@ const LineItems = () => {
     const [perPage, setPerPage] = useState(20);
     const [selectedItems, setSelectedItems] = useState([]);
     const [selectedStatus, setSelectedStatus] = useState("finalizado");
-    const [statusMessage, setStatusMessage] = useState(""); // Estado para el mensaje
+    const [statusMessage, setStatusMessage] = useState("");
     const navigate = useNavigate();
+
+    const fetchLineItems = useCallback(() => {
+        actions.getLineItems(page, perPage);
+    }, [actions, page, perPage]);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -20,8 +24,8 @@ const LineItems = () => {
             navigate("/");
             return;
         }
-        actions.getLineItems(page, perPage); // Asegurarse de obtener los line items al cargar el componente
-    }, [navigate, actions, page, perPage]);
+        fetchLineItems();
+    }, [navigate, fetchLineItems]);
 
     const handlePageChange = (newPage) => {
         if (newPage !== page) {
@@ -40,7 +44,7 @@ const LineItems = () => {
         if (note) {
             actions.addInternalNoteToLineItem(itemId, note)
                 .then(() => {
-                    actions.getLineItems(page, perPage); // Refrescar la lista de line items después de agregar la nota
+                    fetchLineItems();
                 })
                 .catch(error => {
                     console.error("Error al agregar la nota:", error);
@@ -53,7 +57,7 @@ const LineItems = () => {
         if (newNote !== null && newNote !== currentNote) {
             actions.updateInternalNoteToLineItem(itemId, newNote)
                 .then(() => {
-                    actions.getLineItems(page, perPage); // Refrescar la lista de line items después de editar la nota
+                    fetchLineItems();
                 })
                 .catch(error => {
                     console.error("Error al editar la nota:", error);
@@ -64,7 +68,7 @@ const LineItems = () => {
     const handleFinalizeItem = (itemId) => {
         actions.updateLineItemStatus(itemId, "finalizado")
             .then(() => {
-                actions.getLineItems(page, perPage); // Refrescar la lista de line items después de cambiar el estado
+                fetchLineItems();
             })
             .catch(error => {
                 console.error("Error al finalizar el item:", error);
@@ -80,28 +84,27 @@ const LineItems = () => {
     };
 
     const handleFinalizeSelectedItems = () => {
-        selectedItems.forEach(itemId => {
+        Promise.all(selectedItems.map(itemId => 
             actions.updateLineItemStatus(itemId, selectedStatus)
-                .catch(error => {
-                    console.error(`Error al cambiar el estado del item ${itemId} a ${selectedStatus}:`, error);
-                });
+        ))
+        .then(() => {
+            setSelectedItems([]);
+            fetchLineItems();
+            setStatusMessage("Estados modificados correctamente");
+            setTimeout(() => setStatusMessage(""), 3000);
+        })
+        .catch(error => {
+            console.error("Error al modificar los estados:", error);
+            setStatusMessage("Error al modificar los estados");
+            setTimeout(() => setStatusMessage(""), 3000);
         });
-        setSelectedItems([]);
-        actions.getLineItems(page, perPage) // Refrescar la lista de line items después de cambiar el estado
-            .then(() => {
-                setStatusMessage("Estados modificados correctamente"); // Establecer el mensaje
-                setTimeout(() => setStatusMessage(""), 3000); // Limpiar el mensaje después de 3 segundos
-            })
-            .catch(error => {
-                console.error("Error al refrescar la lista de line items:", error);
-            });
     };
 
     const filteredLineItems = store.lineItems.filter(item => ["pendiente", "en_proceso", "finalizado"].includes(item.status));
 
     return (
         <div className='border rounded-3 m-5 justify-content-center'>
-            {statusMessage && <StatusMessage message={statusMessage} onClose={() => setStatusMessage("")} />} {/* Mostrar el mensaje */}
+            {statusMessage && <StatusMessage message={statusMessage} onClose={() => setStatusMessage("")} />}
             <div className="m-3">
                 <label htmlFor="statusSelector">Seleccionar estado:</label>
                 <select
@@ -112,7 +115,6 @@ const LineItems = () => {
                     <option value="finalizado">Finalizado</option>
                     <option value="pendiente">Pendiente</option>
                     <option value="en_proceso">En Proceso</option>
-                    {/* Agregar más opciones según sea necesario */}
                 </select>
                 <button onClick={handleFinalizeSelectedItems} disabled={selectedItems.length === 0}>
                     Modificar estado
@@ -131,77 +133,70 @@ const LineItems = () => {
                                             setSelectedItems([]);
                                         }
                                     }}
-                                    checked={selectedItems.length === filteredLineItems.length && filteredLineItems.length > 0}
+                                    checked={selectedItems.length === filteredLineItems.length}
                                 />
                             </th>
-                            <th>Nº Pedido</th>
-                            <th>Nº trabajo</th>
-                            <th>Cliente</th>
+                            <th>ID</th>
+                            <th>Pedido</th>
+                            <th>Empresa</th>
                             <th>Producto</th>
-                            <th>Quantity</th>
-                            <th>Subtotal</th>
-                            <th>Total</th>
+                            <th>Cliente</th>
+                            <th>Cantidad</th>
                             <th>Estado</th>
-                            <th>Nota interna</th>
-                            <th>QR</th>
+                            <th>Nota Interna</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredLineItems.length > 0 ? (
-                            filteredLineItems.map(item => (
-                                <tr key={item.id} style={{ backgroundColor: item.status === "finalizado" ? "#d4edda" : item.status === "pendiente" ? "#fff3cd" : "transparent" }}>
-                                    <td>
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedItems.includes(item.id)}
-                                            onChange={() => handleSelectItem(item.id)}
-                                        />
-                                    </td>
-                                    <td>{item.order_id}</td>
-                                    <td>{item.id}</td>
-                                    <td>{item.customer_firstname} {item.customer_lastname}</td>
-                                    <td>{item.name}</td>
-                                    <td>{item.quantity}</td>
-                                    <td>{item.subtotal}</td>
-                                    <td>{item.total}</td>
-                                    <td>
-                                        {item.status}
-                                    </td>
-                                    <td>
+                        {filteredLineItems.map(item => (
+                            <tr key={item.id}>
+                                <td>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedItems.includes(item.id)}
+                                        onChange={() => handleSelectItem(item.id)}
+                                    />
+                                </td>
+                                <td>{item.id}</td>
+                                <td>{item.order_number}</td>
+                                <td>{item.billing_company}</td>
+                                <td>{item.name}</td>
+                                <td>{item.customer_firstname} {item.customer_lastname}</td>
+                                <td>{item.quantity}</td>
+                                <td>{item.status}</td>
+                                <td>
+                                    {item.internal_note ? (
                                         <span onClick={() => handleEditNote(item.id, item.internal_note)}>
-                                            {item.internal_note || "Añadir Nota"}
+                                            {item.internal_note}
                                         </span>
-                                    </td>
-                                    <td>
-                                        {item.qr_code && (
-                                            <img src={`data:image/png;base64,${item.qr_code}`} alt="QR Code" style={{ width: '50px', height: '50px' }} />
-                                        )}
-                                    </td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan="11" className="text-center">No hay line items disponibles</td>
+                                    ) : (
+                                        <button onClick={() => handleAddNote(item.id, prompt("Agregar nota interna:"))}>
+                                            Agregar nota
+                                        </button>
+                                    )}
+                                </td>
+                                <td>
+                                    {item.status !== "finalizado" && (
+                                        <button onClick={() => handleFinalizeItem(item.id)}>Finalizar</button>
+                                    )}
+                                </td>
                             </tr>
-                        )}
+                        ))}
                     </tbody>
                 </table>
                 <div>
-                    <label>
-                        Líneas por página:
-                        <select value={perPage} onChange={handlePerPageChange}>
-                            <option value={25}>25</option>
-                            <option value={50}>50</option>
-                            <option value={100}>100</option>
-                            <option value={200}>200</option>
-                        </select>
-                    </label>
                     <button onClick={() => handlePageChange(page - 1)} disabled={page === 1}>
-                        Previous
+                        Anterior
                     </button>
-                    <button onClick={() => handlePageChange(page + 1)} disabled={page * perPage >= store.totalLineItems}>
-                        Next
+                    <span>Página {page}</span>
+                    <button onClick={() => handlePageChange(page + 1)}>
+                        Siguiente
                     </button>
+                    <select value={perPage} onChange={handlePerPageChange}>
+                        <option value={10}>10 por página</option>
+                        <option value={20}>20 por página</option>
+                        <option value={50}>50 por página</option>
+                    </select>
                 </div>
             </div>
         </div>

@@ -127,7 +127,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					const response = await fetch(`${process.env.BACKEND_URL}/api/orders?${params.toString()}`, requestOptions);
 					if (response.ok) {
 						const data = await response.json();
-						setStore({ orders: data.orders, totalOrders: data.total_orders, isFetchingOrders: false });
+						setStore({ orders: data.orders, totalOrders: data.total_orders });
 					} else {
 						const errorData = await response.json();
 						console.error("Failed to fetch orders:", errorData);
@@ -142,15 +142,27 @@ const getState = ({ getStore, getActions, setStore }) => {
 					setStore({ isFetchingOrders: false });
 				}
 			},
-			getLineItems: async (page = 1, per_page = 20, orderId = null) => {
+			getLineItems: async (page = 1, per_page = 20, orderId = null, filters = {}) => {
 				const store = getStore();
 				if (store.isFetchingLineItems) return; // Evitar múltiples solicitudes
 				setStore({ isFetchingLineItems: true });
 				const token = localStorage.getItem("token");
 				if (!token) {
 					console.error("No token found");
-					setStore({ auth: false, isFetchingLineItems: false });
+					setStore({ auth: false });
 					return;
+				}
+				if (isNaN(page) || isNaN(per_page)) {
+					console.error("Invalid page or per_page value");
+					return;
+				}
+				const params = new URLSearchParams({
+					page: String(page),
+					per_page: String(per_page),
+					...Object.fromEntries(Object.entries(filters).map(([key, value]) => [key, value ? String(value) : '']))
+				});
+				if (orderId) {
+					params.append('order_id', String(orderId));
 				}
 				const requestOptions = {
 					method: 'GET',
@@ -160,20 +172,21 @@ const getState = ({ getStore, getActions, setStore }) => {
 					}
 				};
 				try {
-					const response = await fetch(`${process.env.BACKEND_URL}/api/line_items?page=${page}&per_page=${per_page}${orderId ? `&order_id=${orderId}` : ''}`, requestOptions);
+					const response = await fetch(`${process.env.BACKEND_URL}/api/line_items?${params.toString()}`, requestOptions);
 					if (response.ok) {
 						const data = await response.json();
 						setStore({ lineItems: data.line_items, totalLineItems: data.total_items });
 					} else {
+						const errorData = await response.json();
+						console.error("Failed to fetch orders:", errorData);
 						if (response.status === 401) {
 							localStorage.removeItem("token");
 							setStore({ auth: false });
 						}
-						throw new Error("Failed to fetch line items");
+						throw new Error("Failed to fetch orders");
 					}
 				} catch (error) {
-					console.error("Error fetching line items:", error);
-				} finally {
+					console.error("Error fetching orders:", error);
 					setStore({ isFetchingLineItems: false });
 				}
 			},
@@ -202,7 +215,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					body: JSON.stringify({ order_ids: selectedOrders })
 				};
 				try {
-					const response = await fetch(`${process.env.BACKEND_URL}/api/orders/bulk-delete`, requestOptions);
+					const response = await fetch(`${process.env.BACKEND_URL} / api / orders / bulk - delete `, requestOptions);
 					if (!response.ok) {
 						const errorData = await response.json();
 						throw new Error(`Failed to delete orders: ${errorData.error || response.statusText}`);
@@ -227,7 +240,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					}
 				};
 				try {
-					const response = await fetch(`${process.env.BACKEND_URL}/api/orders/${orderId}`, requestOptions);
+					const response = await fetch(`${process.env.BACKEND_URL} / api / orders / ${orderId}`, requestOptions);
 					if (!response.ok) {
 						const errorData = await response.json();
 						throw new Error(`Failed to delete order: ${errorData.error || response.statusText}`);
@@ -250,7 +263,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 						return;
 					}
 
-					const response = await fetch(`${process.env.BACKEND_URL}/api/orders/${orderId}`, {
+					const response = await fetch(`${process.env.BACKEND_URL} / api / orders / ${orderId}`, {
 						headers: {
 							"Content-Type": "application/json",
 							"Authorization": `Bearer ${token}`
@@ -278,7 +291,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 						return;
 					}
 
-					const response = await fetch(`${process.env.BACKEND_URL}/api/customers/${customerId}`, {
+					const response = await fetch(`${process.env.BACKEND_URL} / api / customers / ${customerId}`, {
 						headers: {
 							"Content-Type": "application/json",
 							"Authorization": `Bearer ${token}`
@@ -298,7 +311,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
 			updateCustomer: async (customerId, updatedCustomer) => {
 				try {
-					const response = await fetch(`${process.env.BACKEND_URL}/api/customers/${customerId}`, {
+					const response = await fetch(`${process.env.BACKEND_URL} / api / customers / ${customerId}`, {
 						method: 'PUT',
 						headers: {
 							'Content-Type': 'application/json'
@@ -317,7 +330,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 			},
 			getCustomerOrders: async (customerId, page = 1, per_page = 20) => {
 				try {
-					const response = await fetch(`${process.env.BACKEND_URL}/api/orders?customer_id=${customerId}&page=${page}&per_page=${per_page}`);
+					const response = await fetch(`${process.env.BACKEND_URL} / api / orders ? customer_id = ${customerId} & page=${page} & per_page=${per_page}`);
 					if (response.ok) {
 						const data = await response.json();
 						setStore({ orders: data.orders, totalOrders: data.total_orders });
@@ -391,7 +404,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 			updateInternalNoteToLineItem: async (itemId, note) => {
 				try {
 					const token = localStorage.getItem("token");
-					const response = await fetch(`${process.env.BACKEND_URL}/api/lineitems/${itemId}/note`, {
+					const response = await fetch(`${process.env.BACKEND_URL} /api/lineitems / ${itemId}/note`, {
 						method: "PUT",
 						headers: {
 							"Content-Type": "application/json",
