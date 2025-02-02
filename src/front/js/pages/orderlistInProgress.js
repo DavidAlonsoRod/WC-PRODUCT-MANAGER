@@ -3,11 +3,12 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { Tab, Tabs } from 'react-bootstrap';
 import "../../styles/orderlist.css";
+import { formatDate, getShippingDateClass } from '../utils/dateUtils';
 
 const OrdersInProgress = () => {
     const [orders, setOrders] = useState([]);
     const [page, setPage] = useState(1);
-    const [perPage, setPerPage] = useState(25); // Cambiar a 25 por defecto
+    const [perPage, setPerPage] = useState(25);
     const [totalOrders, setTotalOrders] = useState(0);
     const [customerId, setCustomerId] = useState(null);
     const [filters, setFilters] = useState({
@@ -24,25 +25,6 @@ const OrdersInProgress = () => {
     const [sortBy, setSortBy] = useState('date_created');
     const [selectedOrders, setSelectedOrders] = useState([]);
     const navigate = useNavigate();
-
-    const formatDate = (dateString) => {
-        if (!dateString) return 'Fecha no disponible';
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        if (diffDays === 0) {
-            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-            const diffMinutes = Math.floor(diffMs / (1000 * 60)) % 60;
-            if (diffHours > 0) {
-                return `${diffHours} horas`;
-            } else {
-                return `${diffMinutes} minutos`;
-            }
-        }
-        const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
-        return date.toLocaleDateString(undefined, options);
-    };
 
     const translateStatus = (status) => {
         switch (status) {
@@ -78,7 +60,7 @@ const OrdersInProgress = () => {
             case 'processing':
                 return 'btn btn-success btn-small';
             case 'completed':
-                return 'btn btn-primary btn-small';
+                return 'btn btn-completed btn-small';
             case 'pending':
                 return 'btn btn-secondary btn-small';
             case 'cancelled':
@@ -88,18 +70,16 @@ const OrdersInProgress = () => {
         }
     };
 
-    const getShippingDateClass = (shippingDate) => {
-        if (!shippingDate) return 'btn-small';
-        const date = new Date(shippingDate);
-        const now = new Date();
-        const diffMs = date - now;
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        if (diffDays <= 0) {
-            return 'btn btn-urgent btn-small';
-        } else if (diffDays <= 3) {
-            return 'btn btn-warning btn-small';
-        } else {
-            return 'btn btn-success btn-small';
+    const getShippingStatusClass = (status) => {
+        switch (status) {
+            case 'pte-envio':
+                return 'btn btn-warning btn-small';
+            case 'enviado':
+                return 'btn btn-completed btn-small';
+            case 'envio parcial':
+                return 'btn btn-secondary btn-small';
+            default:
+                return 'btn-small';
         }
     };
 
@@ -117,6 +97,12 @@ const OrdersInProgress = () => {
         "pending",
         "cancelled",
         // Añadir más estados según sea necesario
+    ];
+
+    const shippingStatuses = [
+        "pte-envio",
+        "enviado",
+        "envio parcial"
     ];
 
     useEffect(() => {
@@ -267,10 +253,12 @@ const OrdersInProgress = () => {
                 </Tab>
                 <Tab eventKey="inProgressOrders" title="Pedidos en Proceso">
                     <div className='border rounded-3 m-5 justify-content-center'>
+
                         <button onClick={handleBatchAction} className="btn btn-primary m-3">Realizar acción en pedidos seleccionados</button>
                         <button onClick={handleDeleteOrders} className="btn btn-danger m-3">Borrar pedidos seleccionados</button>
                         <div className="d-flex justify-content-between align-items-center m-3">
                             <div>
+
                                 <label htmlFor="perPageSelect">Mostrar:</label>
                                 <select id="perPageSelect" value={perPage} onChange={handlePerPageChange} className="form-select d-inline-block w-auto ms-2">
                                     <option value={25}>25</option>
@@ -403,6 +391,9 @@ const OrdersInProgress = () => {
                                             ))}
                                         </select>
                                     </th>
+                                    <th>
+                                        Estado de Envío
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -428,6 +419,7 @@ const OrdersInProgress = () => {
                                             <small>{order.billing.company}</small>
                                         </td>
                                         <td>{formatDate(order.date_created)}</td>
+
                                         <td className={getShippingDateClass(order.shipping_date)}>{formatDate(order.shipping_date)}</td>
                                         <td>{order.billing.city}</td>
                                         <td>{order.total}</td>
@@ -435,6 +427,13 @@ const OrdersInProgress = () => {
                                         <td>
                                             <button className={getStatusClass(order.status)}>
                                                 {translateStatus(order.status)}
+                                            </button>
+                                        </td>
+                                        <td>
+                                            <button className={getShippingStatusClass(order.shipping_status)}>
+                                                {order.shipping_status === 'enviado' || order.shipping_status === 'envio parcial'
+                                                    ? formatDate(order.shipping_date)
+                                                    : order.shipping_status}
                                             </button>
                                         </td>
                                     </tr>

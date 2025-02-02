@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Context } from "../store/appContext";
 import { useNavigate } from "react-router-dom";
 import "../../styles/navbar.css";
-import logo from "../../img/logo_dp_navbar.png";
+import logo from "../../img/wc_logo.png";
 
 export const Navbar = () => {
 	const navigate = useNavigate();
@@ -20,7 +20,7 @@ export const Navbar = () => {
 		<nav className="navbar border-bottom border-body" id="navbar">
 			<div className="container-fluid">
 				<div className="d-flex col-2 justify-content-center">
-					<img src={logo} alt="Logo" className="navbar-logo ms-3" />
+					<img src={logo} alt="Logo" className="navbar-logo ms-3 mx-1" />
 				</div>
 
 				{store.auth || localStorage.getItem("token") ? (
@@ -50,17 +50,13 @@ export const Navbar = () => {
 								Escanear QR
 							</button>
 						</Link>
-						<div className="btn-group">
-							<button type="button" className="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+						<Link to="/customers">
+							<button className="btn" id="button">
 								<svg className="m-2" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="20px" fill="#629a97"><path d="M40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm720 0v-120q0-44-24.5-84.5T666-434q51 6 96 20.5t84 35.5q36 20 55 44.5t19 53.5v120H760ZM360-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47Zm400-160q0 66-47 113t-113 47q-11 0-28-2.5t-28-5.5q27-32 41.5-71t14.5-81q0-42-14.5-81T544-792q14-5 28-6.5t28-1.5q66 0 113 47t47 113ZM120-240h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T440-640q0-33-23.5-56.5T360-720q-33 0-56.5 23.5T280-640q0 33 23.5 56.5T360-560Zm0 320Zm0-400Z" /></svg>
 								Clientes
 							</button>
-							<ul className="dropdown-menu">
-								<li><Link to="/customers" className="dropdown-item">Listado de clientes</Link></li>
-								{/* <li><Link to="/customer-orders" className="dropdown-item">Pedidos por cliente</Link></li>
-								<li><Link to="/another-option" className="dropdown-item">Otra opción</Link></li> */}
-							</ul>
-						</div>
+						</Link>
+
 						<Link to="/settings">
 							<button className="btn" id="button">
 								<svg className="m-2" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#629a97"><path d="m234-480-12-60q-12-5-22.5-10.5T178-564l-58 18-40-68 46-40q-2-13-2-26t2-26l-46-40 40-68 58 18q11-8 21.5-13.5T222-820l12-60h80l12 60q12 5 22.5 10.5T370-796l58-18 40 68-46 40q2 13 2 26t-2 26l46 40-40 68-58-18q-11 8-21.5 13.5T326-540l-12 60h-80Zm40-120q33 0 56.5-23.5T354-680q0-33-23.5-56.5T274-760q-33 0-56.5 23.5T194-680q0 33 23.5 56.5T274-600ZM592-40l-18-84q-17-6-31.5-14.5T514-158l-80 26-56-96 64-56q-2-18-2-36t2-36l-64-56 56-96 80 26q14-11 28.5-19.5T574-516l18-84h112l18 84q17 6 31.5 14.5T782-482l80-26 56 96-64 56q2 18 2 36t-2 36l64 56-56 96-80-26q-14 11-28.5 19.5T722-124l-18 84H592Zm56-160q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35Z" /></svg>
@@ -81,8 +77,9 @@ export const Navbar = () => {
 						<h2 className="m-1">Woocomerce Product Manager</h2>
 						<h5 className="m-1">Gestión de fabricación y envío de productos de Woocommerce</h5>
 					</div>
-				)}
-			</div>
-		</nav>
+				)
+				}
+			</div >
+		</nav >
 	);
 };

@@ -471,7 +471,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 						}
 
 						const data = await response.json();
-						const updatedOrders = store.orders.map(order => 
+						const updatedOrders = store.orders.map(order =>
 							order.id === orderId ? { ...order, status: "completed" } : order
 						);
 						setStore({ orders: updatedOrders });
@@ -511,7 +511,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					}
 
 					const data = await response.json();
-					const updatedOrders = getStore().orders.map(order => 
+					const updatedOrders = getStore().orders.map(order =>
 						order.id === orderId ? { ...order, status } : order
 					);
 					setStore({ orders: updatedOrders });
@@ -531,6 +531,33 @@ const getState = ({ getStore, getActions, setStore }) => {
 					}
 				} catch (error) {
 					console.error("Error updating order status:", error);
+					throw error;
+				}
+			},
+			updateOrderShippingStatus: async (orderId, newStatus, currentDate) => {
+				try {
+					const token = localStorage.getItem("token");
+					const response = await fetch(`${process.env.BACKEND_URL}/api/orders/${orderId}/shipping-status`, {
+						method: 'PUT',
+						headers: {
+							"Content-Type": "application/json",
+							"Authorization": `Bearer ${token}`,
+							"Access-Control-Allow-Origin": "*" // Agregar esta línea
+						},
+						body: JSON.stringify({ status: newStatus, date: currentDate })
+					});
+					if (!response.ok) {
+						const errorData = await response.json();
+						throw new Error(`Failed to update shipping status: ${errorData.error || response.statusText}`);
+					}
+					const data = await response.json();
+					const updatedOrders = getStore().orders.map(order =>
+						order.id === orderId ? { ...order, shipping_status: newStatus, shipping_date: currentDate } : order
+					);
+					setStore({ orders: updatedOrders });
+					return data;
+				} catch (error) {
+					console.error("Error updating shipping status:", error);
 					throw error;
 				}
 			}

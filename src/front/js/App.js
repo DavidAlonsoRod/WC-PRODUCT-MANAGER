@@ -1,25 +1,19 @@
-// import React, { useEffect, useContext } from 'react';
-// import { Context } from './store/appContext';
-// // import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-// // import Settings from './pages/settings';
-// // // ...existing code...
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Orders from './pages/orderlist';
+import OrdersInProgress from './pages/orderlistInProgress';
+// ...existing code...
 
-// const App = () => {
-// 	const { actions } = useContext(Context);
+const App = () => {
+    return (
+        <Router>
+            <Routes>
+                <Route path="/orders" element={<Orders />} />
+                <Route path="/orders-in-progress" element={<OrdersInProgress />} />
+                {/* ...otras rutas... */}
+            </Routes>
+        </Router>
+    );
+};
 
-// 	useEffect(() => {
-// 		actions.initializeAuth();
-// 	}, [actions]);
-
-// 	return (
-// 		// <Router>
-// 		//     <Switch>
-// 		//         {/* ...existing routes... */}
-// 		//         <Route path="/settings" component={Settings} />
-// 		//     </Switch>
-// 		// </Router>
-// 		// // ...existing code...
-// 	);
-// };
-
-// export default App;
+export default App;

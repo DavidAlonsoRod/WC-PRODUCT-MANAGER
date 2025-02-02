@@ -57,9 +57,9 @@ span{
 }
 
 .btn-primary {
-    background-color: #c3e0ff;
-    border-color: #c1defe;
-    color: #5f6d7c;
+    background-color: #ffffff;
+    border-color: #3d3d3d;
+    color: #3d3d3d;
 }
 
 .btn-secondary {
@@ -88,4 +88,29 @@ span{
 .bg-light-green {
     background-color: #d1ead1;
 }
+.btn-link {
+    
+    font-size: 12px;
+    color: #0d447c;
+}
+.btn-add-note{
+    
+    border-color: #888989;
+    color: #212529;
+    font-size: 12px;
+    padding: 0.25rem 0.5rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
 
+}
+.btn-item-status{
+    
+    border-color: #888989;
+    background-color: hwb(213 83% 14%);
+    color: #232121;
+    font-size: 12px;
+    padding: 0.25rem 0.5rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+
+}

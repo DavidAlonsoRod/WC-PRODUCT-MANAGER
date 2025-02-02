@@ -61,15 +61,26 @@ td, th {
 }
 
 .btn-primary {
-    background-color: #c3e0ff;
-    border-color: #c1defe;
-    color: #5f6d7c;
+    background-color: #ffffff;
+    border-color: #3d3d3d;
+    color: #3d3d3d;
+}
+.btn-completed{
+    background-color: #c8d7e1;
+    
+    color: #003d66;
+    padding-left: 8px;
+   
+    font-size: 0.7rem;
+    line-height: 1.5;
+   
 }
 
 .btn-secondary {
-    background-color: #6c757d;
+    background-color: #87a0b7;
     border-color: #6c757d;
     color: #fff;
+    
 }
 
 .btn-light {
@@ -102,7 +113,7 @@ td, th {
 .btn-small {
     padding: 0.25rem 0.5rem;
     font-size: 0.1rem;
-    line-height: 1.5;
+    line-height: 1;
     border-radius: 0.2rem;
 }
 

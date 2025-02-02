@@ -24,6 +24,7 @@ function Orders() {
     const [sortBy, setSortBy] = useState('id');
     const [selectedOrders, setSelectedOrders] = useState([]);
     const [selectedStatus, setSelectedStatus] = useState('completed');
+    const [selectedShippingStatus, setSelectedShippingStatus] = useState('pte-envio');
     const navigate = useNavigate();
 
     const formatDate = (dateString) => {
@@ -70,11 +71,23 @@ function Orders() {
             case 'processing':
                 return 'btn btn-success btn-small';
             case 'completed':
-                return 'btn btn-primary btn-small';
+                return 'btn btn-completed btn-small';
             case 'pending':
                 return 'btn btn-secondary btn-small';
             case 'cancelled':
                 return 'btn btn-light btn-small';
+            default:
+                return 'btn-small';
+        }
+    };
+    const getShippingStatusClass = (status) => {
+        switch (status) {
+            case 'pte-envio':
+                return 'btn btn-warning btn-small';
+            case 'enviado':
+                return 'btn btn-completed btn-small';
+            case 'envio parcial':
+                return 'btn btn-secondary btn-small';
             default:
                 return 'btn-small';
         }
@@ -125,6 +138,12 @@ function Orders() {
         "pending",
         "cancelled",
 
+    ];
+
+    const shippingStatuses = [
+        "pte-envio",
+        "enviado",
+        "envio parcial"
     ];
 
     useEffect(() => {
@@ -229,6 +248,29 @@ function Orders() {
         }
     };
 
+    const handleBatchUpdateShippingStatus = async () => {
+        try {
+            await Promise.all(selectedOrders.map(orderId =>
+                actions.updateOrderShippingStatus(orderId, selectedShippingStatus)
+            ));
+            setSelectedOrders([]);
+            alert("Estados de envío actualizados correctamente.");
+        } catch (error) {
+            console.error("Error al actualizar los estados de envío:", error);
+            alert("Error al actualizar los estados de envío.");
+        }
+    };
+
+    const handleShippingStatusChange = async (orderId, newStatus) => {
+        try {
+            const currentDate = new Date().toISOString();
+            await actions.updateOrderShippingStatus(orderId, newStatus, currentDate);
+            await actions.getOrders(page, perPage, customerId, filters);
+        } catch (error) {
+            console.error("Error updating shipping status:", error.response ? error.response.data : error.message);
+        }
+    };
+
     const filteredOrders = store.orders.filter(order => {
         return (
             (filters.id === '' || order.id.toString().includes(filters.id)) &&
@@ -277,6 +319,20 @@ function Orders() {
                                 <option value="cancelled">Cancelado</option>
                             </select>
                             <button onClick={handleBatchUpdateStatus} className="btn btn-success">Actualizar estado</button>
+                        </div>
+                        <div className="d-flex align-items-center m-3">
+                            <label htmlFor="shippingStatusSelector" className="me-2">Cambiar estado de envío a:</label>
+                            <select
+                                id="shippingStatusSelector"
+                                value={selectedShippingStatus}
+                                onChange={(e) => setSelectedShippingStatus(e.target.value)}
+                                className="form-select me-2"
+                            >
+                                <option value="pte-envio">Pte Envío</option>
+                                <option value="enviado">Enviado</option>
+                                <option value="envio parcial">Envío Parcial</option>
+                            </select>
+                            <button onClick={handleBatchUpdateShippingStatus} className="btn btn-success">Actualizar estado de envío</button>
                         </div>
                         <table className='table caption-top'>
                             <caption className='p-3'>Pedidos</caption>
@@ -380,6 +436,9 @@ function Orders() {
                                             ))}
                                         </select>
                                     </th>
+                                    <th>
+                                        Estado de Envío
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -411,6 +470,13 @@ function Orders() {
                                         <td>
                                             <button className={getStatusClass(order.status)}>
                                                 {translateStatus(order.status)}
+                                            </button>
+                                        </td>
+                                        <td>
+                                            <button className={getShippingStatusClass(order.shipping_status)}>
+                                                {order.shipping_status === 'enviado' || order.shipping_status === 'envio parcial'
+                                                    ? formatDate(order.shipping_date)
+                                                    : order.shipping_status}
                                             </button>
                                         </td>
                                     </tr>

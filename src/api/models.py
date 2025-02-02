@@ -121,6 +121,7 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     number = db.Column(db.String(255), nullable=False)
     status = db.Column(db.String(255), nullable=False, default='pendiente')
+    shipping_status = db.Column(db.String(255), nullable=False, default='pte-envio')
     date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
     discount_total = db.Column(db.String(80), nullable=True)
     discount_tax = db.Column(db.String(80), nullable=True)
@@ -147,6 +148,7 @@ class Order(db.Model):
             "id": self.id,
             "number": self.number,
             "status": self.status,
+            "shipping_status": self.shipping_status,
             "date_created": self.date_created.isoformat() if self.date_created else None,
             "shipping_date": self.shipping_date.isoformat() if self.shipping_date else None,
             "total": self.total,

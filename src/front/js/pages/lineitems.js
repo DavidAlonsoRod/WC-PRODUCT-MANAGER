@@ -88,12 +88,12 @@ const LineItems = () => {
         try {
             await actions.updateLineItemStatus(itemId, "finalizado");
             updateLineItemStatusInStore(itemId, "finalizado");
-            setStatusMessage("Item finalizado correctamente");
+            setStatusMessage("Producto terminado");
             setTimeout(() => setStatusMessage(""), 3000);
             checkAndUpdateOrderStatus();
         } catch (error) {
-            console.error("Error al finalizar el item:", error);
-            setStatusMessage("Error al finalizar el item");
+            console.error("Error al finalizar el producto:", error);
+            setStatusMessage("Error al finalizar el producto");
             setTimeout(() => setStatusMessage(""), 3000);
         }
     };
@@ -112,7 +112,7 @@ const LineItems = () => {
     };
 
     const updateLineItemStatusInStore = (itemId, newStatus) => {
-        const updatedLineItems = store.lineItems.map(item => 
+        const updatedLineItems = store.lineItems.map(item =>
             item.id === itemId ? { ...item, status: newStatus } : item
         );
         actions.setLineItems(updatedLineItems);
@@ -147,7 +147,7 @@ const LineItems = () => {
     };
 
     const updateSelectedItemsStatusInStore = (itemIds, newStatus) => {
-        const updatedLineItems = store.lineItems.map(item => 
+        const updatedLineItems = store.lineItems.map(item =>
             itemIds.includes(item.id) ? { ...item, status: newStatus } : item
         );
         actions.setLineItems(updatedLineItems);
@@ -228,6 +228,7 @@ const LineItems = () => {
                             <th>Cliente</th>
                             <th>Cantidad</th>
                             <th>Estado</th>
+                            <th>Fecha de Salida Estimada</th>
                             <th>Nota Interna</th>
                             <th>Acciones</th>
                         </tr>
@@ -249,23 +250,24 @@ const LineItems = () => {
                                 <td>{item.customer_firstname} {item.customer_lastname}</td>
                                 <td>{item.quantity}</td>
                                 <td>{item.status}</td>
+                                <td>{item.estimated_departure_date}</td>
                                 <td>
                                     {item.internal_note ? (
                                         <button onClick={() => handleEditNote(item.id, item.internal_note)} className="btn btn-link">
                                             {item.internal_note}
                                         </button>
                                     ) : (
-                                        <button onClick={() => handleAddNote(item.id, prompt("Agregar nota interna:"))}>
+                                        <button onClick={() => handleAddNote(item.id, prompt("Agregar nota interna:"))} className="btn btn-add-note">
                                             Agregar nota
                                         </button>
                                     )}
                                 </td>
                                 <td>
                                     {item.status === "pendiente" && (
-                                        <button onClick={() => handleFinalizeItem(item.id)}>Finalizar</button>
+                                        <button onClick={() => handleFinalizeItem(item.id)} className="btn btn-item-status">Finalizar</button>
                                     )}
                                     {item.status === "finalizado" && (
-                                        <button onClick={() => handlePendingItem(item.id)}>Pendiente</button>
+                                        <button onClick={() => handlePendingItem(item.id)} className="btn btn-item-status">Pendiente</button>
                                     )}
                                 </td>
                             </tr>

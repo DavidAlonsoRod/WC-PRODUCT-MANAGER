@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef, useContext } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
-import { Tab, Tabs } from 'react-bootstrap';
 import "../../styles/customerview.css";
 import { useNavigate, Link } from 'react-router-dom';
 import EditBillingModal from '../component/EditBillingModal';
@@ -184,132 +183,201 @@ const CustomerView = () => {
     return (
         <div className="d-flex justify-content-center align-items-start vh-100 custom-container">
             <div className="container mt-0" ref={componentRef}>
-                <Tabs defaultActiveKey="customer" id="customer-tabs" className="mb-1 custom-tabs">
-                    <Tab className='p-2' eventKey="customer" title="Datos de envio">
-                        {customer && (
-                            <div className='d-flex'>
-                                <div className='m-5 p-3 border rounded-3'>
-                                    <h4 className='p-2'>{customer.id}</h4>
-                                    <h4>{customer.shipping?.company || 'N/A'}</h4>
-                                    <h5>{customer.first_name} {customer.last_name}</h5>
-                                    <p>Forma de pago: {customer.role}</p>
-                                    <p>Usuario: {customer.username}</p>
-                                </div>
-                                <div className='m-5 p-3 border rounded-3 customerboxes'>
-                                    <h4>Información de envio</h4>
-                                    <p>Nombre: <strong>{customer.shipping?.first_name || 'N/A'}</strong></p>
-                                    <p>Apellidos:  <strong>{customer.shipping?.last_name || 'N/A'}</strong></p>
-                                    <p>Dirección:  <strong>{customer.shipping?.address_1 || 'N/A'} {customer.shipping?.address_2 || ''}</strong></p>
-                                    <p>Ciudad:  <strong>{customer.shipping?.city || 'N/A'}</strong> </p>
-                                    <p>Provincia:  <strong>{customer.shipping?.state || 'N/A'}</strong></p>
-                                    <p>C.P.:  <strong>{customer.shipping?.postcode || 'N/A'}</strong></p>
-                                    <p>Teléfono:  <strong>{customer.billing?.phone || 'N/A'}</strong></p>
-                                    <button className='btn btn-custom mb-3' onClick={handleShippingEditClick}>Editar Envío</button>
-                                    {isShippingModalOpen && customer && (
-                                        <EditShippingModal
-                                            show={isShippingModalOpen}
-                                            handleClose={handleCloseShippingModal}
-                                            customer={customer}
-                                            updateCustomer={handleUpdateCustomer}
-                                        />
-                                    )}
-                                </div>
-                                <div className='m-5 p-3 border rounded-3'>
-                                    <h4>Detalles de facturación</h4>
-                                    <p>Nombre comercial: <strong>{customer.billing?.company || 'N/A'}</strong> </p>
-                                    <p>Nombre:  <strong>{customer.billing?.first_name || 'N/A'}</strong></p>
-                                    <p>Apellidos:  <strong>{customer.billing?.last_name || 'N/A'}</strong></p>
-                                    <p>Dirección:  <strong>{customer.billing?.address_1 || 'N/A'} {customer.billing?.address_2 || ''}</strong></p>
-                                    <p>Ciudad:  <strong>{customer.billing?.city || 'N/A'}</strong></p>
-                                    <p>Provincia:  <strong>{customer.billing?.state || 'N/A'}</strong></p>
-                                    <p>C. Postal:  <strong>{customer.billing?.postcode || 'N/A'}</strong></p>
-                                    <p>Nif:  <strong>{customer.billing?.nif || 'N/A'}</strong></p>
-                                    <p>Email:  <strong>{customer.billing?.email || 'N/A'}</strong></p>
-                                    <p>Teléfono:  <strong>{customer.billing?.phone || 'N/A'}</strong></p>
-                                    <p>Iban:  <strong>{customer.billing?.iban || 'N/A'}</strong></p>
-                                    <button className='btn btn-custom mb-3' onClick={handleBillingEditClick}>Editar Facturación</button>
-                                    {isBillingModalOpen && customer && (
-                                        <EditBillingModal
-                                            show={isBillingModalOpen}
-                                            handleClose={handleCloseBillingModal}
-                                            customer={customer}
-                                            updateCustomer={handleUpdateCustomer}
-                                        />
-                                    )}
-                                </div>
+                {customer && (
+                    <div className='row'>
+                        <div className='d-flex p-1 '>
+                            <h5 className='p-1'>{customer.shipping?.company || 'N/A'}</h5>
+                            <h5 className='p-1 px-3'>{customer.first_name} {customer.last_name}</h5>
+                            <div className='mx-5'>
+                                <p className=" small-text mt-2">Forma de pago: </p>
+                                <p className="large-text">{customer.role}</p>
                             </div>
-                        )}
-                    </Tab>
-                    <Tab eventKey="shipping" title="Pedidos">
-                        {customer?.shipping ? (
-                            <div className='m-5 p-3 border rounded-3'>
-                                <h4>Pedidos de {customer.billing?.company || 'N/A'}</h4>
-
-                                <button onClick={handleDeleteOrders} className="btn btn-danger m-3">Borrar pedidos seleccionados</button>
-                                {orders && orders.length > 0 ? (
-                                    <>
-                                        <table className='table caption-top'>
-                                            <caption className='p-3'>Pedidos</caption>
-                                            <thead className='bg-light'>
-                                                <tr>
-                                                    <th>#</th>
-                                                    <th>Total</th>
-                                                    <th>Fecha de Creación</th>
-                                                    <th>Fecha Prevista de Salida</th>
-                                                    <th>Estado</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {orders.map(order => (
-                                                    <tr
-                                                        key={order.id}
-                                                        className='fw-light'
-                                                        style={{ cursor: 'pointer' }}
-                                                        onClick={() => handleRowClick(order.id)}>
-                                                        <td>
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={selectedOrders.includes(order.id)}
-                                                                onChange={() => handleSelectOrder(order.id)}
-                                                                onClick={(e) => e.stopPropagation()} />
-                                                        </td>
-                                                        <td>{order.id}</td>
-                                                        <td>{order.total}</td>
-                                                        <td>{new Date(order.date_created).toLocaleDateString()}</td>
-                                                        <td>{new Date(order.date_created).toLocaleDateString()}</td>
-                                                        <td>{order.status}</td>
-
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                        <div className="d-flex justify-content-end m-2 pagination">
-                                            {Array.from({ length: totalPages }, (_, index) => (
-                                                <span
-                                                    key={index + 1}
-                                                    onClick={() => handleOrdersPageClick(index + 1)}
-                                                    style={{
-                                                        cursor: 'pointer',
-                                                        fontWeight: ordersPage === index + 1 ? 'bold' : 'normal',
-                                                        margin: '0 5px'
-                                                    }}
-                                                >
-                                                    {index + 1}
-                                                </span>
-                                            ))}
+                        </div>
+                        <div className='col-md-7 p-3 border'>
+                            <h4>Facturación<button className='btn btn-custom' onClick={handleBillingEditClick}>Editar</button>
+                                <div className='d-flex flex-column mt-1'>
+                                    <div className='row'>
+                                        <div className='col-md-6'>
+                                            <p className="small-text">Nombre comercial</p>
+                                            <p className="large-text">{customer.billing?.company || 'N/A'}</p>
                                         </div>
-                                    </>
-                                ) : (
-                                    <p>No hay pedidos de este cliente.</p>
-                                )}
+                                        <div className='col-md-6'>
+                                            <p className="small-text mt-1">Nombre y apellidos</p>
+                                            <p className="large-text">{customer.billing?.first_name || 'N/A'} {customer.billing?.last_name || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                    <div className='d-flex flex-column mt-3'>
+                                        <div className='row'>
+                                            <div className='col-md-5 p-1 m-1'>
+                                                <p className="small-text mt-1">Dirección</p>
+                                                <p className="large-text">{customer.billing?.address_1 || 'N/A'} {customer.billing?.address_2 || ''}</p>
+
+                                            </div>
+                                            <div className='col-md-2 p-1 m-1'>
+                                                <p className="small-text mt-1">Ciudad</p>
+                                                <p className="large-text">{customer.billing?.city || 'N/A'}</p>
+
+
+                                            </div>
+
+
+
+                                            <div className='col-md-2 p-1 m-12'>
+                                                <p className="small-text mt-1">Provincia</p>
+                                                <p className="large-text">{customer.billing?.state || 'N/A'}</p>
+
+
+
+                                            </div>
+                                            <div className='col-md-2 p-1 m-1'>
+                                                <p className="small-text mt-1">C. Postal</p>
+                                                <p className="large-text">{customer.billing?.postcode || 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className='d-flex flex-column mt-3 p-2'>
+                                        <div className='row'>
+                                            <div className='col-md-1 p-1 m-1'>
+                                                <p className="small-text mt-2">Nif</p>
+                                                <p className="large-text">{customer.billing?.nif || 'N/A'}</p>
+                                            </div>
+                                            <div className='col-md-4 p-1 m-1'>
+                                                <p className="small-text mt-2">Email</p>
+                                                <p className="large-text">{customer.billing?.email || 'N/A'}</p>
+                                            </div>
+                                            <div className='col-md-3 p-1 m-1'>
+                                                <p className="small-text mt-2">Teléfono</p>
+                                                <p className="large-text">{customer.billing?.phone || 'N/A'}</p>
+                                            </div>
+                                            <div className='col-md-3 p-1 m-1'>
+                                                <p className="small-text mt-2">Iban</p>
+                                                <p className="large-text">{customer.billing?.iban || 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+
+
+
+                                </div>
+                                {isBillingModalOpen && customer && (
+                                    <EditBillingModal
+                                        show={isBillingModalOpen}
+                                        handleClose={handleCloseBillingModal}
+                                        customer={customer}
+                                        updateCustomer={handleUpdateCustomer}
+                                    />
+                                )}</h4>
+                        </div>
+                        <div className='col-md-5 p-3 border'>
+                            <h4>Envío<button className='btn btn-custom' onClick={handleShippingEditClick}>Editar</button>
+                                {isShippingModalOpen && customer && (
+                                    <EditShippingModal
+                                        show={isShippingModalOpen}
+                                        handleClose={handleCloseShippingModal}
+                                        customer={customer}
+                                        updateCustomer={handleUpdateCustomer}
+                                    />
+                                )}</h4>
+                            <div className='d-flex flex-column mt-1'>
+                                <div className='row'>
+                                    <div className='col-md-3 p-1 m-1'>
+                                        <p className="small-text">Nombre</p>
+                                        <p className="large-text">{customer.shipping?.first_name || 'N/A'} {customer.shipping?.last_name || 'N/A'}</p>
+                                    </div>
+                                    <div className='col-md-3 p-1 m-1'>
+                                        <p className="small-text mt-2">Dirección</p>
+                                        <p className="large-text">{customer.shipping?.address_1 || 'N/A'} {customer.shipping?.address_2 || ''}</p>
+                                    </div>
+                                    <div className='col-md-3 p-1 m-1'>
+                                        <p className="small-text mt-2">Ciudad</p>
+                                        <p className="large-text">{customer.shipping?.city || 'N/A'}</p>
+                                    </div>
+                                    <div className='col-md-3 p-1 m-1'>
+                                        <p className="small-text mt-2">Provincia</p>
+                                        <p className="large-text">{customer.shipping?.state || 'N/A'}</p>
+                                    </div>
+                                </div>
                             </div>
-                        ) : (
-                            <p>Sin datos de envío</p>
-                        )}
-                    </Tab>
-                </Tabs>
-            </div>
-        </div>
+
+
+
+
+
+
+
+                            <p className="small-text mt-2">C.P.</p>
+                            <p className="large-text">{customer.shipping?.postcode || 'N/A'}</p>
+                            <p className="small-text mt-2">Teléfono</p>
+                            <p className="large-text">{customer.billing?.phone || 'N/A'}</p>
+                        </div>
+                    </div>
+                )
+                }
+                <div className='m-5 p-3 border rounded-3'>
+                    <h4>Pedidos de {customer?.billing?.company || 'N/A'}</h4>
+
+                    <button onClick={handleDeleteOrders} className="btn btn-danger m-3">Borrar pedidos seleccionados</button>
+                    {orders && orders.length > 0 ? (
+                        <>
+                            <table className='table caption-top'>
+                                <caption className='p-3'>Pedidos</caption>
+                                <thead className='bg-light'>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Total</th>
+                                        <th>Fecha de Creación</th>
+                                        <th>Fecha Prevista de Salida</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {orders.map(order => (
+                                        <tr
+                                            key={order.id}
+                                            className='fw-light'
+                                            style={{ cursor: 'pointer' }}
+                                            onClick={() => handleRowClick(order.id)}>
+                                            <td>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedOrders.includes(order.id)}
+                                                    onChange={() => handleSelectOrder(order.id)}
+                                                    onClick={(e) => e.stopPropagation()} />
+                                            </td>
+                                            <td>{order.id}</td>
+                                            <td>{order.total}</td>
+                                            <td>{new Date(order.date_created).toLocaleDateString()}</td>
+                                            <td>{new Date(order.date_created).toLocaleDateString()}</td>
+                                            <td>{order.status}</td>
+
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            <div className="d-flex justify-content-end m-2 pagination">
+                                {Array.from({ length: totalPages }, (_, index) => (
+                                    <span
+                                        key={index + 1}
+                                        onClick={() => handleOrdersPageClick(index + 1)}
+                                        style={{
+                                            cursor: 'pointer',
+                                            fontWeight: ordersPage === index + 1 ? 'bold' : 'normal',
+                                            margin: '0 5px'
+                                        }}
+                                    >
+                                        {index + 1}
+                                    </span>
+                                ))}
+                            </div>
+                        </>
+                    ) : (
+                        <p>No hay pedidos de este cliente.</p>
+                    )}
+                </div>
+            </div >
+        </div >
     );
 };
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { Context } from '../store/appContext';
 import { useParams, useNavigate } from 'react-router-dom';
-import "../../styles/customerview.css";
+import "../../styles/orderview.css";
 
 const OrderView = () => {
     const { orderId } = useParams();
@@ -23,7 +23,7 @@ const OrderView = () => {
     }, [orderId, actions, navigate]);
 
     if (error) {
-        return <div>{error}</div>; 
+        return <div>{error}</div>;
     }
 
     if (!store.order) {
@@ -73,55 +73,69 @@ const OrderView = () => {
     };
 
     return (
-        <div className='order-view m-5'>
-            <h1>Pedido {order.id}</h1>
-            <div className='customer-details'>
-                <div className='order-details'>
-                    <p><strong>{order.billing ? `${order.billing.first_name} ${order.billing.last_name}` : 'N/A'}</strong></p>
-                    <p><strong>Fecha de Creación:</strong> {formatDate(order.date_created)}</p>
-                    <p><strong>Fecha de Envío:</strong> {formatDate(order.shipping_date)}</p>
-                    <p><strong>Ciudad:</strong> {order.billing.city}</p>
-                    <p><strong>Método de Pago:</strong> {order.payment_method_title}</p>
-                    <p><strong>Estado:</strong>
-                        <button className={getStatusClass(order.status)}>
-                            {translateStatus(order.status)}
-                        </button>
-                    </p>
+        <body className='mx-5 mt-1 h-80'>
+
+
+            <div className='order-view'>
+                <div className='flex justify-between'>
+                    <div className=''>
+                        <h4>Pedido</h4>
+                        <h2 className='mt-0'> {order.id}</h2 >
+
+                    </div>
+
+
+                    <div className='customer-details'>
+                        <div className='order-details'>
+                            <p className='large-text'><strong>{order.billing ? `${order.billing.first_name} ${order.billing.last_name}` : 'N/A'}</strong></p>
+                            <p className='small-text'>Fecha de Creación:</p>
+                            <p className='large-text'>{formatDate(order.date_created)}</p>
+                            <p><strong>Fecha de Envío:</strong></p>
+                            <p> {formatDate(order.shipping_date)}</p>
+                            <p><strong>Ciudad:</strong> {order.billing.city}</p>
+                            <p><strong>Método de Pago:</strong> {order.payment_method_title}</p>
+                            <p><strong>Estado:</strong>
+                                <button className={getStatusClass(order.status)}>
+                                    {translateStatus(order.status)}
+                                </button>
+                            </p>
+                        </div>
+                        <div className='order-actions'>
+                            <button onClick={() => window.open(pdfPrintUrl, '_blank')} className='btn btn-primary'>Ver detalles del pedido</button>
+                            <button className='btn btn-danger m-2'>Eliminar no funciona (aún)</button>
+                        </div>
+                    </div>
                 </div>
-                <div className='order-actions'>
-                    <button onClick={() => window.open(pdfPrintUrl, '_blank')} className='btn btn-primary'>Ver detalles del pedido</button>
-                    <button className='btn btn-danger m-2'>Eliminar no funciona (aún)</button>
-                </div>
-            </div>
-            <h2>Artículos de Línea</h2>
-            <table className='table'>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Cantidad</th>
-                        <th>Precio</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {order.line_items.map(item => (
-                        <tr key={item.id}>
-                            <td>{item.id}</td>
-                            <td>{item.name}</td>
-                            <td>{item.quantity}</td>
-                            <td>{item.price}</td>
-                            <td>{item.total}</td>
+                <h2>Artículos de Línea</h2>
+                <table className='table'>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Cantidad</th>
+                            <th>Precio</th>
+                            <th>Total</th>
                         </tr>
-                    ))}
-                    <tr>
-                        <td colSpan="4"><strong>Total</strong></td>
-                        <td><strong>{order.total}</strong></td>
-                    </tr>
-                </tbody>
-            </table>
-            <button onClick={() => navigate(-1)} className='btn btn-secondary'>Volver</button>
-        </div>
+                    </thead>
+                    <tbody>
+                        {order.line_items.map(item => (
+                            <tr key={item.id}>
+                                <td>{item.id}</td>
+                                <td>{item.name}</td>
+                                <td>{item.quantity}</td>
+                                <td>{item.price}</td>
+                                <td>{item.total}</td>
+                            </tr>
+                        ))}
+                        <tr>
+                            <td colSpan="4"><strong>Total</strong></td>
+                            <td><strong>{order.total}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button onClick={() => navigate(-1)} className='btn btn-secondary'>Volver</button>
+            </div >
+        </body >
     );
 };
 

@@ -895,6 +895,28 @@ def update_order_status(order_id):
 		return jsonify(order.serialize()), 200
 	except Exception as e:
 		return jsonify({"msg": str(e)}), 500
+
+@api.route('/orders/<int:order_id>/shipping-status', methods=['PUT'])
+@jwt_required()
+@cross_origin()  # Agregar esta línea para permitir CORS en esta ruta
+def update_order_shipping_status(order_id):
+	try:
+		data = request.json
+		status = data.get('status')
+		if status is None:
+			return jsonify({"msg": "Status is required"}), 400
+
+		order = Order.query.get(order_id)
+		if not order:
+			return jsonify({"msg": "Order not found"}), 404
+
+		order.shipping_status = status
+		order.shipping_date = data.get('date')
+		db.session.commit()
+
+		return jsonify(order.serialize()), 200
+	except Exception as e:
+		return jsonify({"msg": str(e)}), 500
 # app.register_blueprint(api, url_prefix='/api')
 
 # if __name__ == "__main__":
