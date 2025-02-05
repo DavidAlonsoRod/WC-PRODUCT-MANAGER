@@ -36,11 +36,12 @@ db.init_app(app)
 # with app.app_context():
 #     init_engine()  # Inicializar el engine dentro del contexto de la aplicación
 
-# add the admin
-setup_admin(app)
+if ENV == "development":
+    # add the admin
+    setup_admin(app)
 
-# add the commands
-setup_commands(app)
+    # add the admin
+    setup_commands(app)
 
 # Add all endpoints form the API with a "api" prefix
 
