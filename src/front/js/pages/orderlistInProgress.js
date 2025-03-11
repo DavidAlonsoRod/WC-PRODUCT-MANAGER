@@ -263,36 +263,11 @@ const OrdersInProgress = () => {
                     <div className='border rounded-3 m-5 justify-content-center'>
 
                         <button onClick={handleBatchAction} className="btn btn-primary m-3">Realizar acción en pedidos seleccionados</button>
-                        <button onClick={handleDeleteOrders} className="btn btn-danger m-3">Borrar pedidos seleccionados</button>
-                        <div className="d-flex justify-content-between align-items-center m-3">
-                            <div>
+                        <button onClick={handleDeleteOrders} className="btn btn-alert m-3">Borrar pedidos seleccionados</button>
 
-                                <label htmlFor="perPageSelect">Mostrar:</label>
-                                <select id="perPageSelect" value={perPage} onChange={handlePerPageChange} className="form-select d-inline-block w-auto ms-2">
-                                    <option value={25}>25</option>
-                                    <option value={50}>50</option>
-                                    <option value={100}>100</option>
-                                </select>
-                            </div>
-                            <div className="pagination">
-                                {Array.from({ length: totalPages }, (_, index) => (
-                                    <span
-                                        key={index + 1}
-                                        onClick={() => handlePageClick(index + 1)}
-                                        style={{
-                                            cursor: 'pointer',
-                                            fontWeight: page === index + 1 ? 'bold' : 'normal',
-                                            margin: '0 5px'
-                                        }}
-                                    >
-                                        {index + 1}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
                         <table className='table caption-top'>
-                            <caption className='p-3'>Pedidos en Proceso</caption>
-                            <thead className='bg-light'>
+
+                            <thead className='table-header'>
                                 <tr>
                                     <th>
                                         <input

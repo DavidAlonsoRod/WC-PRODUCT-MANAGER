@@ -348,8 +348,8 @@ function Orders() {
                                 <button onClick={handleBatchUpdateShippingStatus} className="btn btn-success ms-2">Actualizar estado de envío</button>
                             </div>
                         </div>
-                        <table className="table caption-top">
-                            <caption className='p-3'>Pedidos</caption>
+                        <table className="table caption-top mt-3">
+
                             <thead className='table-header'>
                                 <tr>
                                     <th>
@@ -498,12 +498,12 @@ function Orders() {
                             </tbody>
                         </table>
                         <PaginateController
-                                            currentPage={page}
-                                            totalPages={store.totalPages}
-                                            onPageChange={handlePageChange}
-                                            perPage={perPage}
-                                            handlePerPageChange={handlePerPageChange}
-                                        />
+                            currentPage={page}
+                            totalPages={store.totalPages}
+                            onPageChange={handlePageChange}
+                            perPage={perPage}
+                            handlePerPageChange={handlePerPageChange}
+                        />
                         {/* <div className="d-flex justify-content-end m-2 pagination">
                             {Array.from({ length: totalPages }, (_, index) => (
                                 <span
@@ -519,15 +519,15 @@ function Orders() {
                                 </span>
                             ))}
                         </div> */}
-                    </div>
-                </Tab>
+                    </div >
+                </Tab >
                 <Tab eventKey="inProgressOrders" title="Pedidos en Proceso">
                     <div className='border rounded-3 m-5 justify-content-center'>
                         <p>Redirigiendo a Pedidos en Proceso...</p>
                     </div>
                 </Tab>
-            </Tabs>
-        </div>
+            </Tabs >
+        </div >
     );
 }
 

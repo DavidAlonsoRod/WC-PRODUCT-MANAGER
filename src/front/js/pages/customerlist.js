@@ -64,9 +64,9 @@ const Customers = () => {
     return (
         <div>
             <div className='border rounded-3 m-5 justify-content-center'>
+                <h3 className='p-3'>Clientes</h3>
                 <table className='table caption-top'>
-                    <caption className='p-3'>Clientes</caption>
-                    <thead className='bg-light'>
+                    <thead className='table-header'>
                         <tr>
                             <th>#</th>
                             <th>Company</th>

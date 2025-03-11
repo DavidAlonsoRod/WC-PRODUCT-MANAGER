@@ -1,0 +1,46 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
+
+.form-group-default {
+  margin-bottom: 20px;
+  font-size: 14px;
+  height: 54px;
+  font-weight: 400;
+  line-height: 20px;
+  color: rgb(224, 102, 14);
+  border: 2px;
+  
+}
+
+.custom-modal {
+  background-color: #edeceb;
+  width: 850px;
+  height: 450px; /* Cambia este color según tus necesidades */
+}
+.modal-content {
+  background-color: #edeceb;
+}
+.form-control {
+  height: 40px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: rgb(91, 91, 91);
+  border: none;
+  padding: 0 10px;
+}
+.form-label {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: rgb(91, 91, 91);
+  margin-top: 10px;
+}
+Form {
+  background-color: rgb(255, 255, 255);
+}
+.form-group {
+  border: 1px solid #e51818;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
