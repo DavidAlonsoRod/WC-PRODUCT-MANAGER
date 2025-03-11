@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import "../../styles/orderlist.css";
 import { Tab, Tabs } from 'react-bootstrap';
+import PaginateController from '../component/PaginateController';
 
 function Orders() {
     const { store, actions } = useContext(Context);
@@ -166,6 +167,17 @@ function Orders() {
         }
     }, [page, perPage, customerId, filters]);
 
+    const handlePageChange = (newPage) => {
+        if (newPage !== page) {
+            setPage(newPage);
+        }
+    };
+    const handlePerPageChange = (event) => {
+        const newPerPage = parseInt(event.target.value, 10);
+        if (newPerPage !== perPage) {
+            setPerPage(newPerPage);
+        }
+    };
     const handleRowClick = (orderId) => {
         navigate(`/orders/${orderId}`);
     };
@@ -302,41 +314,43 @@ function Orders() {
             >
                 <Tab className='m-3' eventKey="allOrders" title="Todos los Pedidos">
                     <div className='border rounded-3 m-5 justify-content-center'>
-                        <button onClick={handleDeleteOrders} className="btn btn-danger m-3">Borrar pedidos seleccionados</button>
+                        <button onClick={handleDeleteOrders} className="btn btn-alert m-1">Borrar pedidos seleccionados</button>
                         <button onClick={handleForceUpdateOrders} className="btn btn-primary m-3">Actualizar órdenes</button>
-                        <div className="d-flex align-items-center m-3">
-                            <label htmlFor="statusSelector" className="me-2">Cambiar estado a:</label>
-                            <select
-                                id="statusSelector"
-                                value={selectedStatus}
-                                onChange={(e) => setSelectedStatus(e.target.value)}
-                                className="form-select me-2"
-                            >
-                                <option value="completed">Completado</option>
-                                <option value="processing">Procesando</option>
-                                <option value="on-hold">En espera</option>
-                                <option value="pending">Pendiente de pago</option>
-                                <option value="cancelled">Cancelado</option>
-                            </select>
-                            <button onClick={handleBatchUpdateStatus} className="btn btn-success">Actualizar estado</button>
+                        <div className='d-flex ms-1 gap-5'>
+                            <div className="d-flex align-items-center ms-1 ">
+                                <label htmlFor="statusSelector" className="status-selector">Cambiar estado a:</label>
+                                <select
+                                    id="statusSelector"
+                                    value={selectedStatus}
+                                    onChange={(e) => setSelectedStatus(e.target.value)}
+                                    className="custom-select"
+                                >
+                                    <option value="completed">Completado</option>
+                                    <option value="processing">Procesando</option>
+                                    <option value="on-hold">En espera</option>
+                                    <option value="pending">Pendiente de pago</option>
+                                    <option value="cancelled">Cancelado</option>
+                                </select>
+                                <button onClick={handleBatchUpdateStatus} className="btn btn-success ms-2">Actualizar estado</button>
+                            </div>
+                            <div className="d-flex align-items-center ms-1">
+                                <label htmlFor="shippingStatusSelector" className="status-selector">Cambiar estado de envío a:</label>
+                                <select
+                                    id="shippingStatusSelector"
+                                    value={selectedShippingStatus}
+                                    onChange={(e) => setSelectedShippingStatus(e.target.value)}
+                                    className="custom-select"
+                                >
+                                    <option value="pte-envio">Pte Envío</option>
+                                    <option value="enviado">Enviado</option>
+                                    <option value="envio parcial">Envío Parcial</option>
+                                </select>
+                                <button onClick={handleBatchUpdateShippingStatus} className="btn btn-success ms-2">Actualizar estado de envío</button>
+                            </div>
                         </div>
-                        <div className="d-flex align-items-center m-3">
-                            <label htmlFor="shippingStatusSelector" className="me-2">Cambiar estado de envío a:</label>
-                            <select
-                                id="shippingStatusSelector"
-                                value={selectedShippingStatus}
-                                onChange={(e) => setSelectedShippingStatus(e.target.value)}
-                                className="form-select me-2"
-                            >
-                                <option value="pte-envio">Pte Envío</option>
-                                <option value="enviado">Enviado</option>
-                                <option value="envio parcial">Envío Parcial</option>
-                            </select>
-                            <button onClick={handleBatchUpdateShippingStatus} className="btn btn-success">Actualizar estado de envío</button>
-                        </div>
-                        <table className='table caption-top'>
+                        <table className="table caption-top">
                             <caption className='p-3'>Pedidos</caption>
-                            <thead className='bg-light'>
+                            <thead className='table-header'>
                                 <tr>
                                     <th>
                                         <input
@@ -483,7 +497,14 @@ function Orders() {
                                 ))}
                             </tbody>
                         </table>
-                        <div className="d-flex justify-content-end m-2 pagination">
+                        <PaginateController
+                                            currentPage={page}
+                                            totalPages={store.totalPages}
+                                            onPageChange={handlePageChange}
+                                            perPage={perPage}
+                                            handlePerPageChange={handlePerPageChange}
+                                        />
+                        {/* <div className="d-flex justify-content-end m-2 pagination">
                             {Array.from({ length: totalPages }, (_, index) => (
                                 <span
                                     key={index + 1}
@@ -497,7 +518,7 @@ function Orders() {
                                     {index + 1}
                                 </span>
                             ))}
-                        </div>
+                        </div> */}
                     </div>
                 </Tab>
                 <Tab eventKey="inProgressOrders" title="Pedidos en Proceso">

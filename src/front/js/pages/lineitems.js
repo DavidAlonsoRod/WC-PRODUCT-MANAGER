@@ -3,6 +3,7 @@ import "../../styles/customerlist.css";
 import { useNavigate } from 'react-router-dom';
 import { Context } from '../store/appContext';
 import StatusMessage from '../component/StatusMessage';
+import PaginateController from '../component/PaginateController';
 
 const LineItems = () => {
     const { store, actions } = useContext(Context);
@@ -188,23 +189,25 @@ const LineItems = () => {
     return (
         <div className='border rounded-3 m-5 justify-content-center'>
             {statusMessage && <StatusMessage message={statusMessage} onClose={() => setStatusMessage("")} />}
+            <h3 className='m-4'>Control de Producción</h3>
             <div className="m-3">
-                <label htmlFor="statusSelector">Seleccionar estado:</label>
+                <label className='status-selector' htmlFor="statusSelector">Cambiar estado a:</label>
                 <select
                     id="statusSelector"
                     value={selectedStatus}
                     onChange={(e) => setSelectedStatus(e.target.value)}
+                    className="custom-select"
                 >
                     <option value="finalizado">Finalizado</option>
                     <option value="pendiente">Pendiente</option>
                     <option value="en_proceso">En Proceso</option>
                 </select>
-                <button onClick={handleFinalizeSelectedItems} disabled={selectedItems.length === 0}>
-                    Modificar estado
+                <button className='btn btn-item-status ms-2' onClick={handleFinalizeSelectedItems} disabled={selectedItems.length === 0}>
+                    Cambiar
                 </button>
                 <table className='table caption-top'>
-                    <caption className='p-3'>Items</caption>
-                    <thead>
+                    <caption className='p-3'>Trabajos</caption>
+                    <thead className="table-header">
                         <tr>
                             <th>
                                 <input
@@ -274,20 +277,13 @@ const LineItems = () => {
                         ))}
                     </tbody>
                 </table>
-                <div>
-                    <button onClick={() => handlePageChange(page - 1)} disabled={page === 1}>
-                        Anterior
-                    </button>
-                    <span>Página {page}</span>
-                    <button onClick={() => handlePageChange(page + 1)}>
-                        Siguiente
-                    </button>
-                    <select value={perPage} onChange={handlePerPageChange}>
-                        <option value={10}>10 por página</option>
-                        <option value={20}>20 por página</option>
-                        <option value={50}>50 por página</option>
-                    </select>
-                </div>
+                <PaginateController
+                    currentPage={page}
+                    totalPages={store.totalPages}
+                    onPageChange={handlePageChange}
+                    perPage={perPage}
+                    handlePerPageChange={handlePerPageChange}
+                />
             </div>
         </div>
     );

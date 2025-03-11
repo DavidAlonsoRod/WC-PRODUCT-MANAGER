@@ -1,0 +1,6 @@
+/* customerlist.css */
+
+.table thead th {
+  border-top: 2px solid #007bff; /* Cambia el color según tus necesidades */
+  border-bottom: 2px solid #007bff; /* Cambia el color según tus necesidades */
+}

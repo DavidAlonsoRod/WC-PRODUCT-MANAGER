@@ -1,12 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
+import { Context } from '../store/appContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Tab, Tabs } from 'react-bootstrap';
 import "../../styles/orderlist.css";
 import { formatDate, getShippingDateClass } from '../utils/dateUtils';
+import PaginateController from '../component/PaginateController';
+
 
 const OrdersInProgress = () => {
     const [orders, setOrders] = useState([]);
+    const { store, actions } = useContext(Context);
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(25);
     const [totalOrders, setTotalOrders] = useState(0);
@@ -152,9 +156,17 @@ const OrdersInProgress = () => {
     const handleRowClick = (orderId) => {
         navigate(`/orders/${orderId}`);
     };
+    const handlePageChange = (newPage) => {
+        if (newPage !== page) {
+            setPage(newPage);
+        }
+    };
 
-    const handlePageClick = (pageNumber) => {
-        setPage(pageNumber);
+    const handlePerPageChange = (event) => {
+        const newPerPage = parseInt(event.target.value, 10);
+        if (newPerPage !== perPage) {
+            setPerPage(newPerPage);
+        }
     };
 
     const handleCustomerChange = (event) => {
@@ -212,10 +224,6 @@ const OrdersInProgress = () => {
         }
     };
 
-    const handlePerPageChange = (event) => {
-        setPerPage(parseInt(event.target.value));
-        setPage(1); // Reiniciar a la primera página al cambiar el número de elementos por p��gina
-    };
 
     const filteredOrders = orders.filter(order => {
         return (
@@ -440,22 +448,16 @@ const OrdersInProgress = () => {
                                 ))}
                             </tbody>
                         </table>
-                        <div className="d-flex justify-content-end m-2 pagination">
-                            {Array.from({ length: totalPages }, (_, index) => (
-                                <span
-                                    key={index + 1}
-                                    onClick={() => handlePageClick(index + 1)}
-                                    style={{
-                                        cursor: 'pointer',
-                                        fontWeight: page === index + 1 ? 'bold' : 'normal',
-                                        margin: '0 5px'
-                                    }}
-                                >
-                                    {index + 1}
-                                </span>
-                            ))}
-                        </div>
+                        <PaginateController
+                            currentPage={page}
+                            totalPages={store.totalPages}
+                            onPageChange={handlePageChange}
+                            perPage={perPage}
+                            handlePerPageChange={handlePerPageChange}
+                        />
+
                     </div>
+
                 </Tab>
             </Tabs>
         </div>

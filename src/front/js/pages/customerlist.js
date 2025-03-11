@@ -78,20 +78,20 @@ const Customers = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {customers.map(customer => (
+                        {customers.map((customer, index) => (
                             <tr
-                                key={customer.id}
+                                key={index}
                                 className='fw-light'
                                 onClick={() => handleRowClick(customer.id)}
                                 style={{ cursor: 'pointer' }}
                             >
-                                <td className='fw-light'>{customer.id}</td>
-                                <td>{customer.billing.company}</td>
-                                <td>{customer.first_name}</td>
-                                <td>{customer.last_name}</td>
-                                <td>{customer.city}</td>
-                                <td>{customer.state}</td>
-                                <td>{customer.email}</td>
+                                <td className='fw-light'>{customer?.id || 'N/A'}</td>
+                                <td>{customer?.billing?.company || 'N/A'}</td>
+                                <td>{customer?.first_name || 'N/A'}</td>
+                                <td>{customer?.last_name || 'N/A'}</td>
+                                <td>{customer?.city || 'N/A'}</td>
+                                <td>{customer?.state || 'N/A'}</td>
+                                <td>{customer?.email || 'N/A'}</td>
                             </tr>
                         ))}
                     </tbody>

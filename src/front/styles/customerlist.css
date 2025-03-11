@@ -1,116 +1,148 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
 h1 {
-    color: #0d183f;
-
-};
+  color: #0d183f;
+}
 tr {
-    background-color: gray;
-
+  background-color: rgb(255, 255, 255);
 }
 th {
-    font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
 }
 tr:hover {
-    background-color: rgb(238, 242, 249); /* Color de fondo al pasar el ratón */
+  background-color: rgb(238, 242, 249); /* Color de fondo al pasar el ratón */
 }
 
-thead{
-    color: #61626e;
+thead {
+  color: #fa6a03;
 }
 table tr {
-    cursor: pointer;
-    color:rgb(61, 61, 61);
-    font-size: 12px
-    
+  cursor: pointer;
+  color: rgb(61, 61, 61);
+  font-size: 12px;
 }
 
 table tr:hover {
-    background-color: #f5f5f5;
-    
+  background-color: #f5f5f5;
 }
 
 table a {
-    display: table-row;
+  display: table-row;
 }
-p{
-    font-weight: 200;
+p {
+  font-weight: 200;
 }
-span{
-    cursor: pointer;
-    color:rgb(61, 61, 61);
-    font-size: 12px;
-    margin-right: 10px;
-
+span {
+  cursor: pointer;
+  color: rgb(61, 61, 61);
+  font-size: 12px;
+  margin-right: 10px;
 }
 
 .btn-warning {
-    background-color: #ffebb1;
-    border-color: #ffebb1;
-    
-    color: #392d2d;
+  background-color: #ffebb1;
+  border-color: #ffebb1;
+
+  color: #392d2d;
+}
+.btn-alert {
+  background-color: #c64040;
+  border-color: #ffebb1;
+  font-size: 12px;
+  color: #fff;
 }
 
 .btn-success {
-    background-color: #a1cbab;
-    border-color: #a1cbab;
-    color: #445a4d;
+  background-color: #a1cbab;
+  border-color: #a1cbab;
+  color: #445a4d;
+  font-size: 12px;
 }
 
 .btn-primary {
-    background-color: #ffffff;
-    border-color: #3d3d3d;
-    color: #3d3d3d;
+  background-color: #ffffff;
+  border-color: #3d3d3d;
+  color: #3d3d3d;
+  font-size: 12px;
 }
 
 .btn-secondary {
-    background-color: #6c757d;
-    border-color: #6c757d;
-    color: #fff;
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: #fff;
 }
 
 .btn-light {
-    background-color: #f8f9fa;
-    border-color: #f8f9fa;
-    color: #212529;
+  background-color: #f8f9fa;
+  border-color: #f8f9fa;
+  color: #212529;
 }
 
 .btn-small {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.70rem;
-    line-height: 1.5;
-    border-radius: 0.2rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  border-radius: 0.2rem;
 }
 
 .bg-light-red {
-    background-color: #f1c7c7;
+  background-color: #f1c7c7;
 }
 
 .bg-light-green {
-    background-color: #d1ead1;
+  background-color: #d1ead1;
 }
 .btn-link {
-    
-    font-size: 12px;
-    color: #0d447c;
+  font-size: 12px;
+  color: #0d447c;
 }
-.btn-add-note{
-    
-    border-color: #888989;
-    color: #212529;
-    font-size: 12px;
-    padding: 0.25rem 0.5rem;
-    line-height: 1.5;
-    border-radius: 0.2rem;
-
+.btn-add-note {
+  border-color: #888989;
+  color: #212529;
+  font-size: 12px;
+  padding: 0.25rem 0.5rem;
+  line-height: 1.5;
+  border-radius: 0.2rem;
 }
-.btn-item-status{
-    
-    border-color: #888989;
-    background-color: hwb(213 83% 14%);
-    color: #232121;
-    font-size: 12px;
-    padding: 0.25rem 0.5rem;
-    line-height: 1.5;
-    border-radius: 0.2rem;
+.btn-item-status {
+  border-color: #c0c0c0;
+  background-color: hwb(0 93% 7%);
+  color: #5f5d5d;
+  font-size: 12px;
+  padding: 0.25rem 0.5rem;
+  line-height: 1.5;
+  border-radius: 0.2rem;
+}
+.btn-pages {
+  color: gray;
+  font-size: 12px;
+  padding: 0.25rem 0.5rem;
+  border: none;
+  background: white;
+  margin-right: 5px;
+}
 
+.custom-select {
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  padding: 0.375rem 1.75rem 0.375rem 0.75rem;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #495057;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.custom-select:focus {
+  outline: 0;
+}
+.status-selector {
+  font-size: 12px;
+  margin-right: 10px;
+  color: #535357;
+}
+.table-header {
+  color: white;
+  font-size: 12px;
+  padding: 0.25rem 0.5rem;
+  border-bottom: 2px solid #919191; /* Cambiar el color de la línea debajo de la cabecera */
 }
