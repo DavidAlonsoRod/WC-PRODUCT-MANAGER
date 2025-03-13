@@ -1,130 +1,130 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
 h1 {
-    color: #0d183f;
-
-};
+  color: #0d183f;
+}
 tr {
-    background-color: gray;
-
+  background-color: gray;
 }
 th {
-    font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
 }
 tr:hover {
-    background-color: rgb(238, 242, 249); /* Color de fondo al pasar el ratón */
+  background-color: rgb(238, 242, 249); /* Color de fondo al pasar el ratón */
 }
 
-thead{
-    color: #61626e;
+thead {
+  color: #61626e;
 }
 table tr {
-    cursor: pointer;
-    color:rgb(61, 61, 61);
-    font-size: 12px
-    
+  cursor: pointer;
+  color: rgb(61, 61, 61);
+  font-size: 12px;
 }
 
 table tr:hover {
-    background-color: #f5f5f5;
-    
+  background-color: #f5f5f5;
 }
 
 table a {
-    display: table-row;
+  display: table-row;
 }
-p{
-    font-weight: 200;
+p {
+  font-weight: 200;
 }
-span{
-    cursor: pointer;
-    color:rgb(61, 61, 61);
-    font-size: 12px;
-    margin-right: 10px;
+span {
+  cursor: pointer;
+  color: rgb(61, 61, 61);
+  font-size: 12px;
+  margin-right: 10px;
+}
 
-}
-
-td, th {
-    border-bottom: 1px solid #dee2e6;
+td,
+th {
+  border-bottom: 1px solid #dee2e6;
 }
 
 .btn-warning {
-    background-color: #ffebb1;
-    border-color: #ffebb1;
-    border-bottom: 1px solid #dee2e6;
-    color: #392d2d;
+  background-color: #ffebb1;
+  border-color: #ffebb1;
+  border-bottom: 1px solid #dee2e6;
+  color: #392d2d;
 }
 
 .btn-success {
-    background-color: #a1cbab;
-    border-color: #a1cbab;
-    color: #445a4d;
+  background-color: #a1cbab;
+  border-color: #a1cbab;
+  color: #445a4d;
 }
 
 .btn-primary {
-    background-color: #ffffff;
-    border-color: #3d3d3d;
-    color: #3d3d3d;
+  background-color: #ffffff;
+  border-color: #3d3d3d;
+  color: #3d3d3d;
 }
-.btn-completed{
-    background-color: #c8d7e1;
-    
-    color: #003d66;
-    padding-left: 8px;
-   
-    font-size: 0.7rem;
-    line-height: 1.5;
-   
+.btn-completed {
+  background-color: #c8d7e1;
+
+  color: #003d66;
+  padding-left: 8px;
+
+  font-size: 0.7rem;
+  line-height: 1.5;
 }
 
 .btn-secondary {
-    background-color: #87a0b7;
-    border-color: #6c757d;
-    color: #fff;
-    
+  background-color: #87a0b7;
+  border-color: #6c757d;
+  color: #fff;
 }
 
 .btn-light {
-    background-color: #f8f9fa;
-    border-color: #f8f9fa;
-    color: #212529;
+  background-color: #f8f9fa;
+  border-color: #f8f9fa;
+  color: #212529;
 }
 @keyframes blink {
-    0% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 1;
-    }
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 .btn-urgent {
-    background-color: #1c1663;
-    color: #f80101;
-    display: table-cell; 
-    animation: blink 2s infinite; 
-    line-height: 1.5;
-    border-bottom: 1px solid #dee2e6;
-    align-content: flex-start;
+  background-color: #1c1663;
+  color: #f80101;
+  display: table-cell;
+  animation: blink 2s infinite;
+  line-height: 1.5;
+  border-bottom: 1px solid #dee2e6;
+  align-content: flex-start;
 }
 
 .btn-small {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.1rem;
-    line-height: 1;
-    border-radius: 0.2rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.1rem;
+  line-height: 1;
+  border-radius: 0.2rem;
 }
 
 .form-control {
-    font-size: 0.875rem; /* Tamaño de fuente más pequeño */
-    padding: 0.25rem 0.5rem; /* Espaciado interno más pequeño */
-    height: auto; /* Ajustar altura automáticamente */
+  font-size: 0.875rem; /* Tamaño de fuente más pequeño */
+  padding: 0.25rem 0.5rem; /* Espaciado interno más pequeño */
+  height: auto; /* Ajustar altura automáticamente */
 }
 
 .custom-tabs-margin {
-    margin: 20px; /* Ajustar el valor según sea necesario */
+  margin: 20px; /* Ajustar el valor según sea necesario */
 }
 
 /* Puedes añadir más estilos según sea necesario */
+
+.no-border-top {
+  border-top: none !important;
+  border-top-right-radius: 0 !important;
+  border-top-left-radius: 0 !important;
+}

@@ -302,7 +302,7 @@ function Orders() {
         return sortOrder === 'asc' ? (fieldA > fieldB ? 1 : -1) : (fieldA < fieldB ? 1 : -1);
     });
 
-    const totalPages = Math.ceil(store.totalOrders / perPage);
+    const totalPages = Math.ceil(store.totalOrders / perPage) || 1;
 
     return (
         <div>
@@ -310,11 +310,11 @@ function Orders() {
                 activeKey="allOrders"
                 onSelect={(k) => navigate(k === "allOrders" ? "/orders" : "/orders-in-progress")}
                 id="order-tabs"
-                className="m-5 custom-tabs"
+                className="m-5 mb-0 custom-tabs custom-tabs-margin"
             >
-                <Tab className='m-3' eventKey="allOrders" title="Todos los Pedidos">
-                    <div className='border rounded-3 m-5 justify-content-center'>
-                        <button onClick={handleDeleteOrders} className="btn btn-alert m-1">Borrar pedidos seleccionados</button>
+                <Tab className='m-3 ms-0 mt-0 pb-3' eventKey="allOrders" title="Todos los Pedidos">
+                    <div className='border rounded-3 m-5 mt-0 pt-5 justify-content-center no-border-top no-rounded-top'>
+                        <button onClick={handleDeleteOrders} className="btn btn-alert  m-3">Borrar pedidos seleccionados</button>
                         <button onClick={handleForceUpdateOrders} className="btn btn-primary m-3">Actualizar órdenes</button>
                         <div className='d-flex ms-1 gap-5'>
                             <div className="d-flex align-items-center ms-1 ">
@@ -474,11 +474,11 @@ function Orders() {
                                         <td>
                                             {order.billing ? `${order.billing.first_name} ${order.billing.last_name}` : 'N/A'}
                                             <br />
-                                            <small>{order.billing.company}</small>
+                                            <small>{order.billing && order.billing.company ? order.billing.company : 'N/A'}</small>
                                         </td>
                                         <td>{formatDate(order.date_created)}</td>
                                         <td className={getShippingDateClass(order.shipping_date)}>{formatDate(order.shipping_date)}</td>
-                                        <td>{order.billing.city}</td>
+                                        <td>{order.billing ? order.billing.city : 'N/A'}</td>
                                         <td>{order.total}</td>
                                         <td>{order.payment_method_title}</td>
                                         <td>
@@ -499,7 +499,7 @@ function Orders() {
                         </table>
                         <PaginateController
                             currentPage={page}
-                            totalPages={store.totalPages}
+                            totalPages={totalPages} // Cambiado de store.totalPages a totalPages
                             onPageChange={handlePageChange}
                             perPage={perPage}
                             handlePerPageChange={handlePerPageChange}

@@ -244,7 +244,7 @@ const OrdersInProgress = () => {
         return sortOrder === 'asc' ? (fieldA > fieldB ? 1 : -1) : (fieldA < fieldB ? 1 : -1);
     });
 
-    const totalPages = Math.ceil(totalOrders / perPage);
+    const totalPages = Math.ceil(store.totalOrdersInProgress / perPage) || 1;
 
     return (
         <div>
@@ -252,15 +252,15 @@ const OrdersInProgress = () => {
                 activeKey="inProgressOrders"
                 onSelect={(k) => navigate(k === "inProgressOrders" ? "/orders-in-progress" : "/orders")}
                 id="order-tabs"
-                className="m-5 custom-tabs custom-tabs-margin"
+                className="m-5 mb-0 custom-tabs custom-tabs-margin"
             >
                 <Tab eventKey="allOrders" title="Todos los Pedidos">
-                    <div className='border rounded-3 m-5 justify-content-center'>
+                    <div className='border rounded-3 m-5  justify-content-center'>
                         <p>Redirigiendo a Todos los Pedidos...</p>
                     </div>
                 </Tab>
                 <Tab eventKey="inProgressOrders" title="Pedidos en Proceso">
-                    <div className='border rounded-3 m-5 justify-content-center'>
+                    <div className='border rounded-3 m-5 mt-0 pt-5 justify-content-center no-border-top no-rounded-top'>
 
                         <button onClick={handleBatchAction} className="btn btn-primary m-3">Realizar acción en pedidos seleccionados</button>
                         <button onClick={handleDeleteOrders} className="btn btn-alert m-3">Borrar pedidos seleccionados</button>
@@ -425,7 +425,7 @@ const OrdersInProgress = () => {
                         </table>
                         <PaginateController
                             currentPage={page}
-                            totalPages={store.totalPages}
+                            totalPages={totalPages}
                             onPageChange={handlePageChange}
                             perPage={perPage}
                             handlePerPageChange={handlePerPageChange}

@@ -346,8 +346,8 @@ def import_orders():
                             country=billing_info.get("country", ""),
                             email=billing_info.get("email", ""),
                             phone=billing_info.get("phone", ""),
-                            iban=billing_info.get("iban", ""),  # Importar IBAN
-                            nif=billing_info.get("nif", "")  # Importar NIF
+                            iban=billing_info.get("iban", ""), 
+                            nif=billing_info.get("nif", "") 
                         )
                         db.session.add(billing)
                         db.session.flush()  # Asegurarse de que el ID esté disponible
