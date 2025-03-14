@@ -1,51 +1,146 @@
+* {
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0;
+}
 #navbar {
-    background-color: #1d2232;
-    font-weight: lighter;
-    color: rgb(215, 8, 8); 
+	background-color: #1d2232;
+	font-weight: lighter;
+	display: flex;
+	width: 100%;
+	height: 60px;
+	padding: 0;
+	font-size: 14px;
 }
-
-#navbar a, 
-#navbar button {
-    color: white; 
-    font-weight: lighter;
+.container-fluid {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	padding: 0 24px 0 24px;
 }
-#navbar button:hover {
-    color: white; 
-    font-weight: 400;
+.logo-container {
+	flex: 0 0 auto;
+}
+.navbar-logo {
+	width: 160px;
+	height: 70%;
+	background-size: contain;
+	text-align: center;
+	outline: none;
+	border: none;
+	border-radius: 6px;
+}
+.navbar__content__right__desktop {
+	width: auto;
+	display: flex;
+	gap: 14px;
+	align-items: center;
+	flex-wrap: nowrap;
+	margin-left: auto;
+}
+.navbar__content__right__desktop a {
+	color: white;
+	font-weight: lighter;
+	outline: none;
+	text-decoration: none;
+}
+.navbar__content__right__desktop a:hover {
+	color: white;
+	font-weight: 400;
+	outline: none;
+	font-style: normal;
+	text-decoration: none;
 }
 
 .navbar-brand {
-    color: white;
+	color: white;
 }
 
 .navbar-brand:hover {
-    color: rgb(32, 55, 29);
+	color: rgb(32, 55, 29);
+}
+.navbar-title {
+	flex: 1;
+	text-align: end;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	margin: 0;
+}
+.navbar-title h2,
+p {
+	margin: 0;
 }
 
 #navbar h2 {
-    color: #f8f8f8; 
+	color: #f8f8f8;
+	font-size: 20px;
 }
-
-#navbar h5 {
-    color: rgb(214, 219, 231);
+.navbar-title p {
+	color: #fff;
+	font-size: 14px;
+	margin: 0;
 }
-.navbar-logo {
-    height: 80px; 
-    margin-right: 10px;
-    margin-left: 1rem; /* Ajustar el valor según sea necesario */
+.menu-bars-button {
+	outline: none;
+	background: none;
+	border: none;
+	width: 24px;
+}
+.bars-icon_mobile {
+	color: #fff;
+	display: none;
+	width: 100%;
 }
 
 .dropdown-item {
-    color: gray;
-    background-color: #323749; /* Cambiar a negro */
+	color: gray;
+	background-color: #323749; /* Cambiar a negro */
 }
 
 .dropdown-menu {
-    background-color: #323749; /* Cambiar a negro */
+	background-color: #323749; /* Cambiar a negro */
 }
 
-#navbar .container-fluid {
-    display: flex;
-    align-items: center;
-}
+@media screen and (max-width: 850px) {
+	.navbar__content__right__desktop {
+		display: none;
+	}
 
+	.menu-bars-button {
+		display: block;
+	}
+
+	.bars-icon_mobile {
+		display: inline-block;
+		width: auto;
+	}
+
+	.navbar__content__right__mobile {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		background-color: #1d2232;
+		padding: 12px 24px;
+	}
+
+	.navbar__content__right__mobile a {
+		margin-bottom: 8px;
+		padding: 8px 0;
+		text-decoration: none;
+		color: white;
+	}
+
+	.navbar__content__right__mobile a:hover {
+		background-color: #323749;
+	}
+	#navbar {
+		flex-direction: column;
+		height: auto;
+	}
+
+	.container-fluid {
+		height: auto;
+		flex-wrap: wrap;
+	}
+}
