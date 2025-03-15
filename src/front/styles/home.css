@@ -1,18 +1,18 @@
-/*
-    home.css: This website contains selectors only used in home.css
-
-    All pages share the styles on index.css but you should create 
-    one more css for each page that will contain the selected used 
-    on that page only (the ones not reused in other pages).
-*/
-
 h2 {
-    margin-top: 100px; /* Ajustar este valor según sea necesario */
+  margin-top: 20px; /* Ajustar este valor según sea necesario */
 }
 
 @media (max-width: 768px) {
-    h2 {
-        margin-top: 100px; /* Ajustar el margen superior para pantallas más pequeñas */
-    }
+  h2 {
+    margin-top: 20px; /* Ajustar el margen superior para pantallas más pequeñas */
+  }
 }
 
+.login-form {
+  background-color: rgb(206, 206, 206); /* Color de fondo del formulario */
+}
+.form-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

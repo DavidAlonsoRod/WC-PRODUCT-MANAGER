@@ -20,7 +20,7 @@ const Form = () => {
         <>
             {store.auth === true ? <Navigate to="/orders" /> :
                 <div style={{ width: '500px', margin: '70px', padding: '15px' }}>
-                    <form className="form w-50 mx-auto" onSubmit={sendData}>
+                    <form className="login-form  w-50 mx-auto" onSubmit={sendData}>
                         <div className="mb-3">
                             <label htmlFor="exampleInputEmail1" className="form-label">Usuario</label>
                             <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="form-control" id="exampleInputEmail1" />
