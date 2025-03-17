@@ -315,9 +315,13 @@ def update_customer(customer_id):
 @api.route("/import_orders", methods=["GET"])
 def import_orders():
     try:
+        start_date = request.args.get('start_date')
+        if not start_date:
+            return jsonify({"msg": "introduce la fecha a partir de la cual quieres obtener las órdenes. Ejemplo: /import_orders?start_date=2023-01-01T00:00:00"}), 400
+
         page = 1
         while True:
-            response = wcapi.get("orders", params={"per_page": 100, "page": page})
+            response = wcapi.get("orders", params={"per_page": 100, "page": page, "after": start_date})
             
             if response.status_code != 200:
                 return jsonify({"msg": f"Error al importar órdenes: {response.text}"}), 401
@@ -461,12 +465,16 @@ def import_orders():
 @api.route("/import_line_items", methods=["GET"])
 def import_line_items():
     try:
+        start_date = request.args.get('start_date')
+        if not start_date:
+            return jsonify({"msg": "introduce la fecha a partir de la cual quieres obtener los line_items. Ejemplo: /import_line_items?start_date=2023-01-01T00:00:00"}), 400
+
         page = 1
         while True:
-            response = wcapi.get("orders", params={"per_page": 100, "page": page})
+            response = wcapi.get("orders", params={"per_page": 100, "page": page, "after": start_date})
             
             if response.status_code != 200:
-                return jsonify({"msg": f"Error al importar artículos de línea: {response.text}"}), 401
+                return jsonify({"msg": f"Error al importar los line_items: {response.text}"}), 401
             
             wc_orders = response.json()
 

@@ -5,7 +5,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Tab, Tabs } from 'react-bootstrap';
 import "../../styles/orderlist.css";
 import { formatDate, getShippingDateClass } from '../utils/dateUtils';
-import PaginateController from '../component/PaginateController';
+
 
 
 const OrdersInProgress = () => {
@@ -423,13 +423,7 @@ const OrdersInProgress = () => {
                                 ))}
                             </tbody>
                         </table>
-                        <PaginateController
-                            currentPage={page}
-                            totalPages={totalPages}
-                            onPageChange={handlePageChange}
-                            perPage={perPage}
-                            handlePerPageChange={handlePerPageChange}
-                        />
+
 
                     </div>
 

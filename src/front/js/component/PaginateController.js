@@ -8,22 +8,22 @@ function PaginateController({ currentPage, totalPages, onPageChange, perPage, ha
 
     return (
         <div className='d-flex justify-content-between m-2'>
-            <div className='ms-5'>
-                <select value={perPage} onChange={handlePerPageChange} className="custom-select">
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={50}>50</option>
-                </select>
+            <div className="d-flex justify-content-end m-2 pagination">
+                {Array.from({ length: totalPages }, (_, index) => (
+                    <span
+                        key={index + 1}
+                        onClick={() => handlePageClick(index + 1)}
+                        style={{
+                            cursor: 'pointer',
+                            fontWeight: page === index + 1 ? 'bold' : 'normal',
+                            margin: '0 5px'
+                        }}
+                    >
+                        {index + 1}
+                    </span>
+                ))}
             </div>
-            <div className='me-5'>
-                <button className='btn-pages' onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}>
-                    &lt;
-                </button>
-                <span>{currentPage}</span>
-                <button className='btn-pages' onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}>
-                    &gt;
-                </button>
-            </div>
+
         </div>
     );
 }

@@ -73,11 +73,14 @@
 		]
 	},
 	"dependencies": {
+		"@tanstack/react-table": "^8.21.2",
 		"axios": "^1.7.7",
+		"classnames": "^2.5.1",
 		"prop-types": "^15.6.1",
 		"react": "^16.8.4",
 		"react-bootstrap": "^2.10.5",
 		"react-dom": "^16.8.4",
+		"react-paginate": "^8.3.0",
 		"react-polyfills": "0.0.1",
 		"react-qr-reader": "^3.0.0-beta-1",
 		"react-router-dom": "^6.3.0",

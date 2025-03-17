@@ -4,11 +4,12 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import "../../styles/orderlist.css";
 import { Tab, Tabs } from 'react-bootstrap';
-import PaginateController from '../component/PaginateController';
+
+
 
 function Orders() {
     const { store, actions } = useContext(Context);
-    const [page, setPage] = useState(1);
+    const [page, setPage] = useState(2);
     const [perPage, setPerPage] = useState(20);
     const [customerId, setCustomerId] = useState(null);
     const [filters, setFilters] = useState({
@@ -21,7 +22,7 @@ function Orders() {
         payment_method: '',
         status: ''
     });
-    const [sortOrder, setSortOrder] = useState('desc');
+    const [sortOrder, setSortOrder] = useState('asc');
     const [sortBy, setSortBy] = useState('id');
     const [selectedOrders, setSelectedOrders] = useState([]);
     const [selectedStatus, setSelectedStatus] = useState('completed');
@@ -167,17 +168,24 @@ function Orders() {
         }
     }, [page, perPage, customerId, filters]);
 
-    const handlePageChange = (newPage) => {
-        if (newPage !== page) {
-            setPage(newPage);
-        }
-    };
-    const handlePerPageChange = (event) => {
-        const newPerPage = parseInt(event.target.value, 10);
-        if (newPerPage !== perPage) {
-            setPerPage(newPerPage);
-        }
-    };
+    // const handlePageChange = (newPage) => {
+    //     console.log('newPage:', newPage);
+    //     if (newPage !== page) {
+    //         setPage(newPage);
+    //         actions.getOrders(newPage, perPage, customerId, filters).catch(error => {
+    //             console.error("Error fetching orders:", error.response ? error.response.data : error.message);
+    //         });
+    //     }
+    // };
+    // const handlePerPageChange = (event) => {
+    //     const newPerPage = parseInt(event.target.value, 10);
+    //     if (newPerPage !== perPage) {
+    //         setPerPage(newPerPage);
+    //         actions.getOrders(page, newPerPage, customerId, filters).catch(error => {
+    //             console.error("Error fetching orders:", error.response ? error.response.data : error.message);
+    //         });
+    //     }
+    // };
     const handleRowClick = (orderId) => {
         navigate(`/orders/${orderId}`);
     };
@@ -497,14 +505,7 @@ function Orders() {
                                 ))}
                             </tbody>
                         </table>
-                        <PaginateController
-                            currentPage={page}
-                            totalPages={totalPages} // Cambiado de store.totalPages a totalPages
-                            onPageChange={handlePageChange}
-                            perPage={perPage}
-                            handlePerPageChange={handlePerPageChange}
-                        />
-                        {/* <div className="d-flex justify-content-end m-2 pagination">
+                        <div className="d-flex justify-content-end m-2 pagination">
                             {Array.from({ length: totalPages }, (_, index) => (
                                 <span
                                     key={index + 1}
@@ -518,7 +519,8 @@ function Orders() {
                                     {index + 1}
                                 </span>
                             ))}
-                        </div> */}
+                        </div>
+
                     </div >
                 </Tab >
                 <Tab eventKey="inProgressOrders" title="Pedidos en Proceso">
