@@ -139,6 +139,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					}
 				} catch (error) {
 					console.error("Error fetching orders:", error);
+				} finally {
 					setStore({ isFetchingOrders: false });
 				}
 			},

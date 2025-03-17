@@ -621,7 +621,7 @@ def get_orders():
         per_page = request.args.get('per_page', 20, type=int)
         customer_id = request.args.get('customer_id', type=int)
         query = Order.query
-        if (customer_id):
+        if customer_id:
             query = query.filter_by(customer_id=customer_id)
 
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)

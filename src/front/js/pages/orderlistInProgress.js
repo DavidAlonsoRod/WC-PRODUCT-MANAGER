@@ -5,14 +5,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Tab, Tabs } from 'react-bootstrap';
 import "../../styles/orderlist.css";
 import { formatDate, getShippingDateClass } from '../utils/dateUtils';
-
+import ReactPaginate from 'react-paginate';
 
 
 const OrdersInProgress = () => {
     const [orders, setOrders] = useState([]);
     const { store, actions } = useContext(Context);
     const [page, setPage] = useState(1);
-    const [perPage, setPerPage] = useState(25);
+    const [perPage, setPerPage] = useState(20);
     const [totalOrders, setTotalOrders] = useState(0);
     const [customerId, setCustomerId] = useState(null);
     const [filters, setFilters] = useState({
@@ -156,17 +156,9 @@ const OrdersInProgress = () => {
     const handleRowClick = (orderId) => {
         navigate(`/orders/${orderId}`);
     };
-    const handlePageChange = (newPage) => {
-        if (newPage !== page) {
-            setPage(newPage);
-        }
-    };
-
-    const handlePerPageChange = (event) => {
-        const newPerPage = parseInt(event.target.value, 10);
-        if (newPerPage !== perPage) {
-            setPerPage(newPerPage);
-        }
+    const handlePageClick = ({ selected }) => {
+        console.log('pageNumber:', selected);
+        setPage(selected + 1); // Incrementar el número de página en 1
     };
 
     const handleCustomerChange = (event) => {
@@ -206,10 +198,9 @@ const OrdersInProgress = () => {
     };
 
     const handleBatchAction = () => {
-        // Realizar la acción deseada con los pedidos seleccionados
+
         console.log('Pedidos seleccionados:', selectedOrders);
-        // Ejemplo: cambiar el estado de los pedidos seleccionados
-        // axios.post('/api/orders/batch-update', { orderIds: selectedOrders, newStatus: 'completed' });
+
     };
 
     const handleDeleteOrders = async () => {
@@ -244,7 +235,7 @@ const OrdersInProgress = () => {
         return sortOrder === 'asc' ? (fieldA > fieldB ? 1 : -1) : (fieldA < fieldB ? 1 : -1);
     });
 
-    const totalPages = Math.ceil(store.totalOrdersInProgress / perPage) || 1;
+    const totalPages = Math.ceil(totalOrders / perPage) || 1;
 
     return (
         <div>
@@ -267,7 +258,7 @@ const OrdersInProgress = () => {
 
                         <table className='table caption-top'>
 
-                            <thead className='table-header'>
+                            <thead className='table-header' style={{ backgroundColor: 'red' }}>
                                 <tr>
                                     <th>
                                         <input
@@ -423,6 +414,28 @@ const OrdersInProgress = () => {
                                 ))}
                             </tbody>
                         </table>
+                        <div className="d-flex justify-content-end m-2 pagination">
+                            <ReactPaginate className='pagination'
+                                previousLabel={"← Anterior"}
+                                nextLabel={"Siguiente →"}
+                                breakLabel={"..."}
+                                breakClassName={"break-me"}
+                                pageCount={totalPages}
+                                marginPagesDisplayed={2}
+                                pageRangeDisplayed={5}
+                                onPageChange={handlePageClick} // Pasar el índice de la página directamente
+                                containerClassName={"pagination"}
+                                subContainerClassName={"pages pagination"}
+                                activeClassName={"active"}
+                                previousClassName={"page-item"}
+                                nextClassName={"page-item"}
+                                pageClassName={"page-item"}
+                                pageLinkClassName={"page-link"}
+                                previousLinkClassName={"page-link"}
+                                nextLinkClassName={"page-link"}
+                            />
+                        </div>
+
 
 
                     </div>

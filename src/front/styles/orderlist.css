@@ -2,6 +2,10 @@
 h1 {
   color: #0d183f;
 }
+.table thead th.table-header {
+  color: #61626e;
+  background-color: rgb(230, 229, 229);
+}
 tr {
   background-color: gray;
 }
@@ -12,9 +16,6 @@ tr:hover {
   background-color: rgb(238, 242, 249); /* Color de fondo al pasar el ratón */
 }
 
-thead {
-  color: #61626e;
-}
 table tr {
   cursor: pointer;
   color: rgb(61, 61, 61);
@@ -127,4 +128,24 @@ th {
   border-top: none !important;
   border-top-right-radius: 0 !important;
   border-top-left-radius: 0 !important;
+}
+.pagination {
+  color: rgb(57, 70, 93); /* Cambiar el color del texto a rojo */
+  font-size: 14px;
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+.pagination a {
+  color: rgb(57, 70, 93);
+}
+.pagination a.active {
+  background-color: purple; /* Cambiar el color de fondo del botón activo a morado */
+  color: white; /* Cambiar el color del texto a blanco */
+  border: none; /* Quitar el borde */
+}
+.pagination .active .page-link {
+  background-color: #656f95; /* Cambiar el color de fondo del botón activo a morado */
+  color: white; /* Cambiar el color del texto a blanco */
+  border: none; /* Quitar el borde */
 }
