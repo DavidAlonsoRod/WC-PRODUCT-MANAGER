@@ -2,6 +2,7 @@
 h1 {
   color: #0d183f;
 }
+
 .table thead th.table-header {
   color: #61626e;
   background-color: rgb(230, 229, 229);
@@ -118,6 +119,10 @@ th {
   height: auto; /* Ajustar altura automáticamente */
 }
 
+.form-select {
+  font-size: 12px;
+}
+
 .custom-tabs-margin {
   margin: 20px; /* Ajustar el valor según sea necesario */
 }
@@ -148,4 +153,8 @@ th {
   background-color: #656f95; /* Cambiar el color de fondo del botón activo a morado */
   color: white; /* Cambiar el color del texto a blanco */
   border: none; /* Quitar el borde */
+}
+.itemsPerpage {
+  margin-left: 10px;
+  font-size: 12px;
 }

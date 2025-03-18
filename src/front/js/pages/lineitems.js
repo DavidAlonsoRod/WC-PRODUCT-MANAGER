@@ -3,12 +3,12 @@ import "../../styles/customerlist.css";
 import { useNavigate } from 'react-router-dom';
 import { Context } from '../store/appContext';
 import StatusMessage from '../component/StatusMessage';
-import PaginateController from '../component/PaginateController';
+import ReactPaginate from 'react-paginate';
 
 const LineItems = () => {
     const { store, actions } = useContext(Context);
     const [page, setPage] = useState(1);
-    const [perPage, setPerPage] = useState(20);
+    const [perPage, setPerPage] = useState(10);
     const [selectedItems, setSelectedItems] = useState([]);
     const [selectedStatus, setSelectedStatus] = useState("finalizado");
     const [statusMessage, setStatusMessage] = useState("");
@@ -36,6 +36,10 @@ const LineItems = () => {
         }
     };
 
+    const handlePageClick = (selected) => {
+        console.log('pageNumber:', selected);
+        setPage(selected + 1);
+    };
     const handlePerPageChange = (event) => {
         const newPerPage = parseInt(event.target.value, 10);
         if (newPerPage !== perPage) {
@@ -185,6 +189,7 @@ const LineItems = () => {
                 return '';
         }
     };
+    const totalPages = Math.ceil(store.totaltotal_items / perPage) || 1;
 
     return (
         <div className='border rounded-3 m-5 justify-content-center'>
@@ -277,13 +282,27 @@ const LineItems = () => {
                         ))}
                     </tbody>
                 </table>
-                <PaginateController
-                    currentPage={page}
-                    totalPages={store.totalPages}
-                    onPageChange={handlePageChange}
-                    perPage={perPage}
-                    handlePerPageChange={handlePerPageChange}
-                />
+                <div className="d-flex justify-content-end m-2 pagination">
+                    <ReactPaginate className='pagination'
+                        previousLabel={"← Anterior"}
+                        nextLabel={"Siguiente →"}
+                        breakLabel={"..."}
+                        breakClassName={"break-me"}
+                        pageCount={totalPages}
+                        marginPagesDisplayed={2}
+                        pageRangeDisplayed={5}
+                        onPageChange={handlePageClick} // Pasar el índice de la página directamente
+                        containerClassName={"pagination"}
+                        subContainerClassName={"pages pagination"}
+                        activeClassName={"active"}
+                        previousClassName={"page-item"}
+                        nextClassName={"page-item"}
+                        pageClassName={"page-item"}
+                        pageLinkClassName={"page-link"}
+                        previousLinkClassName={"page-link"}
+                        nextLinkClassName={"page-link"}
+                    />
+                </div>
             </div>
         </div>
     );

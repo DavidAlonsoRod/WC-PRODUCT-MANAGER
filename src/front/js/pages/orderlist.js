@@ -5,11 +5,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import "../../styles/orderlist.css";
 import { Tab, Tabs } from 'react-bootstrap';
 import ReactPaginate from 'react-paginate';
-import { formatDate, getShippingDateClass } from '../utils/dateUtils';
 
 function Orders() {
     const { store, actions } = useContext(Context);
-    const [page, setPage] = useState(0);
+    const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(20);
     const [customerId, setCustomerId] = useState(null);
     const [filters, setFilters] = useState({
@@ -22,12 +21,32 @@ function Orders() {
         payment_method: '',
         status: ''
     });
-    const [sortOrder, setSortOrder] = useState('desc');
+    const [sortOrder, setSortOrder] = useState('asc');
     const [sortBy, setSortBy] = useState('id');
     const [selectedOrders, setSelectedOrders] = useState([]);
     const [selectedStatus, setSelectedStatus] = useState('completed');
     const [selectedShippingStatus, setSelectedShippingStatus] = useState('pte-envio');
     const navigate = useNavigate();
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'Fecha no disponible';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        if (diffDays === 0) {
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffMinutes = Math.floor(diffMs / (1000 * 60)) % 60;
+            if (diffHours > 0) {
+                return `${diffHours} horas`;
+            } else {
+                return `${diffMinutes} minutos`;
+            }
+        }
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+        return date.toLocaleDateString(undefined, options);
+    };
+
 
     const translateStatus = (status) => {
         switch (status) {
@@ -91,6 +110,21 @@ function Orders() {
 
 
 
+    const getShippingDateClass = (shippingDate) => {
+        if (!shippingDate) return 'btn-small';
+        const date = new Date(shippingDate);
+        const now = new Date();
+        const diffMs = date - now;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        if (diffDays <= 0) {
+            return 'btn btn-urgent btn-small';
+        } else if (diffDays <= 3) {
+            return 'btn btn-warning btn-small';
+        } else {
+            return 'btn btn-success btn-small';
+        }
+    };
+
     const paymentMethods = [
         "PayPal",
         "Credit Card",
@@ -131,28 +165,14 @@ function Orders() {
         fetchOrders();
     }, [page, perPage, customerId, filters]);
 
-    const filteredOrders = store.orders.filter(order => {
-        return (
-            (filters.id === '' || order.id.toString().includes(filters.id)) &&
-            (filters.customer === '' || (order.billing && `${order.billing.first_name} ${order.billing.last_name}`.toLowerCase().includes(filters.customer.toLowerCase()))) &&
-            (filters.date_created === '' || formatDate(order.date_created).includes(filters.date_created)) &&
-            (filters.shipping_date === '' || formatDate(order.shipping_date).includes(filters.shipping_date)) &&
-            (filters.city === '' || (order.billing && order.billing.city.toLowerCase().includes(filters.city.toLowerCase()))) &&
-            (filters.total === '' || order.total.toString().includes(filters.total)) &&
-            (filters.payment_method === '' || order.payment_method.toLowerCase().includes(filters.payment_method.toLowerCase())) &&
-            (filters.status === '' || order.status.toLowerCase().includes(filters.status.toLowerCase()))
-        );
-    });
-
-    const sortedOrders = filteredOrders ? [...filteredOrders].sort((a, b) => b.id - a.id) : []; // Ordenar por ID de mayor a menor
 
     const handleRowClick = (orderId) => {
         navigate(`/orders/${orderId}`);
     };
 
-    const handlePageClick = ({ selected }) => {
+    const handlePageClick = (selected) => {
         console.log('pageNumber:', selected);
-        setPage(selected + 1); // Incrementar el número de página en 1
+        setPage(selected + 1);
     };
 
     const handleCustomerChange = (event) => {
@@ -252,6 +272,35 @@ function Orders() {
         }
     };
 
+    const handlePerPageChange = (event) => {
+        const newPerPage = parseInt(event.target.value, 10);
+        if (newPerPage !== perPage) {
+            setPerPage(newPerPage);
+            actions.getOrders(page, newPerPage, customerId, filters).catch(error => {
+                console.error("Error fetching orders:", error.response ? error.response.data : error.message);
+            });
+        }
+    };
+
+    const filteredOrders = store.orders.filter(order => {
+        return (
+            (filters.id === '' || order.id.toString().includes(filters.id)) &&
+            (filters.customer === '' || (order.billing && `${order.billing.first_name} ${order.billing.last_name}`.toLowerCase().includes(filters.customer.toLowerCase()))) &&
+            (filters.date_created === '' || formatDate(order.date_created).includes(filters.date_created)) &&
+            (filters.shipping_date === '' || formatDate(order.shipping_date).includes(filters.shipping_date)) &&
+            (filters.city === '' || (order.billing && order.billing.city.toLowerCase().includes(filters.city.toLowerCase()))) &&
+            (filters.total === '' || order.total.toString().includes(filters.total)) &&
+            (filters.payment_method === '' || order.payment_method.toLowerCase().includes(filters.payment_method.toLowerCase())) &&
+            (filters.status === '' || order.status.toLowerCase().includes(filters.status.toLowerCase()))
+        );
+    });
+
+    const sortedOrders = [...filteredOrders].sort((a, b) => {
+        const fieldA = sortBy === 'total' ? parseFloat(a[sortBy]) : a[sortBy];
+        const fieldB = sortBy === 'total' ? parseFloat(b[sortBy]) : b[sortBy];
+        return sortOrder === 'asc' ? (fieldA > fieldB ? 1 : -1) : (fieldA < fieldB ? 1 : -1);
+    });
+
     const totalPages = Math.ceil(store.totalOrders / perPage) || 1;
 
     return (
@@ -298,11 +347,12 @@ function Orders() {
                                 <button onClick={handleBatchUpdateShippingStatus} className="btn btn-success ms-2">Actualizar estado de envío</button>
                             </div>
                         </div>
+
                         <table className="table caption-top mt-3">
 
                             <thead className='table-header'>
                                 <tr>
-                                    <th className='table-header'>
+                                    <th>
                                         <input
                                             type="checkbox"
                                             onChange={(e) => {
@@ -314,7 +364,7 @@ function Orders() {
                                             }}
                                             checked={selectedOrders.length === store.orders.length} />
                                     </th>
-                                    <th className='table-header'>
+                                    <th>
                                         ID
                                         <button onClick={() => handleSort('id')} className="btn btn-link">
                                             ID {sortBy === 'id' && (sortOrder === 'asc' ? '↑' : '↓')}
@@ -326,7 +376,7 @@ function Orders() {
                                             onChange={handleFilterChange}
                                             className="form-control" />
                                     </th>
-                                    <th className='table-header'>
+                                    <th>
                                         Cliente
                                         <input
                                             type="text"
@@ -335,7 +385,7 @@ function Orders() {
                                             onChange={handleFilterChange}
                                             className="form-control" />
                                     </th>
-                                    <th className='table-header'>
+                                    <th>
                                         Fecha creación
                                         <input
                                             type="date"
@@ -344,7 +394,7 @@ function Orders() {
                                             onChange={(e) => handleDateChange('date_created', e.target.value)}
                                             className="form-control" />
                                     </th>
-                                    <th className='table-header'>
+                                    <th>
                                         Salida estimada
                                         <input
                                             type="date"
@@ -353,7 +403,7 @@ function Orders() {
                                             onChange={(e) => handleDateChange('shipping_date', e.target.value)}
                                             className="form-control" />
                                     </th>
-                                    <th className='table-header'>
+                                    <th>
                                         Ciudad
                                         <input
                                             type="text"
@@ -362,13 +412,13 @@ function Orders() {
                                             onChange={handleFilterChange}
                                             className="form-control" />
                                     </th>
-                                    <th className='table-header'>
+                                    <th>
                                         Total
                                         <button onClick={() => handleSort('total')} className="btn btn-link">
                                             Total {sortBy === 'total' && (sortOrder === 'asc' ? '↑' : '↓')}
                                         </button>
-                                    </th >
-                                    <th className='table-header'>
+                                    </th>
+                                    <th>
                                         Forma de pago
                                         <select
                                             name="payment_method"
@@ -384,7 +434,7 @@ function Orders() {
                                             ))}
                                         </select>
                                     </th>
-                                    <th className='table-header'>
+                                    <th>
                                         Estado
                                         <select
                                             name="status"
@@ -400,7 +450,7 @@ function Orders() {
                                             ))}
                                         </select>
                                     </th>
-                                    <th className='table-header'>
+                                    <th>
                                         Estado de Envío
                                     </th>
                                 </tr>
@@ -447,28 +497,37 @@ function Orders() {
                                 ))}
                             </tbody>
                         </table>
-                        <div className="d-flex justify-content-end m-2 pagination">
-                            <ReactPaginate className='pagination'
-                                previousLabel={"← Anterior"}
-                                nextLabel={"Siguiente →"}
-                                breakLabel={"..."}
-                                breakClassName={"break-me"}
-                                pageCount={totalPages}
-                                marginPagesDisplayed={2}
-                                pageRangeDisplayed={5}
-                                onPageChange={handlePageClick} // Pasar el índice de la página directamente
-                                containerClassName={"pagination"}
-                                subContainerClassName={"pages pagination"}
-                                activeClassName={"active"}
-                                previousClassName={"page-item"}
-                                nextClassName={"page-item"}
-                                pageClassName={"page-item"}
-                                pageLinkClassName={"page-link"}
-                                previousLinkClassName={"page-link"}
-                                nextLinkClassName={"page-link"}
-                            />
+                        <div className="d-flex justify-content-between m-2">
+                            <div className="d-flex align-items-center">
+                                <label htmlFor="perPageSelect" className="me-2 itemsPerpage">Items</label>
+                                <select id="perPageSelect" value={perPage} onChange={handlePerPageChange} className="form-select">
+                                    <option value={20}>20</option>
+                                    <option value={50}>50</option>
+                                    <option value={100}>100</option>
+                                </select>
+                            </div>
+                            <div className="d-flex justify-content-end m-2 pagination">
+                                <ReactPaginate
+                                    previousLabel={"← Anterior"}
+                                    nextLabel={"Siguiente →"}
+                                    breakLabel={"..."}
+                                    breakClassName={"break-me"}
+                                    pageCount={totalPages}
+                                    marginPagesDisplayed={2}
+                                    pageRangeDisplayed={5}
+                                    onPageChange={({ selected }) => handlePageClick(selected + 1)}
+                                    containerClassName={"pagination"}
+                                    subContainerClassName={"pages pagination"}
+                                    activeClassName={"active"}
+                                    previousClassName={"page-item"}
+                                    nextClassName={"page-item"}
+                                    pageClassName={"page-item"}
+                                    pageLinkClassName={"page-link"}
+                                    previousLinkClassName={"page-link"}
+                                    nextLinkClassName={"page-link"}
+                                />
+                            </div>
                         </div>
-
                     </div >
                 </Tab >
                 <Tab eventKey="inProgressOrders" title="Pedidos en Proceso">

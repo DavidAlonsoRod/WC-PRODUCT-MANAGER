@@ -7,7 +7,6 @@ import "../../styles/orderlist.css";
 import { formatDate, getShippingDateClass } from '../utils/dateUtils';
 import ReactPaginate from 'react-paginate';
 
-
 const OrdersInProgress = () => {
     const [orders, setOrders] = useState([]);
     const { store, actions } = useContext(Context);
@@ -46,6 +45,7 @@ const OrdersInProgress = () => {
                 return status;
         }
     };
+
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -53,9 +53,7 @@ const OrdersInProgress = () => {
             navigate("/");
             return;
         }
-
     }, []);
-
 
     const getStatusClass = (status) => {
         switch (status) {
@@ -91,7 +89,6 @@ const OrdersInProgress = () => {
         "PayPal",
         "Credit Card",
         "Bank Transfer",
-        // A��adir más métodos de pago según sea necesario
     ];
 
     const orderStatuses = [
@@ -100,7 +97,6 @@ const OrdersInProgress = () => {
         "completed",
         "pending",
         "cancelled",
-        // Añadir más estados según sea necesario
     ];
 
     const shippingStatuses = [
@@ -110,11 +106,11 @@ const OrdersInProgress = () => {
     ];
 
     useEffect(() => {
-        let isMounted = true; // Variable para controlar si el componente está montado
-        const token = localStorage.getItem("token"); // Definir la variable token
+        let isMounted = true;
+        const token = localStorage.getItem("token");
 
         const fetchOrders = async () => {
-            if (!isMounted) return; // Evitar múltiples solicitudes
+            if (!isMounted) return;
             try {
                 const params = new URLSearchParams({
                     page: String(page),
@@ -132,12 +128,12 @@ const OrdersInProgress = () => {
                 const endpoint = `${process.env.BACKEND_URL}/api/orders/in-progress?${params.toString()}`;
                 const response = await axios.get(endpoint, { headers });
 
-                if (isMounted) { // Solo actualizar el estado si el componente está montado
+                if (isMounted) {
                     setOrders(response.data.orders || []);
                     setTotalOrders(response.data.total_orders || 0);
                 }
             } catch (error) {
-                if (isMounted) { // Solo actualizar el estado si el componente está montado
+                if (isMounted) {
                     console.error("Error fetching orders:", error.response ? error.response.data : error.message);
                     setOrders([]);
                 }
@@ -145,20 +141,21 @@ const OrdersInProgress = () => {
         };
 
         fetchOrders();
-        const intervalId = setInterval(fetchOrders, 300000); // Actualizar cada 5 minutos
+        const intervalId = setInterval(fetchOrders, 300000);
 
         return () => {
-            isMounted = false; // Marcar el componente como desmontado
-            clearInterval(intervalId); // Limpiar el intervalo al desmontar el componente
+            isMounted = false;
+            clearInterval(intervalId);
         };
-    }, [page, perPage, customerId, filters]); // Añadir filtros a las dependencias
+    }, [page, perPage, customerId, filters]);
 
     const handleRowClick = (orderId) => {
         navigate(`/orders/${orderId}`);
     };
+
     const handlePageClick = ({ selected }) => {
         console.log('pageNumber:', selected);
-        setPage(selected + 1); // Incrementar el número de página en 1
+        setPage(selected + 1);
     };
 
     const handleCustomerChange = (event) => {
@@ -189,6 +186,16 @@ const OrdersInProgress = () => {
         }
     };
 
+    const handlePerPageChange = (event) => {
+        const newPerPage = parseInt(event.target.value, 10);
+        if (newPerPage !== perPage) {
+            setPerPage(newPerPage);
+            actions.getOrders(page, newPerPage, customerId, filters).catch(error => {
+                console.error("Error fetching orders:", error.response ? error.response.data : error.message);
+            });
+        }
+    };
+
     const handleSelectOrder = (orderId) => {
         setSelectedOrders(prevSelectedOrders =>
             prevSelectedOrders.includes(orderId)
@@ -198,9 +205,7 @@ const OrdersInProgress = () => {
     };
 
     const handleBatchAction = () => {
-
         console.log('Pedidos seleccionados:', selectedOrders);
-
     };
 
     const handleDeleteOrders = async () => {
@@ -214,7 +219,6 @@ const OrdersInProgress = () => {
             console.error("Error deleting orders:", error.response ? error.response.data : error.message);
         }
     };
-
 
     const filteredOrders = orders.filter(order => {
         return (
@@ -252,12 +256,9 @@ const OrdersInProgress = () => {
                 </Tab>
                 <Tab eventKey="inProgressOrders" title="Pedidos en Proceso">
                     <div className='border rounded-3 m-5 mt-0 pt-5 justify-content-center no-border-top no-rounded-top'>
-
                         <button onClick={handleBatchAction} className="btn btn-primary m-3">Realizar acción en pedidos seleccionados</button>
                         <button onClick={handleDeleteOrders} className="btn btn-alert m-3">Borrar pedidos seleccionados</button>
-
                         <table className='table caption-top'>
-
                             <thead className='table-header' style={{ backgroundColor: 'red' }}>
                                 <tr>
                                     <th>
@@ -393,7 +394,6 @@ const OrdersInProgress = () => {
                                             <small>{order.billing.company}</small>
                                         </td>
                                         <td>{formatDate(order.date_created)}</td>
-
                                         <td className={getShippingDateClass(order.shipping_date)}>{formatDate(order.shipping_date)}</td>
                                         <td>{order.billing.city}</td>
                                         <td>{order.total}</td>
@@ -414,32 +414,38 @@ const OrdersInProgress = () => {
                                 ))}
                             </tbody>
                         </table>
-                        <div className="d-flex justify-content-end m-2 pagination">
-                            <ReactPaginate className='pagination'
-                                previousLabel={"← Anterior"}
-                                nextLabel={"Siguiente →"}
-                                breakLabel={"..."}
-                                breakClassName={"break-me"}
-                                pageCount={totalPages}
-                                marginPagesDisplayed={2}
-                                pageRangeDisplayed={5}
-                                onPageChange={handlePageClick} // Pasar el índice de la página directamente
-                                containerClassName={"pagination"}
-                                subContainerClassName={"pages pagination"}
-                                activeClassName={"active"}
-                                previousClassName={"page-item"}
-                                nextClassName={"page-item"}
-                                pageClassName={"page-item"}
-                                pageLinkClassName={"page-link"}
-                                previousLinkClassName={"page-link"}
-                                nextLinkClassName={"page-link"}
-                            />
+                        <div className="d-flex justify-content-between m-2">
+                            <div className="d-flex align-items-center">
+                                <label htmlFor="perPageSelect" className="me-2 itemsPerpage">Items</label>
+                                <select id="perPageSelect" value={perPage} onChange={handlePerPageChange} className="form-select">
+                                    <option value={20}>20</option>
+                                    <option value={50}>50</option>
+                                    <option value={100}>100</option>
+                                </select>
+                            </div>
+                            <div className="d-flex justify-content-end m-2 pagination">
+                                <ReactPaginate
+                                    previousLabel={"← Anterior"}
+                                    nextLabel={"Siguiente →"}
+                                    breakLabel={"..."}
+                                    breakClassName={"break-me"}
+                                    pageCount={totalPages}
+                                    marginPagesDisplayed={2}
+                                    pageRangeDisplayed={5}
+                                    onPageChange={handlePageClick}
+                                    containerClassName={"pagination"}
+                                    subContainerClassName={"pages pagination"}
+                                    activeClassName={"active"}
+                                    previousClassName={"page-item"}
+                                    nextClassName={"page-item"}
+                                    pageClassName={"page-item"}
+                                    pageLinkClassName={"page-link"}
+                                    previousLinkClassName={"page-link"}
+                                    nextLinkClassName={"page-link"}
+                                />
+                            </div>
                         </div>
-
-
-
                     </div>
-
                 </Tab>
             </Tabs>
         </div>
